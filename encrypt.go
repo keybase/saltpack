@@ -53,7 +53,7 @@ func (es *encryptStream) encryptBlock() error {
 	var err error
 	n, err = es.buffer.Read(es.inblock[:])
 	if err != nil {
-		return nil
+		return err
 	}
 	return es.encryptBytes(es.inblock[0:n])
 }

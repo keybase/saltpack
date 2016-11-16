@@ -75,7 +75,7 @@ func (pes *testEncryptStream) encryptBlock() error {
 	var err error
 	n, err = pes.buffer.Read(pes.inblock[:])
 	if err != nil {
-		return nil
+		return err
 	}
 	return pes.encryptBytes(pes.inblock[0:n])
 }
