@@ -947,9 +947,6 @@ func TestCorruptNonce(t *testing.T) {
 }
 
 func TestCorruptHeader(t *testing.T) {
-	// TODO: Fix.
-	t.Skip()
-
 	msg := randomMsg(t, 1024*11)
 
 	// Test bad Header version
@@ -968,7 +965,7 @@ func TestCorruptHeader(t *testing.T) {
 	_, _, err = Open(ciphertext, kr)
 	if ebv, ok := err.(ErrBadVersion); !ok {
 		t.Fatalf("Got wrong error; wanted 'Bad Version' but got %v", err)
-	} else if ebv.received.Major != 2 {
+	} else if ebv.received.Major != 3 {
 		t.Fatalf("got wrong version # in error message: %v", ebv.received.Major)
 	}
 

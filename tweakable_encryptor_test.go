@@ -190,12 +190,13 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		eh.Receivers = append(eh.Receivers, keys)
 	}
 
+	ehCopy := *eh
 	if pes.options.corruptHeader != nil {
-		pes.options.corruptHeader(eh)
+		pes.options.corruptHeader(&ehCopy)
 	}
 
-	// Encode the header and the header length, and write them out immediately.
-	headerBytes, err := encodeToBytes(pes.header)
+	// Encode the (possibly-corrupted) header and the header length, and write them out immediately.
+	headerBytes, err := encodeToBytes(ehCopy)
 	if err != nil {
 		return err
 	}
