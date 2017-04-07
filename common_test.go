@@ -88,6 +88,8 @@ func TestCurve25519ScalarMult(t *testing.T) {
 	curve25519.ScalarMult(&shared3, &key2, &key1)
 	curve25519.ScalarMult(&shared4, &key2, &key2)
 
+	t.Log(shared1, shared2, shared3, shared4)
+
 	if shared2 == shared1 {
 		t.Errorf("shared2 == shared1 == %v unexpectedly", shared1)
 	}
