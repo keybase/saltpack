@@ -93,10 +93,13 @@ func hmacSHA512256(key []byte, input []byte) []byte {
 	return fullMAC[:cryptoAuthBytes]
 }
 
-func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash []byte) []byte {
+type macKey [cryptoAuthKeyBytes]byte
+
+func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash []byte) macKey {
 	nonce := nonceForMACKeyBox(headerHash)
 	macKeyBox := secret.Box(public, nonce, make([]byte, cryptoAuthKeyBytes))
-	macKey := macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes]
+	var macKey macKey
+	copy(macKey[:], macKeyBox[poly1305.TagSize:poly1305.TagSize+cryptoAuthKeyBytes])
 	return macKey
 }
 

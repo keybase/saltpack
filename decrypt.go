@@ -22,7 +22,7 @@ type decryptStream struct {
 	senderKey  *RawBoxKey
 	buf        []byte
 	headerHash []byte
-	macKey     []byte
+	macKey     macKey
 	position   int
 	mki        MessageKeyInfo
 }
@@ -280,7 +280,7 @@ func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlock) ([]byte, er
 
 	// Check the authenticator.
 	hashToAuthenticate := computePayloadHash(ds.headerHash, nonce, ciphertext)
-	ourAuthenticator := hmacSHA512256(ds.macKey, hashToAuthenticate)
+	ourAuthenticator := hmacSHA512256(ds.macKey[:], hashToAuthenticate)
 	if !hmac.Equal(ourAuthenticator, bl.HashAuthenticators[ds.position]) {
 		return nil, ErrBadTag(bl.seqno)
 	}

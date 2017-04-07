@@ -20,7 +20,7 @@ type encryptStream struct {
 	buffer     bytes.Buffer
 	inblock    []byte
 	headerHash []byte
-	macKeys    [][]byte
+	macKeys    []macKey
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
 
@@ -75,7 +75,7 @@ func (es *encryptStream) encryptBytes(b []byte) error {
 	// recipient.
 	hashToAuthenticate := computePayloadHash(es.headerHash, nonce, ciphertext)
 	for _, macKey := range es.macKeys {
-		authenticator := hmacSHA512256(macKey, hashToAuthenticate)
+		authenticator := hmacSHA512256(macKey[:], hashToAuthenticate)
 		block.HashAuthenticators = append(block.HashAuthenticators, authenticator)
 	}
 
