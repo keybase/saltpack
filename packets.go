@@ -50,7 +50,7 @@ func (h *EncryptionHeader) validate() error {
 	if h.Type != MessageTypeEncryption {
 		return ErrWrongMessageType{MessageTypeEncryption, h.Type}
 	}
-	if h.Version.Major != CurrentVersion().Major {
+	if h.Version.Major != Version1().Major && h.Version.Major != Version2().Major {
 		return ErrBadVersion{h.Version}
 	}
 	return nil
