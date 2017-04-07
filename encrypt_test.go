@@ -287,9 +287,14 @@ func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPub
 	}
 }
 
-func TestEmptyEncryptionOneReceiver(t *testing.T) {
+func TestEmptyEncryptionOneReceiverV1(t *testing.T) {
 	msg := []byte{}
 	testRoundTrip(t, Version1(), msg, nil, nil)
+}
+
+func TestEmptyEncryptionOneReceiverV2(t *testing.T) {
+	msg := []byte{}
+	testRoundTrip(t, Version2(), msg, nil, nil)
 }
 
 func TestSmallEncryptionOneReceiver(t *testing.T) {
