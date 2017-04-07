@@ -152,7 +152,10 @@ func computeMACKey(version Version, secret, eSecret BoxSecretKey, public BoxPubl
 	case Version1():
 		return computeMACKeyHelper(secret, public, headerHash)
 	case Version2():
-		panic("Not implemented")
+		mac1 := computeMACKeyHelper(secret, public, headerHash)
+		mac2 := computeMACKeyHelper(eSecret, public, headerHash)
+		hash := sha512.Sum512_256(append(mac1[:], mac2[:]...))
+		return hash
 	default:
 		panic(fmt.Sprintf("Unknown version %+v", version))
 	}
