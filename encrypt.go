@@ -188,7 +188,10 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	}
 
 	// Use the header hash to compute the MAC keys.
-	es.macKeys = computeMACKeys(es.header.Version, es.headerHash, sender, ephemeralKey, receivers)
+	//
+	// TODO: Pre-compute the shared key in the receiver loop above
+	// and pass it through to computeMACKeysSender.
+	es.macKeys = computeMACKeysSender(es.header.Version, es.headerHash, sender, ephemeralKey, receivers)
 
 	return nil
 }

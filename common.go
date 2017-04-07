@@ -147,7 +147,7 @@ func computeMACKeySingle(secret BoxSecretKey, public BoxPublicKey, headerHash he
 	return sliceToByte32(macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes])
 }
 
-func computeMACKey(version Version, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
+func computeMACKeySender(version Version, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
 	switch version {
 	case Version1():
 		return computeMACKeySingle(secret, public, headerHash)
@@ -161,10 +161,10 @@ func computeMACKey(version Version, secret, eSecret BoxSecretKey, public BoxPubl
 	}
 }
 
-func computeMACKeys(version Version, headerHash headerHash, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey) []macKey {
+func computeMACKeysSender(version Version, headerHash headerHash, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey) []macKey {
 	var macKeys []macKey
 	for _, receiver := range receivers {
-		macKey := computeMACKey(version, sender, ephemeralKey, receiver, headerHash)
+		macKey := computeMACKeySender(version, sender, ephemeralKey, receiver, headerHash)
 		macKeys = append(macKeys, macKey)
 	}
 	return macKeys

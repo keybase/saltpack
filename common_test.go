@@ -102,10 +102,10 @@ var public2 = boxPublicKey{
 var constHeaderHash = headerHash{0x7}
 
 func TestComputeMacKeyV1(t *testing.T) {
-	macKey1 := computeMACKey(Version1(), secret1, eSecret1, public1, constHeaderHash)
-	macKey2 := computeMACKey(Version1(), secret2, eSecret1, public1, constHeaderHash)
-	macKey3 := computeMACKey(Version1(), secret1, eSecret2, public1, constHeaderHash)
-	macKey4 := computeMACKey(Version1(), secret1, eSecret1, public2, constHeaderHash)
+	macKey1 := computeMACKeySender(Version1(), secret1, eSecret1, public1, constHeaderHash)
+	macKey2 := computeMACKeySender(Version1(), secret2, eSecret1, public1, constHeaderHash)
+	macKey3 := computeMACKeySender(Version1(), secret1, eSecret2, public1, constHeaderHash)
+	macKey4 := computeMACKeySender(Version1(), secret1, eSecret1, public2, constHeaderHash)
 
 	if macKey2 == macKey1 {
 		t.Errorf("macKey2 == macKey1 == %v unexpectedly", macKey1)
