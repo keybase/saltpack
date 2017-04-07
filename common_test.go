@@ -85,6 +85,10 @@ var secret2 = boxSecretKey{
 	key: RawBoxKey{0x10},
 }
 
+var eSecret = boxSecretKey{
+	key: RawBoxKey{0x28},
+}
+
 var public1 = boxPublicKey{
 	key: RawBoxKey{0x5},
 }
@@ -95,9 +99,9 @@ var public2 = boxPublicKey{
 var constHeaderHash = headerHash{0x7}
 
 func TestComputeMacKey(t *testing.T) {
-	macKey1 := computeMACKey(secret1, public1, constHeaderHash)
-	macKey2 := computeMACKey(secret2, public1, constHeaderHash)
-	macKey3 := computeMACKey(secret1, public2, constHeaderHash)
+	macKey1 := computeMACKey(Version1(), secret1, eSecret, public1, constHeaderHash)
+	macKey2 := computeMACKey(Version1(), secret2, eSecret, public1, constHeaderHash)
+	macKey3 := computeMACKey(Version1(), secret1, eSecret, public2, constHeaderHash)
 
 	if macKey2 == macKey1 {
 		t.Errorf("macKey2 == macKey1 == %v unexpectedly", macKey1)
