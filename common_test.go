@@ -76,6 +76,9 @@ func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, v
 	}
 }
 
+// Due to the specifics of Curve25519 (see https://cr.yp.to/ecdh.html ),
+// the lower three bits of key[0] don't distinguish two secret keys.
+
 var secret1 = boxSecretKey{
 	key: RawBoxKey{0x08},
 }
