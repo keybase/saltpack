@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"encoding/hex"
-	"fmt"
 	"io"
 
 	"golang.org/x/crypto/nacl/secretbox"
@@ -132,10 +131,6 @@ func checkKnownVersion(version Version) error {
 func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
 	if err := checkKnownVersion(version); err != nil {
 		return err
-	}
-
-	if version != Version1() && version != Version2() {
-		return fmt.Errorf("Unknown version %+v", version)
 	}
 
 	if err := es.checkReceivers(receivers); err != nil {

@@ -170,6 +170,20 @@ func computeMACKeys(version Version, headerHash headerHash, sender, ephemeralKey
 	return macKeys
 }
 
+func computeMACKeyReceiver(version Version, secret BoxSecretKey, public, ePublic BoxPublicKey, headerHash headerHash) macKey {
+	switch version {
+	case Version1():
+		return computeMACKeyHelper(secret, public, headerHash)
+	case Version2():
+		mac1 := computeMACKeyHelper(secret, public, headerHash)
+		mac2 := computeMACKeyHelper(secret, ePublic, headerHash)
+		hash := sha512.Sum512_256(append(mac1[:], mac2[:]...))
+		return hash
+	default:
+		panic(fmt.Sprintf("Unknown version %+v", version))
+	}
+}
+
 func computePayloadHash(headerHash headerHash, nonce Nonce, payloadCiphertext []byte) payloadHash {
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
