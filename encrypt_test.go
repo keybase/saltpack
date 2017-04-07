@@ -409,7 +409,7 @@ func testRealEncryptorBig(t *testing.T, version Version) {
 	testRealEncryptor(t, version, 1024*1024*3)
 }
 
-func TestRoundTripMedium6Receivers(t *testing.T) {
+func testRoundTripMedium6Receivers(t *testing.T, version Version) {
 	msg := make([]byte, 1024*3)
 	if _, err := rand.Read(msg); err != nil {
 		t.Fatal(err)
@@ -422,10 +422,10 @@ func TestRoundTripMedium6Receivers(t *testing.T) {
 		newBoxKeyNoInsert(t).GetPublicKey(),
 		newBoxKey(t).GetPublicKey(),
 	}
-	testRoundTrip(t, Version1(), msg, receivers, nil)
+	testRoundTrip(t, version, msg, receivers, nil)
 }
 
-func TestRoundTripSmall6Receivers(t *testing.T) {
+func testRoundTripSmall6Receivers(t *testing.T, version Version) {
 	msg := []byte("hoppy halloween")
 	if _, err := rand.Read(msg); err != nil {
 		t.Fatal(err)
@@ -438,7 +438,7 @@ func TestRoundTripSmall6Receivers(t *testing.T) {
 		newBoxKeyNoInsert(t).GetPublicKey(),
 		newBoxKey(t).GetPublicKey(),
 	}
-	testRoundTrip(t, Version1(), msg, receivers, nil)
+	testRoundTrip(t, version, msg, receivers, nil)
 }
 
 func TestReceiverNotFound(t *testing.T) {
@@ -1313,6 +1313,8 @@ func TestEncrypt(t *testing.T) {
 		testBiggishEncryptionOneReceiver,
 		testRealEncryptorSmall,
 		testRealEncryptorBig,
+		testRoundTripMedium6Receivers,
+		testRoundTripSmall6Receivers,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
