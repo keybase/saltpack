@@ -441,7 +441,7 @@ func testRoundTripSmall6Receivers(t *testing.T, version Version) {
 	testRoundTrip(t, version, msg, receivers, nil)
 }
 
-func TestReceiverNotFound(t *testing.T) {
+func testReceiverNotFound(t *testing.T, version Version) {
 	sndr := newBoxKey(t)
 	msg := []byte("those who die stay with us forever, as bones")
 	var out bytes.Buffer
@@ -454,7 +454,7 @@ func TestReceiverNotFound(t *testing.T) {
 		newBoxKeyNoInsert(t).GetPublicKey(),
 	}
 
-	strm, err := newTestEncryptStream(Version1(), &out, sndr, receivers,
+	strm, err := newTestEncryptStream(version, &out, sndr, receivers,
 		testEncryptionOptions{blockSize: 1024})
 	if err != nil {
 		t.Fatal(err)
@@ -471,12 +471,12 @@ func TestReceiverNotFound(t *testing.T) {
 	}
 }
 
-func TestTruncation(t *testing.T) {
+func testTruncation(t *testing.T, version Version) {
 	sndr := newBoxKey(t)
 	var out bytes.Buffer
 	msg := []byte("this message is going to be truncated")
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
-	strm, err := newTestEncryptStream(Version1(), &out, sndr, receivers,
+	strm, err := newTestEncryptStream(version, &out, sndr, receivers,
 		testEncryptionOptions{blockSize: 1024})
 	if err != nil {
 		t.Fatal(err)
@@ -496,28 +496,28 @@ func TestTruncation(t *testing.T) {
 	}
 }
 
-func TestMediumEncryptionOneReceiverSmallReads(t *testing.T) {
+func testMediumEncryptionOneReceiverSmallReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
 	if _, err := rand.Read(buf); err != nil {
 		t.Fatal(err)
 	}
-	testRoundTrip(t, Version1(), buf, nil, &options{readSize: 1})
+	testRoundTrip(t, version, buf, nil, &options{readSize: 1})
 }
 
-func TestMediumEncryptionOneReceiverSmallishReads(t *testing.T) {
+func testMediumEncryptionOneReceiverSmallishReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
 	if _, err := rand.Read(buf); err != nil {
 		t.Fatal(err)
 	}
-	testRoundTrip(t, Version1(), buf, nil, &options{readSize: 7})
+	testRoundTrip(t, version, buf, nil, &options{readSize: 7})
 }
 
-func TestMediumEncryptionOneReceiverMediumReads(t *testing.T) {
+func testMediumEncryptionOneReceiverMediumReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
 	if _, err := rand.Read(buf); err != nil {
 		t.Fatal(err)
 	}
-	testRoundTrip(t, Version1(), buf, nil, &options{readSize: 79})
+	testRoundTrip(t, version, buf, nil, &options{readSize: 79})
 }
 
 func testSealAndOpen(t *testing.T, sz int) {
@@ -1315,6 +1315,11 @@ func TestEncrypt(t *testing.T) {
 		testRealEncryptorBig,
 		testRoundTripMedium6Receivers,
 		testRoundTripSmall6Receivers,
+		testReceiverNotFound,
+		testTruncation,
+		testMediumEncryptionOneReceiverSmallReads,
+		testMediumEncryptionOneReceiverSmallishReads,
+		testMediumEncryptionOneReceiverMediumReads,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
