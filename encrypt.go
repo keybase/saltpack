@@ -119,7 +119,7 @@ func (es *encryptStream) checkReceivers(v []BoxPublicKey) error {
 	return nil
 }
 
-func (es *encryptStream) init(sender BoxSecretKey, receivers []BoxPublicKey) error {
+func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
 
 	if err := es.checkReceivers(receivers); err != nil {
 		return err
@@ -214,7 +214,7 @@ func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey
 		encoder: newEncoder(ciphertext),
 		inblock: make([]byte, encryptionBlockSize),
 	}
-	err := es.init(sender, receivers)
+	err := es.init(version, sender, receivers)
 	return es, err
 }
 
