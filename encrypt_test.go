@@ -520,14 +520,14 @@ func testMediumEncryptionOneReceiverMediumReads(t *testing.T, version Version) {
 	testRoundTrip(t, version, buf, nil, &options{readSize: 79})
 }
 
-func testSealAndOpen(t *testing.T, sz int) {
+func testSealAndOpen(t *testing.T, version Version, sz int) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := make([]byte, sz)
 	if _, err := rand.Read(plaintext); err != nil {
 		t.Fatal(err)
 	}
-	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
+	ciphertext, err := Seal(version, plaintext, sender, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -540,15 +540,15 @@ func testSealAndOpen(t *testing.T, sz int) {
 	}
 }
 
-func TestSealAndOpenSmall(t *testing.T) {
-	testSealAndOpen(t, 103)
+func testSealAndOpenSmall(t *testing.T, version Version) {
+	testSealAndOpen(t, version, 103)
 }
 
-func TestSealAndOpenBig(t *testing.T) {
-	testSealAndOpen(t, 1024*1024*3)
+func testSealAndOpenBig(t *testing.T, version Version) {
+	testSealAndOpen(t, version, 1024*1024*3)
 }
 
-func TestSealAndOpenTwoReceivers(t *testing.T) {
+func testSealAndOpenTwoReceivers(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{
 		newBoxKeyNoInsert(t).GetPublicKey(),
@@ -558,7 +558,7 @@ func TestSealAndOpenTwoReceivers(t *testing.T) {
 	if _, err := rand.Read(plaintext); err != nil {
 		t.Fatal(err)
 	}
-	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
+	ciphertext, err := Seal(version, plaintext, sender, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -571,22 +571,22 @@ func TestSealAndOpenTwoReceivers(t *testing.T) {
 	}
 }
 
-func TestRepeatedKey(t *testing.T) {
+func testRepeatedKey(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	pk := newBoxKey(t).GetPublicKey()
 	receivers := []BoxPublicKey{pk, pk}
 	plaintext := randomMsg(t, 1024*3)
-	_, err := Seal(Version1(), plaintext, sender, receivers)
+	_, err := Seal(version, plaintext, sender, receivers)
 	if _, ok := err.(ErrRepeatedKey); !ok {
 		t.Fatalf("Wanted a repeated key error; got %v", err)
 	}
 }
 
-func TestEmptyReceivers(t *testing.T) {
+func testEmptyReceivers(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{}
 	plaintext := randomMsg(t, 1024*3)
-	_, err := Seal(Version1(), plaintext, sender, receivers)
+	_, err := Seal(version, plaintext, sender, receivers)
 	if err != ErrBadReceivers {
 		t.Fatalf("Wanted error %v but got %v", ErrBadReceivers, err)
 	}
@@ -1320,6 +1320,11 @@ func TestEncrypt(t *testing.T) {
 		testMediumEncryptionOneReceiverSmallReads,
 		testMediumEncryptionOneReceiverSmallishReads,
 		testMediumEncryptionOneReceiverMediumReads,
+		testSealAndOpenSmall,
+		testSealAndOpenBig,
+		testSealAndOpenTwoReceivers,
+		testRepeatedKey,
+		testEmptyReceivers,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
