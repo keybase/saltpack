@@ -255,9 +255,6 @@ func (ds *decryptStream) processEncryptionHeader(hdr *EncryptionHeader) error {
 			return ErrNoSenderKey
 		}
 		ds.mki.SenderKey = longLivedSenderKey
-
-		// Compute the MAC key.
-		ds.macKey = computeMACKey(secretKey, longLivedSenderKey, ds.headerHash)
 	} else {
 		ds.mki.SenderIsAnon = true
 		ds.mki.SenderKey = ephemeralKey
