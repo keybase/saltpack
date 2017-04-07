@@ -157,7 +157,7 @@ func computeMACKeySender(version Version, secret, eSecret BoxSecretKey, public B
 		hash := sha512.Sum512_256(append(mac1[:], mac2[:]...))
 		return hash
 	default:
-		panic(fmt.Sprintf("Unknown version %+v", version))
+		panic(fmt.Sprintf("Unknown version %s", version))
 	}
 }
 
@@ -171,7 +171,7 @@ func computeMACKeyReceiver(version Version, secret BoxSecretKey, public, ePublic
 		hash := sha512.Sum512_256(append(mac1[:], mac2[:]...))
 		return hash
 	default:
-		panic(fmt.Sprintf("Unknown version %+v", version))
+		panic(fmt.Sprintf("Unknown version %s", version))
 	}
 }
 
