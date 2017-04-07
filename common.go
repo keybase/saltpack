@@ -52,9 +52,11 @@ func assertEndOfStream(stream *msgpackStream) error {
 	return err
 }
 
-func attachedSignatureInput(headerHash []byte, block *signatureBlock) []byte {
+type headerHash [sha512.Size]byte
+
+func attachedSignatureInput(headerHash headerHash, block *signatureBlock) []byte {
 	hasher := sha512.New()
-	hasher.Write(headerHash)
+	hasher.Write(headerHash[:])
 	binary.Write(hasher, binary.BigEndian, block.seqno)
 	hasher.Write(block.PayloadChunk)
 
@@ -65,9 +67,9 @@ func attachedSignatureInput(headerHash []byte, block *signatureBlock) []byte {
 	return buf.Bytes()
 }
 
-func detachedSignatureInput(headerHash []byte, plaintext []byte) []byte {
+func detachedSignatureInput(headerHash headerHash, plaintext []byte) []byte {
 	hasher := sha512.New()
-	hasher.Write(headerHash)
+	hasher.Write(headerHash[:])
 	hasher.Write(plaintext)
 
 	return detachedSignatureInputFromHash(hasher.Sum(nil))
@@ -94,7 +96,6 @@ func hmacSHA512256(key []byte, input []byte) []byte {
 }
 
 type macKey [cryptoAuthKeyBytes]byte
-type headerHash [sha512.Size]byte
 
 func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
 	nonce := nonceForMACKeyBox(headerHash)
@@ -112,8 +113,6 @@ func computePayloadHash(headerHash headerHash, nonce *Nonce, payloadCiphertext [
 	return payloadDigest.Sum(nil)
 }
 
-func sha512OfSlice(slice []byte) []byte {
-	digest := sha512.New()
-	digest.Write(slice)
-	return digest.Sum(nil)
+func hashHeader(headerBytes []byte) headerHash {
+	return sha512.Sum512(headerBytes)
 }

@@ -12,7 +12,7 @@ type verifyStream struct {
 	state      readState
 	buffer     []byte
 	header     *SignatureHeader
-	headerHash []byte
+	headerHash headerHash
 	publicKey  SigningPublicKey
 	seqno      packetSeqno
 }
@@ -72,7 +72,7 @@ func (v *verifyStream) readHeader(msgType MessageType) error {
 		return err
 	}
 
-	v.headerHash = sha512OfSlice(headerBytes)
+	v.headerHash = hashHeader(headerBytes)
 
 	var header SignatureHeader
 	err = decodeFromBytes(&header, headerBytes)

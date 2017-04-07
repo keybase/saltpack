@@ -11,7 +11,7 @@ import (
 )
 
 type signAttachedStream struct {
-	headerHash []byte
+	headerHash headerHash
 	encoder    encoder
 	buffer     bytes.Buffer
 	block      []byte
@@ -36,7 +36,7 @@ func newSignAttachedStream(w io.Writer, signer SigningSecretKey) (*signAttachedS
 	}
 
 	// Compute the header hash.
-	headerHash := sha512OfSlice(headerBytes)
+	headerHash := hashHeader(headerBytes)
 
 	// Create the attached stream object.
 	stream := &signAttachedStream{
@@ -137,7 +137,7 @@ func newSignDetachedStream(w io.Writer, signer SigningSecretKey) (*signDetachedS
 	}
 
 	// Compute the header hash.
-	headerHash := sha512OfSlice(headerBytes)
+	headerHash := hashHeader(headerBytes)
 
 	// Create the detached stream object.
 	stream := &signDetachedStream{
@@ -154,7 +154,7 @@ func newSignDetachedStream(w io.Writer, signer SigningSecretKey) (*signDetachedS
 
 	// Start off the message digest with the header hash. Subsequent calls to
 	// Write() will push message bytes into this digest.
-	stream.hasher.Write(headerHash)
+	stream.hasher.Write(headerHash[:])
 
 	return stream, nil
 }

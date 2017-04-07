@@ -17,7 +17,7 @@ type testSignOptions struct {
 }
 
 type testSignStream struct {
-	headerHash []byte
+	headerHash headerHash
 	encoder    encoder
 	buffer     bytes.Buffer
 	block      []byte
@@ -50,7 +50,7 @@ func newTestSignStream(w io.Writer, signer SigningSecretKey, opts testSignOption
 	}
 
 	// Compute the header hash.
-	headerHash := sha512OfSlice(headerBytes)
+	headerHash := hashHeader(headerBytes)
 
 	stream := &testSignStream{
 		headerHash: headerHash,
@@ -188,7 +188,7 @@ func testTweakSignDetached(plaintext []byte, signer SigningSecretKey, opts testS
 	}
 
 	// Compute the header hash.
-	headerHash := sha512OfSlice(headerBytes)
+	headerHash := hashHeader(headerBytes)
 
 	// Double encode the header bytes to start the output.
 	output, err := encodeToBytes(headerBytes)

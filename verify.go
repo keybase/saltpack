@@ -70,7 +70,7 @@ func VerifyDetachedReader(message io.Reader, signature []byte, keyring SigKeyrin
 	// Compute the signed text hash, without requiring us to copy the whole
 	// signed text into memory at once.
 	hasher := sha512.New()
-	hasher.Write(s.headerHash)
+	hasher.Write(s.headerHash[:])
 	if _, err := io.Copy(hasher, message); err != nil {
 		return nil, err
 	}
