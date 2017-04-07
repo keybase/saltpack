@@ -79,8 +79,8 @@ func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, v
 }
 
 func TestCurve25519ScalarMult(t *testing.T) {
-	key1 := [32]byte{0x1}
-	key2 := [32]byte{0x2}
+	key1 := [32]byte{0x08}
+	key2 := [32]byte{0x10}
 
 	var shared1, shared2, shared3, shared4 [32]byte
 	curve25519.ScalarMult(&shared1, &key1, &key1)
@@ -105,10 +105,10 @@ func TestCurve25519ScalarMult(t *testing.T) {
 
 func TestPrecompute(t *testing.T) {
 	secret1 := boxSecretKey{
-		key: RawBoxKey{0x1},
+		key: RawBoxKey{0x08},
 	}
 	secret2 := boxSecretKey{
-		key: RawBoxKey{0x2},
+		key: RawBoxKey{0x10},
 	}
 
 	public1 := boxPublicKey{
@@ -138,17 +138,17 @@ func TestPrecompute(t *testing.T) {
 
 func TestComputeMacKeySenderV1(t *testing.T) {
 	secret1 := boxSecretKey{
-		key: RawBoxKey{0x1},
+		key: RawBoxKey{0x08},
 	}
 	secret2 := boxSecretKey{
-		key: RawBoxKey{0x2},
+		key: RawBoxKey{0x10},
 	}
 
 	eSecret1 := boxSecretKey{
-		key: RawBoxKey{0x3},
+		key: RawBoxKey{0x18},
 	}
 	eSecret2 := boxSecretKey{
-		key: RawBoxKey{0x4},
+		key: RawBoxKey{0x20},
 	}
 
 	public1 := boxPublicKey{
@@ -180,17 +180,17 @@ func TestComputeMacKeySenderV1(t *testing.T) {
 
 func TestComputeMacKeySenderV2(t *testing.T) {
 	secret1 := boxSecretKey{
-		key: RawBoxKey{0x1},
+		key: RawBoxKey{0x08},
 	}
 	secret2 := boxSecretKey{
-		key: RawBoxKey{0x2},
+		key: RawBoxKey{0x10},
 	}
 
 	eSecret1 := boxSecretKey{
-		key: RawBoxKey{0x3},
+		key: RawBoxKey{0x18},
 	}
 	eSecret2 := boxSecretKey{
-		key: RawBoxKey{0x4},
+		key: RawBoxKey{0x20},
 	}
 
 	public1 := boxPublicKey{
