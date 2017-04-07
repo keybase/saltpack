@@ -75,3 +75,120 @@ func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, v
 		})
 	}
 }
+
+func TestPrecompute(t *testing.T) {
+	secret1 := boxSecretKey{
+		key: RawBoxKey{0x1},
+	}
+	secret2 := boxSecretKey{
+		key: RawBoxKey{0x2},
+	}
+
+	public1 := boxPublicKey{
+		key: RawBoxKey{0x3},
+	}
+	public2 := boxPublicKey{
+		key: RawBoxKey{0x4},
+	}
+
+	shared1 := secret1.Precompute(public1).(boxPrecomputedSharedKey)
+	shared2 := secret1.Precompute(public2).(boxPrecomputedSharedKey)
+	shared3 := secret2.Precompute(public1).(boxPrecomputedSharedKey)
+	shared4 := secret2.Precompute(public2).(boxPrecomputedSharedKey)
+
+	if shared2 == shared1 {
+		t.Errorf("shared2 == shared1 == %v unexpectedly", shared1)
+	}
+
+	if shared3 == shared1 {
+		t.Errorf("shared3 == shared1 == %v unexpectedly", shared1)
+	}
+
+	if shared4 == shared1 {
+		t.Errorf("shared4 == shared1 == %v unexpectedly", shared1)
+	}
+}
+
+func TestComputeMacKeySenderV1(t *testing.T) {
+	secret1 := boxSecretKey{
+		key: RawBoxKey{0x1},
+	}
+	secret2 := boxSecretKey{
+		key: RawBoxKey{0x2},
+	}
+
+	eSecret1 := boxSecretKey{
+		key: RawBoxKey{0x3},
+	}
+	eSecret2 := boxSecretKey{
+		key: RawBoxKey{0x4},
+	}
+
+	public1 := boxPublicKey{
+		key: RawBoxKey{0x5},
+	}
+	public2 := boxPublicKey{
+		key: RawBoxKey{0x6},
+	}
+
+	headerHash := [64]byte{0x7}
+
+	macKey1 := computeMACKeySender(Version1, secret1, eSecret1, public1, headerHash[:])
+	macKey2 := computeMACKeySender(Version1, secret2, eSecret1, public1, headerHash[:])
+	macKey3 := computeMACKeySender(Version1, secret1, eSecret2, public1, headerHash[:])
+	macKey4 := computeMACKeySender(Version1, secret1, eSecret1, public2, headerHash[:])
+
+	if macKey2 == macKey1 {
+		t.Errorf("macKey2 == macKey1 == %v unexpectedly", macKey1)
+	}
+
+	if macKey3 == macKey1 {
+		t.Errorf("macKey3 == macKey1 == %v unexpectedly", macKey1)
+	}
+
+	if macKey4 == macKey1 {
+		t.Errorf("macKey4 == macKey1 == %v unexpectedly", macKey1)
+	}
+}
+
+func TestComputeMacKeySenderV2(t *testing.T) {
+	secret1 := boxSecretKey{
+		key: RawBoxKey{0x1},
+	}
+	secret2 := boxSecretKey{
+		key: RawBoxKey{0x2},
+	}
+
+	eSecret1 := boxSecretKey{
+		key: RawBoxKey{0x3},
+	}
+	eSecret2 := boxSecretKey{
+		key: RawBoxKey{0x4},
+	}
+
+	public1 := boxPublicKey{
+		key: RawBoxKey{0x5},
+	}
+	public2 := boxPublicKey{
+		key: RawBoxKey{0x6},
+	}
+
+	headerHash := [64]byte{0x7}
+
+	macKey1 := computeMACKeySender(Version2, secret1, eSecret1, public1, headerHash[:])
+	macKey2 := computeMACKeySender(Version2, secret2, eSecret1, public1, headerHash[:])
+	macKey3 := computeMACKeySender(Version2, secret1, eSecret2, public1, headerHash[:])
+	macKey4 := computeMACKeySender(Version2, secret1, eSecret1, public2, headerHash[:])
+
+	if macKey2 == macKey1 {
+		t.Errorf("macKey2 == macKey1 == %v unexpectedly", macKey1)
+	}
+
+	if macKey3 == macKey1 {
+		t.Errorf("macKey3 == macKey1 == %v unexpectedly", macKey1)
+	}
+
+	if macKey4 == macKey1 {
+		t.Errorf("macKey4 == macKey1 == %v unexpectedly", macKey1)
+	}
+}
