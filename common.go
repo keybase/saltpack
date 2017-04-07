@@ -141,7 +141,7 @@ func computePayloadAuthenticator(macKey macKey, payloadHash payloadHash) payload
 	return sliceToByte32(fullMAC[:cryptoAuthBytes])
 }
 
-func computeMACKey(version Version, secret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
+func computeMACKey(version Version, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
 	nonce := nonceForMACKeyBox(headerHash)
 	macKeyBox := secret.Box(public, nonce, make([]byte, cryptoAuthKeyBytes))
 	return sliceToByte32(macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes])

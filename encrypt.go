@@ -193,15 +193,15 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	}
 
 	// Use the header hash to compute the MAC keys.
-	es.macKeys = computeMACKeys(es.header.Version, es.headerHash, sender, receivers)
+	es.macKeys = computeMACKeys(es.header.Version, es.headerHash, sender, ephemeralKey, receivers)
 
 	return nil
 }
 
-func computeMACKeys(version Version, headerHash []byte, sender BoxSecretKey, receivers []BoxPublicKey) [][]byte {
-	var macKeys [][]byte
+func computeMACKeys(version Version, headerHash headerHash, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey) []macKey {
+	var macKeys []macKey
 	for _, receiver := range receivers {
-		macKey := computeMACKey(version, sender, receiver, headerHash)
+		macKey := computeMACKey(version, sender, ephemeralKey, receiver, headerHash)
 		macKeys = append(macKeys, macKey)
 	}
 	return macKeys
