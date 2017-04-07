@@ -122,7 +122,7 @@ func (pes *testEncryptStream) encryptBytes(b []byte) error {
 	return nil
 }
 
-func (pes *testEncryptStream) init(sender BoxSecretKey, receivers []BoxPublicKey) error {
+func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
 
 	ephemeralKey, err := receivers[0].CreateEphemeralKey()
 	if err != nil {
@@ -137,7 +137,7 @@ func (pes *testEncryptStream) init(sender BoxSecretKey, receivers []BoxPublicKey
 
 	eh := &EncryptionHeader{
 		FormatName: FormatName,
-		Version:    CurrentVersion(),
+		Version:    version,
 		Type:       MessageTypeEncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
@@ -241,20 +241,20 @@ func (pes *testEncryptStream) writeFooter() error {
 
 // Options are available mainly for testing.  Can't think of a good reason for
 // end-users to have to specify options.
-func newTestEncryptStream(ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (io.WriteCloser, error) {
+func newTestEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (io.WriteCloser, error) {
 	pes := &testEncryptStream{
 		output:  ciphertext,
 		encoder: newEncoder(ciphertext),
 		options: options,
 		inblock: make([]byte, options.getBlockSize()),
 	}
-	err := pes.init(sender, receivers)
+	err := pes.init(version, sender, receivers)
 	return pes, err
 }
 
 func testSeal(plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (out []byte, err error) {
 	var buf bytes.Buffer
-	es, err := newTestEncryptStream(&buf, sender, receivers, options)
+	es, err := newTestEncryptStream(Version1(), &buf, sender, receivers, options)
 	if err != nil {
 		return nil, err
 	}
