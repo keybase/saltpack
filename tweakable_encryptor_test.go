@@ -41,7 +41,7 @@ type testEncryptStream struct {
 	buffer     bytes.Buffer
 	inblock    []byte
 	options    testEncryptionOptions
-	headerHash []byte
+	headerHash headerHash
 	macKeys    []macKey
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
@@ -203,8 +203,7 @@ func (pes *testEncryptStream) init(sender BoxSecretKey, receivers []BoxPublicKey
 	if pes.options.corruptHeaderPacked != nil {
 		pes.options.corruptHeaderPacked(headerBytes)
 	}
-	headerHash := sha512.Sum512(headerBytes)
-	pes.headerHash = headerHash[:]
+	pes.headerHash = sha512.Sum512(headerBytes)
 	err = pes.encoder.Encode(headerBytes)
 	if err != nil {
 		return err

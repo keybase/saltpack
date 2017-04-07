@@ -19,7 +19,7 @@ type encryptStream struct {
 	payloadKey SymmetricKey
 	buffer     bytes.Buffer
 	inblock    []byte
-	headerHash []byte
+	headerHash headerHash
 	macKeys    []macKey
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
@@ -168,8 +168,7 @@ func (es *encryptStream) init(sender BoxSecretKey, receivers []BoxPublicKey) err
 	if err != nil {
 		return err
 	}
-	headerHash := sha512.Sum512(headerBytes)
-	es.headerHash = headerHash[:]
+	es.headerHash = sha512.Sum512(headerBytes)
 	err = es.encoder.Encode(headerBytes)
 	if err != nil {
 		return err

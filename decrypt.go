@@ -21,7 +21,7 @@ type decryptStream struct {
 	payloadKey *SymmetricKey
 	senderKey  *RawBoxKey
 	buf        []byte
-	headerHash []byte
+	headerHash headerHash
 	macKey     macKey
 	position   int
 	mki        MessageKeyInfo
@@ -100,8 +100,7 @@ func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 		return ErrFailedToReadHeaderBytes
 	}
 	// Compute the header hash.
-	headerHash := sha512.Sum512(headerBytes)
-	ds.headerHash = headerHash[:]
+	ds.headerHash = sha512.Sum512(headerBytes)
 	// Parse the header bytes.
 	var header EncryptionHeader
 	err = decodeFromBytes(&header, headerBytes)

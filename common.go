@@ -94,8 +94,9 @@ func hmacSHA512256(key []byte, input []byte) []byte {
 }
 
 type macKey [cryptoAuthKeyBytes]byte
+type headerHash [sha512.Size]byte
 
-func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash []byte) macKey {
+func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
 	nonce := nonceForMACKeyBox(headerHash)
 	macKeyBox := secret.Box(public, nonce, make([]byte, cryptoAuthKeyBytes))
 	var macKey macKey
@@ -103,9 +104,9 @@ func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash []byte) 
 	return macKey
 }
 
-func computePayloadHash(headerHash []byte, nonce *Nonce, payloadCiphertext []byte) []byte {
+func computePayloadHash(headerHash headerHash, nonce *Nonce, payloadCiphertext []byte) []byte {
 	payloadDigest := sha512.New()
-	payloadDigest.Write(headerHash)
+	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
 	payloadDigest.Write(payloadCiphertext)
 	return payloadDigest.Sum(nil)

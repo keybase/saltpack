@@ -35,10 +35,7 @@ func nonceForDerivedSharedKey() *Nonce {
 	return &n
 }
 
-func nonceForMACKeyBox(headerHash []byte) *Nonce {
-	if len(headerHash) != 64 {
-		panic("Header hash shorter than expected.")
-	}
+func nonceForMACKeyBox(headerHash headerHash) *Nonce {
 	var n Nonce
 	copy(n[:], headerHash[:nonceBytes])
 	return &n
