@@ -358,7 +358,7 @@ func testBiggishEncryptionOneReceiver(t *testing.T, version Version) {
 	testRoundTrip(t, version, buf, nil, nil)
 }
 
-func testRealEncryptor(t *testing.T, sz int) {
+func testRealEncryptor(t *testing.T, version Version, sz int) {
 	msg := make([]byte, sz)
 	if _, err := rand.Read(msg); err != nil {
 		t.Fatal(err)
@@ -366,7 +366,7 @@ func testRealEncryptor(t *testing.T, sz int) {
 	sndr := newBoxKey(t)
 	var ciphertext bytes.Buffer
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
-	strm, err := NewEncryptStream(Version1(), &ciphertext, sndr, receivers)
+	strm, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -401,12 +401,12 @@ func testRealEncryptor(t *testing.T, sz int) {
 	}
 }
 
-func TestRealEncryptorSmall(t *testing.T) {
-	testRealEncryptor(t, 101)
+func testRealEncryptorSmall(t *testing.T, version Version) {
+	testRealEncryptor(t, version, 101)
 }
 
-func TestRealEncryptorBig(t *testing.T) {
-	testRealEncryptor(t, 1024*1024*3)
+func testRealEncryptorBig(t *testing.T, version Version) {
+	testRealEncryptor(t, version, 1024*1024*3)
 }
 
 func TestRoundTripMedium6Receivers(t *testing.T) {
@@ -1311,6 +1311,8 @@ func TestEncrypt(t *testing.T) {
 		testSmallEncryptionOneReceiver,
 		testMediumEncryptionOneReceiver,
 		testBiggishEncryptionOneReceiver,
+		testRealEncryptorSmall,
+		testRealEncryptorBig,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
