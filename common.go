@@ -173,7 +173,7 @@ func computeMACKeyReceiver(version Version, secret BoxSecretKey, public, ePublic
 	}
 }
 
-func computeMACKeysSender(version Version, headerHash headerHash, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey) []macKey {
+func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
 	var macKeys []macKey
 	for _, receiver := range receivers {
 		macKey := computeMACKeySender(version, sender, ephemeralKey, receiver, headerHash)

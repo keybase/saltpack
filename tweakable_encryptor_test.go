@@ -213,7 +213,7 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 	}
 
 	// Use the header hash to compute the MAC keys.
-	pes.macKeys = computeMACKeysSender(pes.header.Version, pes.headerHash, sender, ephemeralKey, receivers)
+	pes.macKeys = computeMACKeysSender(pes.header.Version, sender, ephemeralKey, receivers, pes.headerHash)
 
 	return nil
 }
