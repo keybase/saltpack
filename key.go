@@ -80,6 +80,8 @@ type BoxSecretKey interface {
 	GetPublicKey() BoxPublicKey
 
 	// Precompute computes a DH with the given key
+	//
+	// TODO: Rename to peer.
 	Precompute(sender BoxPublicKey) BoxPrecomputedSharedKey
 }
 
