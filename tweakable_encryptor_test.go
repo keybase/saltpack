@@ -253,9 +253,9 @@ func newTestEncryptStream(version Version, ciphertext io.Writer, sender BoxSecre
 	return pes, err
 }
 
-func testSeal(plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (out []byte, err error) {
+func testSeal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (out []byte, err error) {
 	var buf bytes.Buffer
-	es, err := newTestEncryptStream(Version1(), &buf, sender, receivers, options)
+	es, err := newTestEncryptStream(version, &buf, sender, receivers, options)
 	if err != nil {
 		return nil, err
 	}
