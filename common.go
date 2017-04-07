@@ -161,6 +161,15 @@ func computeMACKey(version Version, secret, eSecret BoxSecretKey, public BoxPubl
 	}
 }
 
+func computeMACKeys(version Version, headerHash headerHash, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey) []macKey {
+	var macKeys []macKey
+	for _, receiver := range receivers {
+		macKey := computeMACKey(version, sender, ephemeralKey, receiver, headerHash)
+		macKeys = append(macKeys, macKey)
+	}
+	return macKeys
+}
+
 func computePayloadHash(headerHash headerHash, nonce Nonce, payloadCiphertext []byte) payloadHash {
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])

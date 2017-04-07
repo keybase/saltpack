@@ -198,15 +198,6 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	return nil
 }
 
-func computeMACKeys(version Version, headerHash headerHash, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey) []macKey {
-	var macKeys []macKey
-	for _, receiver := range receivers {
-		macKey := computeMACKey(version, sender, ephemeralKey, receiver, headerHash)
-		macKeys = append(macKeys, macKey)
-	}
-	return macKeys
-}
-
 func (es *encryptStream) Close() error {
 	for es.buffer.Len() > 0 {
 		err := es.encryptBlock()

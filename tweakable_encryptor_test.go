@@ -210,17 +210,9 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 	}
 
 	// Use the header hash to compute the MAC keys.
-	pes.computeMACKeys(sender, receivers)
+	pes.macKeys = computeMACKeys(pes.header.Version, pes.headerHash, sender, ephemeralKey, receivers)
 
 	return nil
-}
-
-func (pes *testEncryptStream) computeMACKeys(sender BoxSecretKey, receivers []BoxPublicKey) {
-	for _, receiver := range receivers {
-		// TODO: Plumb down version.
-		macKey := computeMACKey(Version1(), sender, nil, receiver, pes.headerHash)
-		pes.macKeys = append(pes.macKeys, macKey)
-	}
 }
 
 func (pes *testEncryptStream) Close() error {
