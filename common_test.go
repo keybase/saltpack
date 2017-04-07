@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"golang.org/x/crypto/curve25519"
 )
 
 func TestComputePayloadAuthenticator(t *testing.T) {
@@ -73,6 +75,29 @@ func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, v
 		t.Run(name, func(t *testing.T) {
 			runTestOverVersions(t, f)
 		})
+	}
+}
+
+func TestCurve25519ScalarMult(t *testing.T) {
+	key1 := [32]byte{0x1}
+	key2 := [32]byte{0x2}
+
+	var shared1, shared2, shared3, shared4 [32]byte
+	curve25519.ScalarMult(&shared1, &key1, &key1)
+	curve25519.ScalarMult(&shared2, &key1, &key2)
+	curve25519.ScalarMult(&shared3, &key2, &key1)
+	curve25519.ScalarMult(&shared4, &key2, &key2)
+
+	if shared2 == shared1 {
+		t.Errorf("shared2 == shared1 == %v unexpectedly", shared1)
+	}
+
+	if shared3 == shared1 {
+		t.Errorf("shared3 == shared1 == %v unexpectedly", shared1)
+	}
+
+	if shared4 == shared1 {
+		t.Errorf("shared4 == shared1 == %v unexpectedly", shared1)
 	}
 }
 
