@@ -18,6 +18,10 @@ type Version struct {
 	Minor   int  `codec:"minor"`
 }
 
+func (v Version) String() string {
+	return fmt.Sprintf("%d.%d", v.Major, v.Minor)
+}
+
 // TODO: Check FormatName in the various Header.validate() functions.
 
 // EncryptionHeader is the first packet in an encrypted message. It contains

@@ -10,6 +10,9 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"reflect"
+	"runtime"
+	"strings"
 	"testing"
 
 	"golang.org/x/crypto/nacl/box"
@@ -250,6 +253,48 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 	return res, nil
 }
 
+var testVersions = []Version{Version1(), Version2()}
+
+func runTestOverVersions(t *testing.T, f func(t *testing.T, version Version)) {
+	for _, version := range testVersions {
+		version := version // capture range variable.
+		t.Run(version.String(), func(t *testing.T) {
+			f(t, version)
+		})
+	}
+}
+
+// runTestsOverVersions runs the given list of test functions over all
+// versions to test. prefix should be the common prefix for all the
+// test function names, and the names of the subtest will be taken to
+// be the strings after that prefix. Example use:
+//
+// func TestFoo(t *testing.T) {
+//      tests := []func(*testing.T, Version){
+//              testFooBar1,
+//              testFooBar2,
+//              testFooBar3,
+//              ...
+//      }
+//      runTestsOverVersions(t, "testFoo", tests)
+// }
+func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, ver Version)) {
+	for _, f := range fs {
+		f := f // capture range variable.
+		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+		i := strings.LastIndex(name, prefix)
+		if i >= 0 {
+			i += len(prefix)
+		} else {
+			i = 0
+		}
+		name = name[i:]
+		t.Run(name, func(t *testing.T) {
+			runTestOverVersions(t, f)
+		})
+	}
+}
+
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
 	sndr := newBoxKey(t)
 	var ciphertext bytes.Buffer
@@ -287,19 +332,14 @@ func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPub
 	}
 }
 
-func TestEmptyEncryptionOneReceiverV1(t *testing.T) {
+func testEmptyEncryptionOneReceiver(t *testing.T, version Version) {
 	msg := []byte{}
-	testRoundTrip(t, Version1(), msg, nil, nil)
+	testRoundTrip(t, version, msg, nil, nil)
 }
 
-func TestEmptyEncryptionOneReceiverV2(t *testing.T) {
-	msg := []byte{}
-	testRoundTrip(t, Version2(), msg, nil, nil)
-}
-
-func TestSmallEncryptionOneReceiver(t *testing.T) {
+func testSmallEncryptionOneReceiver(t *testing.T, version Version) {
 	msg := []byte("secret message!")
-	testRoundTrip(t, Version1(), msg, nil, nil)
+	testRoundTrip(t, version, msg, nil, nil)
 }
 
 func TestMediumEncryptionOneReceiver(t *testing.T) {
@@ -1263,4 +1303,12 @@ func TestNoWriteMessage(t *testing.T) {
 	if len(plaintext) != 0 {
 		t.Fatal("Expected empty plaintext!")
 	}
+}
+
+func TestEncrypt(t *testing.T) {
+	tests := []func(*testing.T, Version){
+		testEmptyEncryptionOneReceiver,
+		testSmallEncryptionOneReceiver,
+	}
+	runTestsOverVersions(t, "test", tests)
 }
