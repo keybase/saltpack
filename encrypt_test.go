@@ -342,20 +342,20 @@ func testSmallEncryptionOneReceiver(t *testing.T, version Version) {
 	testRoundTrip(t, version, msg, nil, nil)
 }
 
-func TestMediumEncryptionOneReceiver(t *testing.T) {
+func testMediumEncryptionOneReceiver(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
 	if _, err := rand.Read(buf); err != nil {
 		t.Fatal(err)
 	}
-	testRoundTrip(t, Version1(), buf, nil, nil)
+	testRoundTrip(t, version, buf, nil, nil)
 }
 
-func TestBiggishEncryptionOneReceiver(t *testing.T) {
+func testBiggishEncryptionOneReceiver(t *testing.T, version Version) {
 	buf := make([]byte, 1024*100)
 	if _, err := rand.Read(buf); err != nil {
 		t.Fatal(err)
 	}
-	testRoundTrip(t, Version1(), buf, nil, nil)
+	testRoundTrip(t, version, buf, nil, nil)
 }
 
 func testRealEncryptor(t *testing.T, sz int) {
@@ -1309,6 +1309,8 @@ func TestEncrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
 		testEmptyEncryptionOneReceiver,
 		testSmallEncryptionOneReceiver,
+		testMediumEncryptionOneReceiver,
+		testBiggishEncryptionOneReceiver,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
