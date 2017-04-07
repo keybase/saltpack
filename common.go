@@ -105,12 +105,17 @@ func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash headerHa
 	return macKey
 }
 
-func computePayloadHash(headerHash headerHash, nonce *Nonce, payloadCiphertext []byte) []byte {
+type payloadHash [sha512.Size]byte
+
+func computePayloadHash(headerHash headerHash, nonce *Nonce, payloadCiphertext []byte) payloadHash {
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
 	payloadDigest.Write(payloadCiphertext)
-	return payloadDigest.Sum(nil)
+	h := payloadDigest.Sum(nil)
+	var payloadHash payloadHash
+	copy(payloadHash[:], h)
+	return payloadHash
 }
 
 func hashHeader(headerBytes []byte) headerHash {
