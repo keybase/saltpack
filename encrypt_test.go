@@ -321,7 +321,7 @@ func testRealEncryptor(t *testing.T, sz int) {
 	sndr := newBoxKey(t)
 	var ciphertext bytes.Buffer
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
-	strm, err := NewEncryptStream(&ciphertext, sndr, receivers)
+	strm, err := NewEncryptStream(Version1(), &ciphertext, sndr, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -482,7 +482,7 @@ func testSealAndOpen(t *testing.T, sz int) {
 	if _, err := rand.Read(plaintext); err != nil {
 		t.Fatal(err)
 	}
-	ciphertext, err := Seal(plaintext, sender, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -513,7 +513,7 @@ func TestSealAndOpenTwoReceivers(t *testing.T) {
 	if _, err := rand.Read(plaintext); err != nil {
 		t.Fatal(err)
 	}
-	ciphertext, err := Seal(plaintext, sender, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -531,7 +531,7 @@ func TestRepeatedKey(t *testing.T) {
 	pk := newBoxKey(t).GetPublicKey()
 	receivers := []BoxPublicKey{pk, pk}
 	plaintext := randomMsg(t, 1024*3)
-	_, err := Seal(plaintext, sender, receivers)
+	_, err := Seal(Version1(), plaintext, sender, receivers)
 	if _, ok := err.(ErrRepeatedKey); !ok {
 		t.Fatalf("Wanted a repeated key error; got %v", err)
 	}
@@ -541,7 +541,7 @@ func TestEmptyReceivers(t *testing.T) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{}
 	plaintext := randomMsg(t, 1024*3)
-	_, err := Seal(plaintext, sender, receivers)
+	_, err := Seal(Version1(), plaintext, sender, receivers)
 	if err != ErrBadReceivers {
 		t.Fatalf("Wanted error %v but got %v", ErrBadReceivers, err)
 	}
@@ -1024,7 +1024,7 @@ func TestSealAndOpenTrailingGarbage(t *testing.T) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(plaintext, sender, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1040,7 +1040,7 @@ func TestSealAndOpenTrailingGarbage(t *testing.T) {
 func TestAnonymousSender(t *testing.T) {
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(plaintext, nil, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1062,7 +1062,7 @@ func TestAllAnonymous(t *testing.T) {
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(plaintext, nil, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1093,7 +1093,7 @@ func TestAllAnonymous(t *testing.T) {
 	}
 
 	receivers[5] = newHiddenBoxKeyNoInsert(t).GetPublicKey()
-	ciphertext, err = Seal(plaintext, nil, receivers)
+	ciphertext, err = Seal(Version1(), plaintext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1190,7 +1190,7 @@ func TestAnonymousThenNamed(t *testing.T) {
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(plaintext, nil, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1210,7 +1210,7 @@ func TestBadKeyLookup(t *testing.T) {
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(plaintext, nil, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1241,7 +1241,7 @@ func TestNoWriteMessage(t *testing.T) {
 		newBoxKey(t).GetPublicKey(),
 	}
 	var ciphertext bytes.Buffer
-	es, err := NewEncryptStream(&ciphertext, nil, receivers)
+	es, err := NewEncryptStream(Version1(), &ciphertext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}

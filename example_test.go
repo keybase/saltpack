@@ -38,7 +38,7 @@ func ExampleEncryptArmor62Seal() {
 	// but for now, just the one.
 	var ciphertext string
 	allReceivers := []saltpack.BoxPublicKey{receiver.GetPublicKey()}
-	ciphertext, err = saltpack.EncryptArmor62Seal(msg, sender, allReceivers, "")
+	ciphertext, err = saltpack.EncryptArmor62Seal(saltpack.Version1(), msg, sender, allReceivers, "")
 	if err != nil {
 		return
 	}
@@ -85,7 +85,7 @@ func ExampleNewEncryptArmor62Stream() {
 	var output bytes.Buffer
 	allReceivers := []saltpack.BoxPublicKey{receiver.GetPublicKey()}
 	var input io.WriteCloser
-	input, err = saltpack.NewEncryptArmor62Stream(&output, sender, allReceivers, "")
+	input, err = saltpack.NewEncryptArmor62Stream(saltpack.Version1(), &output, sender, allReceivers, "")
 	if err != nil {
 		return
 	}

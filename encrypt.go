@@ -208,7 +208,7 @@ func (es *encryptStream) writeFooter() error {
 //
 // Returns an io.WriteClose that accepts plaintext data to be encrypted; and
 // also returns an error if initialization failed.
-func NewEncryptStream(ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey) (io.WriteCloser, error) {
+func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey) (io.WriteCloser, error) {
 	es := &encryptStream{
 		output:  ciphertext,
 		encoder: newEncoder(ciphertext),
@@ -220,9 +220,9 @@ func NewEncryptStream(ciphertext io.Writer, sender BoxSecretKey, receivers []Box
 
 // Seal a plaintext from the given sender, for the specified receiver groups.
 // Returns a ciphertext, or an error if something bad happened.
-func Seal(plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey) (out []byte, err error) {
+func Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey) (out []byte, err error) {
 	var buf bytes.Buffer
-	es, err := NewEncryptStream(&buf, sender, receivers)
+	es, err := NewEncryptStream(version, &buf, sender, receivers)
 	if err != nil {
 		return nil, err
 	}
