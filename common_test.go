@@ -112,8 +112,10 @@ func TestComputeMacKeySenderV1(t *testing.T) {
 		t.Errorf("macKey2 == macKey1 == %v unexpectedly", macKey1)
 	}
 
-	if macKey3 == macKey1 {
-		t.Errorf("macKey3 == macKey1 == %v unexpectedly", macKey1)
+	// The V1 MAC key doesn't depend on the ephemeral secret key;
+	// this is fixed in V2.
+	if macKey3 != macKey1 {
+		t.Errorf("macKey3 == %v != macKey1 == %v unexpectedly", macKey3, macKey1)
 	}
 
 	if macKey4 == macKey1 {
