@@ -3,7 +3,12 @@
 
 package saltpack
 
-import "testing"
+import (
+	"reflect"
+	"runtime"
+	"strings"
+	"testing"
+)
 
 func TestComputePayloadAuthenticator(t *testing.T) {
 	macKeys := []macKey{{0x01}, {0x02}}
@@ -26,5 +31,47 @@ func TestComputePayloadAuthenticator(t *testing.T) {
 			}
 			i++
 		}
+	}
+}
+
+var testVersions = []Version{Version1(), Version2()}
+
+func runTestOverVersions(t *testing.T, f func(t *testing.T, version Version)) {
+	for _, version := range testVersions {
+		version := version // capture range variable.
+		t.Run(version.String(), func(t *testing.T) {
+			f(t, version)
+		})
+	}
+}
+
+// runTestsOverVersions runs the given list of test functions over all
+// versions to test. prefix should be the common prefix for all the
+// test function names, and the names of the subtest will be taken to
+// be the strings after that prefix. Example use:
+//
+// func TestFoo(t *testing.T) {
+//      tests := []func(*testing.T, Version){
+//              testFooBar1,
+//              testFooBar2,
+//              testFooBar3,
+//              ...
+//      }
+//      runTestsOverVersions(t, "testFoo", tests)
+// }
+func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, ver Version)) {
+	for _, f := range fs {
+		f := f // capture range variable.
+		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+		i := strings.LastIndex(name, prefix)
+		if i >= 0 {
+			i += len(prefix)
+		} else {
+			i = 0
+		}
+		name = name[i:]
+		t.Run(name, func(t *testing.T) {
+			runTestOverVersions(t, f)
+		})
 	}
 }
