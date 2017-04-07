@@ -8,8 +8,6 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-
-	"golang.org/x/crypto/curve25519"
 )
 
 func TestComputePayloadAuthenticator(t *testing.T) {
@@ -78,88 +76,30 @@ func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, v
 	}
 }
 
-func TestCurve25519ScalarMult(t *testing.T) {
-	key1 := [32]byte{0x08}
-	key2 := [32]byte{0x10}
-
-	var shared1, shared2, shared3, shared4 [32]byte
-	curve25519.ScalarMult(&shared1, &key1, &key1)
-	curve25519.ScalarMult(&shared2, &key1, &key2)
-	curve25519.ScalarMult(&shared3, &key2, &key1)
-	curve25519.ScalarMult(&shared4, &key2, &key2)
-
-	t.Log(shared1, shared2, shared3, shared4)
-
-	if shared2 == shared1 {
-		t.Errorf("shared2 == shared1 == %v unexpectedly", shared1)
-	}
-
-	if shared3 == shared1 {
-		t.Errorf("shared3 == shared1 == %v unexpectedly", shared1)
-	}
-
-	if shared4 == shared1 {
-		t.Errorf("shared4 == shared1 == %v unexpectedly", shared1)
-	}
+var secret1 = boxSecretKey{
+	key: RawBoxKey{0x08},
+}
+var secret2 = boxSecretKey{
+	key: RawBoxKey{0x10},
 }
 
-func TestPrecompute(t *testing.T) {
-	secret1 := boxSecretKey{
-		key: RawBoxKey{0x08},
-	}
-	secret2 := boxSecretKey{
-		key: RawBoxKey{0x10},
-	}
-
-	public1 := boxPublicKey{
-		key: RawBoxKey{0x3},
-	}
-	public2 := boxPublicKey{
-		key: RawBoxKey{0x4},
-	}
-
-	shared1 := secret1.Precompute(public1).(boxPrecomputedSharedKey)
-	shared2 := secret1.Precompute(public2).(boxPrecomputedSharedKey)
-	shared3 := secret2.Precompute(public1).(boxPrecomputedSharedKey)
-	shared4 := secret2.Precompute(public2).(boxPrecomputedSharedKey)
-
-	if shared2 == shared1 {
-		t.Errorf("shared2 == shared1 == %v unexpectedly", shared1)
-	}
-
-	if shared3 == shared1 {
-		t.Errorf("shared3 == shared1 == %v unexpectedly", shared1)
-	}
-
-	if shared4 == shared1 {
-		t.Errorf("shared4 == shared1 == %v unexpectedly", shared1)
-	}
+var eSecret1 = boxSecretKey{
+	key: RawBoxKey{0x18},
 }
+var eSecret2 = boxSecretKey{
+	key: RawBoxKey{0x20},
+}
+
+var public1 = boxPublicKey{
+	key: RawBoxKey{0x5},
+}
+var public2 = boxPublicKey{
+	key: RawBoxKey{0x6},
+}
+
+var headerHash = [64]byte{0x7}
 
 func TestComputeMacKeySenderV1(t *testing.T) {
-	secret1 := boxSecretKey{
-		key: RawBoxKey{0x08},
-	}
-	secret2 := boxSecretKey{
-		key: RawBoxKey{0x10},
-	}
-
-	eSecret1 := boxSecretKey{
-		key: RawBoxKey{0x18},
-	}
-	eSecret2 := boxSecretKey{
-		key: RawBoxKey{0x20},
-	}
-
-	public1 := boxPublicKey{
-		key: RawBoxKey{0x5},
-	}
-	public2 := boxPublicKey{
-		key: RawBoxKey{0x6},
-	}
-
-	headerHash := [64]byte{0x7}
-
 	macKey1 := computeMACKeySender(Version1, secret1, eSecret1, public1, headerHash[:])
 	macKey2 := computeMACKeySender(Version1, secret2, eSecret1, public1, headerHash[:])
 	macKey3 := computeMACKeySender(Version1, secret1, eSecret2, public1, headerHash[:])
@@ -179,29 +119,6 @@ func TestComputeMacKeySenderV1(t *testing.T) {
 }
 
 func TestComputeMacKeySenderV2(t *testing.T) {
-	secret1 := boxSecretKey{
-		key: RawBoxKey{0x08},
-	}
-	secret2 := boxSecretKey{
-		key: RawBoxKey{0x10},
-	}
-
-	eSecret1 := boxSecretKey{
-		key: RawBoxKey{0x18},
-	}
-	eSecret2 := boxSecretKey{
-		key: RawBoxKey{0x20},
-	}
-
-	public1 := boxPublicKey{
-		key: RawBoxKey{0x5},
-	}
-	public2 := boxPublicKey{
-		key: RawBoxKey{0x6},
-	}
-
-	headerHash := [64]byte{0x7}
-
 	macKey1 := computeMACKeySender(Version2, secret1, eSecret1, public1, headerHash[:])
 	macKey2 := computeMACKeySender(Version2, secret2, eSecret1, public1, headerHash[:])
 	macKey3 := computeMACKeySender(Version2, secret1, eSecret2, public1, headerHash[:])
