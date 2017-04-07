@@ -217,7 +217,8 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 
 func (pes *testEncryptStream) computeMACKeys(sender BoxSecretKey, receivers []BoxPublicKey) {
 	for _, receiver := range receivers {
-		macKey := computeMACKey(sender, receiver, pes.headerHash)
+		// TODO: Plumb down version.
+		macKey := computeMACKey(Version1, sender, receiver, pes.headerHash)
 		pes.macKeys = append(pes.macKeys, macKey)
 	}
 }

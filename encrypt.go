@@ -200,7 +200,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 
 func (es *encryptStream) computeMACKeys(sender BoxSecretKey, receivers []BoxPublicKey) {
 	for _, receiver := range receivers {
-		macKey := computeMACKey(sender, receiver, es.headerHash)
+		macKey := computeMACKey(es.header.Version, sender, receiver, es.headerHash)
 		es.macKeys = append(es.macKeys, macKey)
 	}
 }
