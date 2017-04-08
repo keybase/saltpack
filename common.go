@@ -87,7 +87,7 @@ type payloadHash [sha512.Size]byte
 
 func authenticatePayload(macKey macKey, payloadHash payloadHash) []byte {
 	// Equivalent to crypto_auth, but using Go's builtin HMAC. Truncates
-	// SHA512, instead of actually calling SHA512/256.
+	// SHA512, instead of calling SHA512/256, which has different IVs.
 	authenticatorDigest := hmac.New(sha512.New, macKey[:])
 	authenticatorDigest.Write(payloadHash[:])
 	fullMAC := authenticatorDigest.Sum(nil)
