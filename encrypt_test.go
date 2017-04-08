@@ -1225,7 +1225,7 @@ func testEmptyReceiverKID(t *testing.T, version Version) {
 	}
 }
 
-func TestAnonymousThenNamed(t *testing.T) {
+func testAnonymousThenNamed(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
@@ -1235,7 +1235,7 @@ func TestAnonymousThenNamed(t *testing.T) {
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(Version1(), plaintext, nil, receivers)
+	ciphertext, err := Seal(version, plaintext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1245,7 +1245,7 @@ func TestAnonymousThenNamed(t *testing.T) {
 	}
 }
 
-func TestBadKeyLookup(t *testing.T) {
+func testBadKeyLookup(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
@@ -1255,7 +1255,7 @@ func TestBadKeyLookup(t *testing.T) {
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(Version1(), plaintext, nil, receivers)
+	ciphertext, err := Seal(version, plaintext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1279,14 +1279,14 @@ func TestCorruptFraming(t *testing.T) {
 	}
 }
 
-func TestNoWriteMessage(t *testing.T) {
+func testNoWriteMessage(t *testing.T, version Version) {
 	// We need to make sure the header is written out, even if we never call
 	// Write() with any payload bytes.
 	receivers := []BoxPublicKey{
 		newBoxKey(t).GetPublicKey(),
 	}
 	var ciphertext bytes.Buffer
-	es, err := NewEncryptStream(Version1(), &ciphertext, nil, receivers)
+	es, err := NewEncryptStream(version, &ciphertext, nil, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1343,6 +1343,9 @@ func TestEncrypt(t *testing.T) {
 		testCorruptEphemeralKey,
 		testCiphertextSwapKeys,
 		testEmptyReceiverKID,
+		testAnonymousThenNamed,
+		testBadKeyLookup,
+		testNoWriteMessage,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
