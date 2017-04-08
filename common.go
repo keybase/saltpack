@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/binary"
+	"fmt"
 
 	"github.com/keybase/go-codec/codec"
 	"golang.org/x/crypto/poly1305"
@@ -83,6 +84,13 @@ func detachedSignatureInputFromHash(plaintextAndHeaderHash []byte) []byte {
 	return buf.Bytes()
 }
 
+func safeCopy(out, in []byte) {
+	if len(out) != len(in) {
+		panic(fmt.Sprintf("len(out)=%d != len(in)=%d", len(out), len(in)))
+	}
+	copy(out, in)
+}
+
 type payloadHash [sha512.Size]byte
 
 type payloadAuthenticator [cryptoAuthBytes]byte
@@ -98,7 +106,7 @@ func authenticatePayload(macKey macKey, payloadHash payloadHash) payloadAuthenti
 	authenticatorDigest.Write(payloadHash[:])
 	fullMAC := authenticatorDigest.Sum(nil)
 	var auth payloadAuthenticator
-	copy(auth[:], fullMAC[:cryptoAuthBytes])
+	safeCopy(auth[:], fullMAC[:cryptoAuthBytes])
 	return auth
 }
 
@@ -108,7 +116,7 @@ func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash headerHa
 	nonce := nonceForMACKeyBox(headerHash)
 	macKeyBox := secret.Box(public, nonce, make([]byte, cryptoAuthKeyBytes))
 	var macKey macKey
-	copy(macKey[:], macKeyBox[poly1305.TagSize:poly1305.TagSize+cryptoAuthKeyBytes])
+	safeCopy(macKey[:], macKeyBox[poly1305.TagSize:poly1305.TagSize+cryptoAuthKeyBytes])
 	return macKey
 }
 
@@ -119,7 +127,7 @@ func computePayloadHash(headerHash headerHash, nonce *Nonce, payloadCiphertext [
 	payloadDigest.Write(payloadCiphertext)
 	h := payloadDigest.Sum(nil)
 	var payloadHash payloadHash
-	copy(payloadHash[:], h)
+	safeCopy(payloadHash[:], h)
 	return payloadHash
 }
 
