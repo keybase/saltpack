@@ -852,7 +852,7 @@ func testCorruptSenderSecretboxCiphertext(t *testing.T, version Version) {
 	}
 }
 
-func TestMissingFooter(t *testing.T) {
+func testMissingFooter(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	msg := randomMsg(t, 1024*9)
@@ -869,7 +869,7 @@ func TestMissingFooter(t *testing.T) {
 	}
 }
 
-func TestCorruptEncryption(t *testing.T) {
+func testCorruptEncryption(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	msg := randomMsg(t, 1024*9)
@@ -1331,6 +1331,8 @@ func TestEncrypt(t *testing.T) {
 		testCorruptPayloadKeyPlaintext,
 		testCorruptSenderSecretboxPlaintext,
 		testCorruptSenderSecretboxCiphertext,
+		testMissingFooter,
+		testCorruptEncryption,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
