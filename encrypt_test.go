@@ -134,9 +134,9 @@ func (b boxSecretKey) GetPublicKey() BoxPublicKey {
 
 type boxPrecomputedSharedKey RawBoxKey
 
-func (b boxSecretKey) Precompute(pk BoxPublicKey) BoxPrecomputedSharedKey {
+func (b boxSecretKey) Precompute(peer BoxPublicKey) BoxPrecomputedSharedKey {
 	var res boxPrecomputedSharedKey
-	box.Precompute((*[32]byte)(&res), (*[32]byte)(pk.ToRawBoxKeyPointer()), (*[32]byte)(&b.key))
+	box.Precompute((*[32]byte)(&res), (*[32]byte)(peer.ToRawBoxKeyPointer()), (*[32]byte)(&b.key))
 	return res
 }
 

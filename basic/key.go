@@ -85,9 +85,9 @@ func (k SecretKey) GetPublicKey() saltpack.BoxPublicKey {
 }
 
 // Precompute computes a shared key with the passed public key.
-func (k SecretKey) Precompute(sender saltpack.BoxPublicKey) saltpack.BoxPrecomputedSharedKey {
+func (k SecretKey) Precompute(peer saltpack.BoxPublicKey) saltpack.BoxPrecomputedSharedKey {
 	var res PrecomputedSharedKey
-	box.Precompute((*[32]byte)(&res), (*[32]byte)(sender.ToRawBoxKeyPointer()), (*[32]byte)(&k.sec))
+	box.Precompute((*[32]byte)(&res), (*[32]byte)(peer.ToRawBoxKeyPointer()), (*[32]byte)(&k.sec))
 	return res
 }
 
