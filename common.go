@@ -84,8 +84,14 @@ func detachedSignatureInputFromHash(plaintextAndHeaderHash []byte) []byte {
 	return buf.Bytes()
 }
 
-// TODO: Use this in more places.
 func copyEqualSize(out, in []byte) {
+	if len(out) != len(in) {
+		panic(fmt.Sprintf("len(out)=%d != len(in)=%d", len(out), len(in)))
+	}
+	copy(out, in)
+}
+
+func copyEqualSizeStr(out []byte, in string) {
 	if len(out) != len(in) {
 		panic(fmt.Sprintf("len(out)=%d != len(in)=%d", len(out), len(in)))
 	}

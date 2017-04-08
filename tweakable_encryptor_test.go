@@ -148,7 +148,7 @@ func (pes *testEncryptStream) init(sender BoxSecretKey, receivers []BoxPublicKey
 	}
 
 	var senderPlaintext [32]byte
-	copy(senderPlaintext[:], sender.GetPublicKey().ToKID())
+	copyEqualSize(senderPlaintext[:], sender.GetPublicKey().ToKID())
 	senderPlaintextSlice := senderPlaintext[:]
 	if pes.options.corruptSenderKeyPlaintext != nil {
 		pes.options.corruptSenderKeyPlaintext(&senderPlaintextSlice)

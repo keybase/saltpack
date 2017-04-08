@@ -13,38 +13,38 @@ type Nonce [nonceBytes]byte
 
 func nonceForSenderKeySecretBox() *Nonce {
 	var n Nonce
-	copy(n[:], "saltpack_sender_key_sbox")
+	copyEqualSizeStr(n[:], "saltpack_sender_key_sbox")
 	return &n
 }
 
 func nonceForPayloadKeyBoxV1() *Nonce {
 	var n Nonce
-	copy(n[:], "saltpack_payload_key_box")
+	copyEqualSizeStr(n[:], "saltpack_payload_key_box")
 	return &n
 }
 
 func nonceForPayloadKeyBoxV2(recip uint64) *Nonce {
 	var n Nonce
-	copy(n[:], "saltpack_recipsbXXXXXXXX")
+	copyEqualSizeStr(n[:], "saltpack_recipsbXXXXXXXX")
 	return &n
 }
 
 func nonceForDerivedSharedKey() *Nonce {
 	var n Nonce
-	copy(n[:], "saltpack_derived_sboxkey")
+	copyEqualSizeStr(n[:], "saltpack_derived_sboxkey")
 	return &n
 }
 
 func nonceForMACKeyBox(headerHash headerHash) *Nonce {
 	var n Nonce
-	copy(n[:], headerHash[:nonceBytes])
+	copyEqualSize(n[:], headerHash[:nonceBytes])
 	return &n
 }
 
 // Construct the nonce for the ith block of payload.
 func nonceForChunkSecretBox(i encryptionBlockNumber) *Nonce {
 	var n Nonce
-	copy(n[0:16], "saltpack_ploadsb")
+	copyEqualSizeStr(n[0:16], "saltpack_ploadsb")
 	binary.BigEndian.PutUint64(n[16:], uint64(i))
 	return &n
 }
@@ -55,7 +55,7 @@ func nonceForChunkSecretBox(i encryptionBlockNumber) *Nonce {
 // have their own context, but at the same time it's a good practice.
 func nonceForChunkSigncryption(i encryptionBlockNumber) *Nonce {
 	var n Nonce
-	copy(n[0:16], "saltpack_ploadsc")
+	copyEqualSizeStr(n[0:16], "saltpack_ploadsc")
 	binary.BigEndian.PutUint64(n[16:], uint64(i))
 	return &n
 }

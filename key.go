@@ -16,7 +16,7 @@ func rawBoxKeyFromSlice(slice []byte) (*RawBoxKey, error) {
 	if len(slice) != len(result) {
 		return nil, ErrBadBoxKey
 	}
-	copy(result[:], slice)
+	copyEqualSize(result[:], slice)
 	return &result, nil
 }
 
@@ -29,7 +29,7 @@ func symmetricKeyFromSlice(slice []byte) (*SymmetricKey, error) {
 	if len(slice) != len(result) {
 		return nil, ErrBadSymmetricKey
 	}
-	copy(result[:], slice)
+	copyEqualSize(result[:], slice)
 	return &result, nil
 }
 
