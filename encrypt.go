@@ -122,7 +122,7 @@ func (es *encryptStream) checkReceivers(v []BoxPublicKey) error {
 
 func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
 
-	if version != Version1 && version != Version2 {
+	if version != Version1() && version != Version2() {
 		return fmt.Errorf("Unknown version %s", version)
 	}
 
