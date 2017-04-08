@@ -769,7 +769,7 @@ func TestCorruptSenderSecretboxPlaintext(t *testing.T) {
 	teo = testEncryptionOptions{
 		corruptSenderKeyPlaintext: func(pk *[]byte) {
 			var shortKey [31]byte
-			copyEqualSize(shortKey[:], *pk)
+			copy(shortKey[:], *pk)
 			*pk = shortKey[:]
 		},
 	}
