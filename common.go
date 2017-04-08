@@ -85,13 +85,21 @@ func detachedSignatureInputFromHash(plaintextAndHeaderHash []byte) []byte {
 
 type payloadHash [sha512.Size]byte
 
-func authenticatePayload(macKey macKey, payloadHash payloadHash) []byte {
+type payloadAuthenticator [cryptoAuthBytes]byte
+
+func (pa payloadAuthenticator) Equal(other payloadAuthenticator) bool {
+	return hmac.Equal(pa[:], other[:])
+}
+
+func authenticatePayload(macKey macKey, payloadHash payloadHash) payloadAuthenticator {
 	// Equivalent to crypto_auth, but using Go's builtin HMAC. Truncates
 	// SHA512, instead of calling SHA512/256, which has different IVs.
 	authenticatorDigest := hmac.New(sha512.New, macKey[:])
 	authenticatorDigest.Write(payloadHash[:])
 	fullMAC := authenticatorDigest.Sum(nil)
-	return fullMAC[:cryptoAuthBytes]
+	var auth payloadAuthenticator
+	copy(auth[:], fullMAC[:cryptoAuthBytes])
+	return auth
 }
 
 type macKey [cryptoAuthKeyBytes]byte
