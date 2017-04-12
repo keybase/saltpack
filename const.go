@@ -39,6 +39,10 @@ func CurrentVersion() Version {
 	return Version1()
 }
 
+func KnownVersions() []Version {
+	return []Version{Version1(), Version2()}
+}
+
 // encryptionBlockSize is by default 1MB and can't currently be tweaked.
 const encryptionBlockSize int = 1048576
 

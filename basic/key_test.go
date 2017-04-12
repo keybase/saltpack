@@ -41,8 +41,7 @@ func testBasicBox(t *testing.T, version saltpack.Version) {
 }
 
 func TestBasicBox(t *testing.T) {
-	testVersions := []saltpack.Version{saltpack.Version1, saltpack.Version2}
-	for _, version := range testVersions {
+	for _, version := range saltpack.KnownVersions() {
 		version := version // capture range variable.
 		t.Run(version.String(), func(t *testing.T) {
 			testBasicBox(t, version)
