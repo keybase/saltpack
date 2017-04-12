@@ -141,9 +141,7 @@ func computePayloadAuthenticator(macKey macKey, payloadHash payloadHash) payload
 	return sliceToByte32(fullMAC[:cryptoAuthBytes])
 }
 
-func computeMACKeySingle(secret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
-	// TODO: use V2 when needed.
-	nonce := nonceForMACKeyBoxV1(headerHash)
+func computeMACKeySingle(secret BoxSecretKey, public BoxPublicKey, nonce *Nonce) macKey {
 	macKeyBox := secret.Box(public, nonce, make([]byte, cryptoAuthKeyBytes))
 	return sliceToByte32(macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes])
 }
@@ -161,10 +159,13 @@ func sum512Truncate256(in []byte) [32]byte {
 func computeMACKeySender(version Version, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
 	switch version {
 	case Version1():
-		return computeMACKeySingle(secret, public, headerHash)
+		nonce := nonceForMACKeyBoxV1(headerHash)
+		return computeMACKeySingle(secret, public, nonce)
 	case Version2():
-		mac1 := computeMACKeySingle(secret, public, headerHash)
-		mac2 := computeMACKeySingle(eSecret, public, headerHash)
+		// TODO: Use v2.
+		nonce := nonceForMACKeyBoxV1(headerHash)
+		mac1 := computeMACKeySingle(secret, public, nonce)
+		mac2 := computeMACKeySingle(eSecret, public, nonce)
 		return sum512Truncate256(append(mac1[:], mac2[:]...))
 	default:
 		panic(ErrBadVersion{version})
@@ -174,10 +175,13 @@ func computeMACKeySender(version Version, secret, eSecret BoxSecretKey, public B
 func computeMACKeyReceiver(version Version, secret BoxSecretKey, public, ePublic BoxPublicKey, headerHash headerHash) macKey {
 	switch version {
 	case Version1():
-		return computeMACKeySingle(secret, public, headerHash)
+		nonce := nonceForMACKeyBoxV1(headerHash)
+		return computeMACKeySingle(secret, public, nonce)
 	case Version2():
-		mac1 := computeMACKeySingle(secret, public, headerHash)
-		mac2 := computeMACKeySingle(secret, ePublic, headerHash)
+		// TODO: Use v2.
+		nonce := nonceForMACKeyBoxV1(headerHash)
+		mac1 := computeMACKeySingle(secret, public, nonce)
+		mac2 := computeMACKeySingle(secret, ePublic, nonce)
 		return sum512Truncate256(append(mac1[:], mac2[:]...))
 	default:
 		panic(ErrBadVersion{version})
