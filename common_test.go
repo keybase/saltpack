@@ -111,8 +111,29 @@ func TestComputeMacKeyV1(t *testing.T) {
 		t.Errorf("macKey2 == macKey1 == %v unexpectedly", macKey1)
 	}
 
+	// The V1 MAC key doesn't depend on the ephemeral keypair; this is
+	// fixed in V2.
 	if macKey3 != macKey1 {
 		t.Errorf("macKey3 == %v != macKey1 == %v unexpectedly", macKey3, macKey1)
+	}
+
+	if macKey4 == macKey1 {
+		t.Errorf("macKey4 == macKey1 == %v unexpectedly", macKey1)
+	}
+}
+
+func TestComputeMacKeyV2(t *testing.T) {
+	macKey1 := computeMACKeySender(Version2(), secret1, eSecret1, public1, constHeaderHash)
+	macKey2 := computeMACKeySender(Version2(), secret2, eSecret1, public1, constHeaderHash)
+	macKey3 := computeMACKeySender(Version2(), secret1, eSecret2, public1, constHeaderHash)
+	macKey4 := computeMACKeySender(Version2(), secret1, eSecret1, public2, constHeaderHash)
+
+	if macKey2 == macKey1 {
+		t.Errorf("macKey2 == macKey1 == %v unexpectedly", macKey1)
+	}
+
+	if macKey3 == macKey1 {
+		t.Errorf("macKey3 == macKey1 == %v unexpectedly", macKey1)
 	}
 
 	if macKey4 == macKey1 {
