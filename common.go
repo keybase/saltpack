@@ -98,6 +98,8 @@ func copyEqualSizeStr(out []byte, in string) {
 	copy(out, in)
 }
 
+type macKey [cryptoAuthKeyBytes]byte
+
 type payloadHash [sha512.Size]byte
 
 type payloadAuthenticator [cryptoAuthBytes]byte
@@ -116,8 +118,6 @@ func authenticatePayload(macKey macKey, payloadHash payloadHash) payloadAuthenti
 	copyEqualSize(auth[:], fullMAC[:cryptoAuthBytes])
 	return auth
 }
-
-type macKey [cryptoAuthKeyBytes]byte
 
 func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
 	nonce := nonceForMACKeyBox(headerHash)
