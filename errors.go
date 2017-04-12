@@ -111,7 +111,7 @@ func (e ErrWrongMessageType) Error() string {
 	return fmt.Sprintf("Wrong saltpack message type: wanted %s, but got %s instead", e.wanted, e.received)
 }
 func (e ErrBadVersion) Error() string {
-	return fmt.Sprintf("Unsupported version (%v)", e.received)
+	return fmt.Sprintf("Unsupported version (%s)", e.received)
 }
 func (e ErrBadCiphertext) Error() string {
 	return fmt.Sprintf("In packet %d: bad ciphertext; failed Poly1305", e)
