@@ -31,7 +31,7 @@ func testBasicBox(t *testing.T, version saltpack.Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, msg2, _, err := saltpack.Dearmor62DecryptOpen(text, kr)
+	_, msg2, _, err := saltpack.Dearmor62DecryptOpen(saltpack.SingleVersionValidator(version), text, kr)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -30,7 +30,7 @@ func encryptArmor62RandomData(t *testing.T, version Version, sz int) ([]byte, st
 
 func testEncryptArmor62(t *testing.T, version Version) {
 	plaintext, ciphertext := encryptArmor62RandomData(t, version, 1024)
-	_, plaintext2, brand, err := Dearmor62DecryptOpen(ciphertext, kr)
+	_, plaintext2, brand, err := Dearmor62DecryptOpen(SingleVersionValidator(version), ciphertext, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +54,7 @@ func testDearmor62DecryptSlowReader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 
-	_, dec, frame, err := NewDearmor62DecryptStream(&slowReader{[]byte(ciphertext)}, kr)
+	_, dec, frame, err := NewDearmor62DecryptStream(SingleVersionValidator(version), &slowReader{[]byte(ciphertext)}, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +81,7 @@ func testNewlineInFrame(t *testing.T, version Version) {
 	ss := []string{"\n\n>   ", ciphertext[0:10], "\n  	 ", ciphertext[11:]}
 	ciphertext = strings.Join(ss, "")
 
-	_, plaintext2, brand, err := Dearmor62DecryptOpen(ciphertext, kr)
+	_, plaintext2, brand, err := Dearmor62DecryptOpen(SingleVersionValidator(version), ciphertext, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func testNewlineInFrame(t *testing.T, version Version) {
 func testBadArmor62(t *testing.T, version Version) {
 	_, ciphertext := encryptArmor62RandomData(t, version, 24)
 	bad1 := ciphertext[0:2] + "䁕" + ciphertext[2:]
-	_, _, _, err := Dearmor62DecryptOpen(bad1, kr)
+	_, _, _, err := Dearmor62DecryptOpen(SingleVersionValidator(version), bad1, kr)
 	if _, ok := err.(ErrBadFrame); !ok {
 		t.Fatalf("Wanted error type %T but got type %T", ErrBadFrame{}, err)
 	}
@@ -104,20 +104,20 @@ func testBadArmor62(t *testing.T, version Version) {
 	}
 
 	bad2 := ciphertext[0:1] + "z" + ciphertext[2:]
-	_, _, _, err = Dearmor62DecryptOpen(bad2, kr)
+	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad2, kr)
 	if _, ok := err.(ErrBadFrame); !ok {
 		t.Fatalf("Wanted of type ErrBadFrame; got %v", err)
 	}
 
 	l := len(ciphertext)
 	bad3 := ciphertext[0:(l-8)] + "z" + ciphertext[(l-7):]
-	_, _, _, err = Dearmor62DecryptOpen(bad3, kr)
+	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad3, kr)
 	if _, ok := err.(ErrBadFrame); !ok {
 		t.Fatalf("Wanted of type ErrBadFrmae; got %v", err)
 	}
 
 	bad4 := ciphertext + "䁕"
-	_, _, _, err = Dearmor62DecryptOpen(bad4, kr)
+	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad4, kr)
 	if err != ErrTrailingGarbage {
 		t.Fatalf("Wanted error %v but got %v", ErrTrailingGarbage, err)
 	}
