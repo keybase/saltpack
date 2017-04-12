@@ -106,7 +106,7 @@ func (pes *testEncryptStream) encryptBytes(b []byte) error {
 	// recipient.
 	hashToAuthenticate := computePayloadHash(pes.headerHash, nonce, ciphertext)
 	for _, macKey := range pes.macKeys {
-		authenticator := authenticatePayload(macKey, hashToAuthenticate)
+		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		block.HashAuthenticators = append(block.HashAuthenticators, authenticator)
 	}
 

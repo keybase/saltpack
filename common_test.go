@@ -5,7 +5,7 @@ package saltpack
 
 import "testing"
 
-func TestAuthenticatePayload(t *testing.T) {
+func TestComputePayloadAuthenticator(t *testing.T) {
 	macKeys := []macKey{{0x01}, {0x02}}
 	payloadHashes := []payloadHash{{0x03}, {0x04}}
 
@@ -19,7 +19,7 @@ func TestAuthenticatePayload(t *testing.T) {
 	i := 0
 	for _, macKey := range macKeys {
 		for _, payloadHash := range payloadHashes {
-			authenticator := authenticatePayload(macKey, payloadHash)
+			authenticator := computePayloadAuthenticator(macKey, payloadHash)
 			if !authenticator.Equal(expectedAuthenticators[i]) {
 				t.Errorf("Got %#v, expected %#v", authenticator, expectedAuthenticators[i])
 

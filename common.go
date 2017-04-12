@@ -108,7 +108,7 @@ func (pa payloadAuthenticator) Equal(other payloadAuthenticator) bool {
 	return hmac.Equal(pa[:], other[:])
 }
 
-func authenticatePayload(macKey macKey, payloadHash payloadHash) payloadAuthenticator {
+func computePayloadAuthenticator(macKey macKey, payloadHash payloadHash) payloadAuthenticator {
 	// Equivalent to crypto_auth, but using Go's builtin HMAC. Truncates
 	// SHA512, instead of calling SHA512/256, which has different IVs.
 	authenticatorDigest := hmac.New(sha512.New, macKey[:])

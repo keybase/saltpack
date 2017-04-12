@@ -75,7 +75,7 @@ func (es *encryptStream) encryptBytes(b []byte) error {
 	// recipient.
 	hashToAuthenticate := computePayloadHash(es.headerHash, nonce, ciphertext)
 	for _, macKey := range es.macKeys {
-		authenticator := authenticatePayload(macKey, hashToAuthenticate)
+		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		block.HashAuthenticators = append(block.HashAuthenticators, authenticator)
 	}
 

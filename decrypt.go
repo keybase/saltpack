@@ -279,7 +279,7 @@ func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlock) ([]byte, er
 
 	// Check the authenticator.
 	hashToAuthenticate := computePayloadHash(ds.headerHash, nonce, ciphertext)
-	ourAuthenticator := authenticatePayload(ds.macKey, hashToAuthenticate)
+	ourAuthenticator := computePayloadAuthenticator(ds.macKey, hashToAuthenticate)
 	if !ourAuthenticator.Equal(bl.HashAuthenticators[ds.position]) {
 		return nil, ErrBadTag(bl.seqno)
 	}
