@@ -263,7 +263,7 @@ func (ds *decryptStream) processEncryptionHeader(hdr *EncryptionHeader) error {
 	}
 
 	// Compute the MAC key.
-	ds.macKey = computeMACKeyReceiver(hdr.Version, secretKey, ds.mki.SenderKey, ephemeralKey, ds.headerHash)
+	ds.macKey = computeMACKeyReceiver(hdr.Version, uint64(ds.position), secretKey, ds.mki.SenderKey, ephemeralKey, ds.headerHash)
 
 	return nil
 }
