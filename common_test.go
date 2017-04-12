@@ -157,10 +157,13 @@ func TestComputeMACKeySendersSameRecipientV1(t *testing.T) {
 	receivers := []BoxPublicKey{public1, public1}
 	macKeys := computeMACKeysSender(Version1(), secret1, eSecret1, receivers, constHeaderHash)
 
-	firstMACKey := macKeys[0]
-	for i, macKey := range macKeys {
-		if macKey != firstMACKey {
-			t.Errorf("macKeys[%d] = %v != %v unexpectedly", i, macKey, firstMACKey)
-		}
+	if len(macKeys) != 2 {
+		t.Fatalf("len(macKeys)=%d != 2 unexpectedly", len(macKeys))
+	}
+
+	// Identical recipients lead to identical MAC keys in V1; this
+	// is vixed in V2.
+	if macKeys[0] != macKeys[1] {
+		t.Errorf("macKeys[0] = %v != macKeys[1] = %v unexpectedly", macKeys[0], macKeys[1])
 	}
 }
