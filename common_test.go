@@ -101,7 +101,7 @@ var public2 = boxPublicKey{
 
 var constHeaderHash = headerHash{0x7}
 
-func TestComputeMacKeySenderV1(t *testing.T) {
+func TestComputeMACKeySenderV1(t *testing.T) {
 	macKey1 := computeMACKeySender(Version1(), 0, secret1, eSecret1, public1, constHeaderHash)
 	macKey2 := computeMACKeySender(Version1(), 1, secret1, eSecret1, public1, constHeaderHash)
 	macKey3 := computeMACKeySender(Version1(), 0, secret2, eSecret1, public1, constHeaderHash)
@@ -129,7 +129,7 @@ func TestComputeMacKeySenderV1(t *testing.T) {
 	}
 }
 
-func TestComputeMacKeySenderV2(t *testing.T) {
+func TestComputeMACKeySenderV2(t *testing.T) {
 	macKey1 := computeMACKeySender(Version2(), 0, secret1, eSecret1, public1, constHeaderHash)
 	macKey2 := computeMACKeySender(Version2(), 1, secret1, eSecret1, public1, constHeaderHash)
 	macKey3 := computeMACKeySender(Version2(), 0, secret2, eSecret1, public1, constHeaderHash)
@@ -150,5 +150,17 @@ func TestComputeMacKeySenderV2(t *testing.T) {
 
 	if macKey5 == macKey1 {
 		t.Errorf("macKey5 == macKey1 == %v unexpectedly", macKey1)
+	}
+}
+
+func TestComputeMACKeySendersSameRecipientV1(t *testing.T) {
+	receivers := []BoxPublicKey{public1, public1}
+	macKeys := computeMACKeysSender(Version1(), secret1, eSecret1, receivers, constHeaderHash)
+
+	firstMACKey := macKeys[0]
+	for i, macKey := range macKeys {
+		if macKey != firstMACKey {
+			t.Errorf("macKeys[%d] = %v != %v unexpectedly", i, macKey, firstMACKey)
+		}
 	}
 }
