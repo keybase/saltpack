@@ -50,13 +50,6 @@ type encryptionBlock struct {
 	seqno              packetSeqno
 }
 
-func validateEncryptionVersion(version Version) error {
-	if version.Major != Version1().Major && version.Major != Version2().Major {
-		return ErrBadVersion{version}
-	}
-	return nil
-}
-
 func (h *EncryptionHeader) validate(versionValidator func(Version) error) error {
 	if h.Type != MessageTypeEncryption {
 		return ErrWrongMessageType{MessageTypeEncryption, h.Type}

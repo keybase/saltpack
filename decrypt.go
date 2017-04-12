@@ -14,17 +14,18 @@ import (
 )
 
 type decryptStream struct {
-	ring       Keyring
-	mps        *msgpackStream
-	err        error
-	state      readState
-	payloadKey *SymmetricKey
-	senderKey  *RawBoxKey
-	buf        []byte
-	headerHash headerHash
-	macKey     macKey
-	position   int
-	mki        MessageKeyInfo
+	versionValidator VersionValidator
+	ring             Keyring
+	mps              *msgpackStream
+	err              error
+	state            readState
+	payloadKey       *SymmetricKey
+	senderKey        *RawBoxKey
+	buf              []byte
+	headerHash       headerHash
+	macKey           macKey
+	position         int
+	mki              MessageKeyInfo
 }
 
 // MessageKeyInfo conveys all of the data about the keys used in this encrypted message.
@@ -207,7 +208,7 @@ func (ds *decryptStream) tryHiddenReceivers(hdr *EncryptionHeader, ephemeralKey 
 }
 
 func (ds *decryptStream) processEncryptionHeader(hdr *EncryptionHeader) error {
-	if err := hdr.validate(validateEncryptionVersion); err != nil {
+	if err := hdr.validate(ds.versionValidator); err != nil {
 		return err
 	}
 
@@ -318,7 +319,7 @@ func SingleVersionValidator(desiredVersion Version) VersionValidator {
 			return ErrBadVersion{version}
 		}
 
-		return ErrBadVersion{version}
+		return nil
 	}
 }
 
@@ -335,8 +336,9 @@ func SingleVersionValidator(desiredVersion Version) VersionValidator {
 //
 func NewDecryptStream(versionValidator VersionValidator, r io.Reader, keyring Keyring) (mki *MessageKeyInfo, plaintext io.Reader, err error) {
 	ds := &decryptStream{
-		ring: keyring,
-		mps:  newMsgpackStream(r),
+		versionValidator: versionValidator,
+		ring:             keyring,
+		mps:              newMsgpackStream(r),
 	}
 
 	err = ds.readHeader(r)
