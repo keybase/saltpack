@@ -143,7 +143,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 
 	eh := &EncryptionHeader{
 		FormatName: FormatName,
-		Version:    CurrentVersion(),
+		Version:    version,
 		Type:       MessageTypeEncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
