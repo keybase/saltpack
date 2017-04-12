@@ -164,7 +164,8 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
 	for _, receiver := range receivers {
-		payloadKeyBox := ephemeralKey.Box(receiver, nonceForPayloadKeyBoxV1(), es.payloadKey[:])
+		sharedKey := ephemeralKey.Precompute(receiver)
+		payloadKeyBox := sharedKey.Box(nonceForPayloadKeyBoxV1(), es.payloadKey[:])
 
 		keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
 
