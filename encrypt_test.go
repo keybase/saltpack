@@ -944,11 +944,14 @@ func testCorruptNonce(t *testing.T, version Version) {
 func testCorruptHeader(t *testing.T, version Version) {
 	msg := randomMsg(t, 1024*11)
 
+	badVersion := version
+	badVersion.Major++
+
 	// Test bad Header version
 	teo := testEncryptionOptions{
 		blockSize: 1024,
 		corruptHeader: func(eh *EncryptionHeader) {
-			eh.Version.Major = 3
+			eh.Version = badVersion
 		},
 	}
 	sender := newBoxKey(t)
@@ -960,8 +963,8 @@ func testCorruptHeader(t *testing.T, version Version) {
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if ebv, ok := err.(ErrBadVersion); !ok {
 		t.Fatalf("Got wrong error; wanted 'Bad Version' but got %v", err)
-	} else if ebv.received.Major != 3 {
-		t.Fatalf("got wrong version # in error message: %v", ebv.received.Major)
+	} else if ebv.received != badVersion {
+		t.Fatalf("got wrong version # in error message: %v", ebv.received)
 	}
 
 	// Test bad header Tag
