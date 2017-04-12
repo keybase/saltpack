@@ -92,13 +92,6 @@ var public2 = boxPublicKey{
 	key: RawBoxKey{0x6},
 }
 
-var ePublic1 = boxPublicKey{
-	key: RawBoxKey{0x7},
-}
-var ePublic2 = boxPublicKey{
-	key: RawBoxKey{0x8},
-}
-
 var constHeaderHash = headerHash{0x7}
 
 func TestComputeMacKey(t *testing.T) {
