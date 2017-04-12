@@ -207,7 +207,7 @@ func (ds *decryptStream) tryHiddenReceivers(hdr *EncryptionHeader, ephemeralKey 
 }
 
 func (ds *decryptStream) processEncryptionHeader(hdr *EncryptionHeader) error {
-	if err := hdr.validate(); err != nil {
+	if err := hdr.validate(validateEncryptionVersion); err != nil {
 		return err
 	}
 
