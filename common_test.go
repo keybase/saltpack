@@ -101,7 +101,7 @@ var public2 = boxPublicKey{
 
 var constHeaderHash = headerHash{0x7}
 
-func TestComputeMacKeyV1(t *testing.T) {
+func TestComputeMacKeySenderV1(t *testing.T) {
 	macKey1 := computeMACKeySender(Version1(), secret1, eSecret1, public1, constHeaderHash)
 	macKey2 := computeMACKeySender(Version1(), secret2, eSecret1, public1, constHeaderHash)
 	macKey3 := computeMACKeySender(Version1(), secret1, eSecret2, public1, constHeaderHash)
@@ -122,7 +122,7 @@ func TestComputeMacKeyV1(t *testing.T) {
 	}
 }
 
-func TestComputeMacKeyV2(t *testing.T) {
+func TestComputeMacKeySenderV2(t *testing.T) {
 	macKey1 := computeMACKeySender(Version2(), secret1, eSecret1, public1, constHeaderHash)
 	macKey2 := computeMACKeySender(Version2(), secret2, eSecret1, public1, constHeaderHash)
 	macKey3 := computeMACKeySender(Version2(), secret1, eSecret2, public1, constHeaderHash)
