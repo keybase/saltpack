@@ -147,6 +147,16 @@ func computeMACKeySingle(secret BoxSecretKey, public BoxPublicKey, headerHash he
 	return sliceToByte32(macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes])
 }
 
+func sum512Truncate256(in []byte) [32]byte {
+	// Consistent with computePayloadAuthenticator in that it
+	// truncates SHA512 instead of calling SHA512/256, which has
+	// different IVs.
+	sum512 := sha512.Sum512(in)
+	var out [32]byte
+	copyEqualSize(out[:], sum512[:32])
+	return out
+}
+
 func computeMACKeySender(version Version, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
 	switch version {
 	case Version1():
@@ -154,7 +164,7 @@ func computeMACKeySender(version Version, secret, eSecret BoxSecretKey, public B
 	case Version2():
 		mac1 := computeMACKeySingle(secret, public, headerHash)
 		mac2 := computeMACKeySingle(eSecret, public, headerHash)
-		return sha512.Sum512_256(append(mac1[:], mac2[:]...))
+		return sum512Truncate256(append(mac1[:], mac2[:]...))
 	default:
 		panic(ErrBadVersion{version})
 	}
@@ -167,7 +177,7 @@ func computeMACKeyReceiver(version Version, secret BoxSecretKey, public, ePublic
 	case Version2():
 		mac1 := computeMACKeySingle(secret, public, headerHash)
 		mac2 := computeMACKeySingle(secret, ePublic, headerHash)
-		return sha512.Sum512_256(append(mac1[:], mac2[:]...))
+		return sum512Truncate256(append(mac1[:], mac2[:]...))
 	default:
 		panic(ErrBadVersion{version})
 	}
