@@ -80,7 +80,7 @@ type BoxSecretKey interface {
 	GetPublicKey() BoxPublicKey
 
 	// Precompute computes a DH with the given key
-	Precompute(peer BoxPublicKey) BoxPrecomputedSharedKey
+	Precompute(sender BoxPublicKey) BoxPrecomputedSharedKey
 }
 
 // SigningSecretKey is a secret NaCl key that can sign messages.
