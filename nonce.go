@@ -20,6 +20,7 @@ func nonceForPayloadKeyBoxV1() Nonce {
 }
 
 func nonceForPayloadKeyBoxV2(recip uint64) Nonce {
+	// TODO: Actually mix in recip.
 	return stringToByte24("saltpack_recipsbXXXXXXXX")
 }
 
@@ -27,8 +28,15 @@ func nonceForDerivedSharedKey() Nonce {
 	return stringToByte24("saltpack_derived_sboxkey")
 }
 
-func nonceForMACKeyBox(headerHash headerHash) Nonce {
+func nonceForMACKeyBoxV1(headerHash headerHash) Nonce {
 	return sliceToByte24(headerHash[:nonceBytes])
+}
+
+func nonceForMACKeyBoxV2(headerHash headerHash, recip uint64) Nonce {
+	var n Nonce
+	copyEqualSize(n[:nonceBytes-8], headerHash[:nonceBytes-8])
+	binary.BigEndian.PutUint64(n[nonceBytes-8:], uint64(recip))
+	return n
 }
 
 // Construct the nonce for the ith block of payload.

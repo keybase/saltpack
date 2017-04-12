@@ -142,7 +142,8 @@ func computePayloadAuthenticator(macKey macKey, payloadHash payloadHash) payload
 }
 
 func computeMACKeySingle(secret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
-	nonce := nonceForMACKeyBox(headerHash)
+	// TODO: use V2 when needed.
+	nonce := nonceForMACKeyBoxV1(headerHash)
 	macKeyBox := secret.Box(public, nonce, make([]byte, cryptoAuthKeyBytes))
 	return sliceToByte32(macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes])
 }
