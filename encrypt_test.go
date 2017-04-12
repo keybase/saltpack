@@ -92,8 +92,8 @@ func (k *keyring) CreateEphemeralKey() (BoxSecretKey, error) {
 		return nil, err
 	}
 	ret := &boxSecretKey{}
-	copyEqualSize(ret.key[:], (*sk)[:])
-	copyEqualSize(ret.pub.key[:], (*pk)[:])
+	ret.key = *sk
+	ret.pub.key = *pk
 	ret.isInit = true
 	return ret, nil
 }
@@ -180,8 +180,8 @@ func (b boxPublicKey) CreateEphemeralKey() (BoxSecretKey, error) {
 		return nil, err
 	}
 	ret := &boxSecretKey{hide: b.hide}
-	copyEqualSize(ret.key[:], (*sk)[:])
-	copyEqualSize(ret.pub.key[:], (*pk)[:])
+	ret.key = *sk
+	ret.pub.key = *pk
 	ret.isInit = true
 	return ret, nil
 }
