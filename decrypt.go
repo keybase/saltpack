@@ -305,21 +305,23 @@ type VersionValidator func(version Version) error
 // major version. You probably want to use this with NewDecryptStream,
 // unless you want to restrict to specific versions only.
 func CheckKnownMajorVersion(version Version) error {
-	if version.Major != Version1().Major && version.Major != Version2().Major {
-		return ErrBadVersion{version}
+	for _, knownVersion := range KnownVersions() {
+		if version.Major == knownVersion.Major {
+			return nil
+		}
 	}
-	return nil
+	return ErrBadVersion{version}
 }
 
 // SingleVersionValidator returns a VersionValidator that returns nil
 // if its given version is equal to desiredVersion.
 func SingleVersionValidator(desiredVersion Version) VersionValidator {
 	return func(version Version) error {
-		if version != desiredVersion {
-			return ErrBadVersion{version}
+		if version == desiredVersion {
+			return nil
 		}
 
-		return nil
+		return ErrBadVersion{version}
 	}
 }
 
