@@ -180,3 +180,23 @@ func TestComputeMACKeySendersSameRecipientV2(t *testing.T) {
 		t.Errorf("macKeys[0] == macKeys[1] = %v unexpectedly", macKeys[0])
 	}
 }
+
+func testComputeMACKeySenderReceiver(t *testing.T, version Version) {
+	var index uint64 = 3
+	senderKey := newBoxKeyNoInsert(t)
+	eKey := newBoxKeyNoInsert(t)
+	receiverKey := newBoxKeyNoInsert(t)
+
+	senderMACKey := computeMACKeySender(version, index, senderKey, eKey, receiverKey.GetPublicKey(), constHeaderHash)
+	receiverMACKey := computeMACKeyReceiver(version, index, receiverKey, senderKey.GetPublicKey(), eKey.GetPublicKey(), constHeaderHash)
+	if senderMACKey != receiverMACKey {
+		t.Fatalf("senderMACKey = %v != receiverMACKey = %v", senderMACKey, receiverMACKey)
+	}
+}
+
+func TestCommon(t *testing.T) {
+	tests := []func(*testing.T, Version){
+		testComputeMACKeySenderReceiver,
+	}
+	runTestsOverVersions(t, "test", tests)
+}
