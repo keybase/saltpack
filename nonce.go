@@ -12,32 +12,27 @@ const nonceBytes = 24
 type Nonce [nonceBytes]byte
 
 func nonceForSenderKeySecretBox() *Nonce {
-	var n Nonce
-	copyEqualSizeStr(n[:], "saltpack_sender_key_sbox")
+	var n Nonce = stringToByte24("saltpack_sender_key_sbox")
 	return &n
 }
 
 func nonceForPayloadKeyBoxV1() *Nonce {
-	var n Nonce
-	copyEqualSizeStr(n[:], "saltpack_payload_key_box")
+	var n Nonce = stringToByte24("saltpack_payload_key_box")
 	return &n
 }
 
 func nonceForPayloadKeyBoxV2(recip uint64) *Nonce {
-	var n Nonce
-	copyEqualSizeStr(n[:], "saltpack_recipsbXXXXXXXX")
+	var n Nonce = stringToByte24("saltpack_recipsbXXXXXXXX")
 	return &n
 }
 
 func nonceForDerivedSharedKey() *Nonce {
-	var n Nonce
-	copyEqualSizeStr(n[:], "saltpack_derived_sboxkey")
+	var n Nonce = stringToByte24("saltpack_derived_sboxkey")
 	return &n
 }
 
 func nonceForMACKeyBox(headerHash headerHash) *Nonce {
-	var n Nonce
-	copyEqualSize(n[:], headerHash[:nonceBytes])
+	var n Nonce = sliceToByte24(headerHash[:nonceBytes])
 	return &n
 }
 

@@ -98,6 +98,18 @@ func copyEqualSizeStr(out []byte, in string) {
 	copy(out, in)
 }
 
+func sliceToByte24(in []byte) [24]byte {
+	var out [24]byte
+	copyEqualSize(out[:], in)
+	return out
+}
+
+func stringToByte24(in string) [24]byte {
+	var out [24]byte
+	copyEqualSizeStr(out[:], in)
+	return out
+}
+
 func sliceToByte32(in []byte) [32]byte {
 	var out [32]byte
 	copyEqualSize(out[:], in)
