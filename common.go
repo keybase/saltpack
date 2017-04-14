@@ -160,10 +160,11 @@ func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecre
 		nonce := nonceForMACKeyBoxV1(headerHash)
 		return computeMACKeySingle(secret, public, nonce)
 	case Version2():
-		nonce := nonceForMACKeyBoxV2(headerHash, index)
-		mac1 := computeMACKeySingle(secret, public, nonce)
-		mac2 := computeMACKeySingle(eSecret, public, nonce)
-		return sum512Truncate256(append(mac1[:], mac2[:]...))
+		nonce := nonceForMACKeyBoxV2(headerHash, false, index)
+		mac := computeMACKeySingle(secret, public, nonce)
+		eNonce := nonceForMACKeyBoxV2(headerHash, true, index)
+		eMAC := computeMACKeySingle(eSecret, public, eNonce)
+		return sum512Truncate256(append(mac[:], eMAC[:]...))
 	default:
 		panic(ErrBadVersion{version})
 	}
@@ -175,10 +176,11 @@ func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, p
 		nonce := nonceForMACKeyBoxV1(headerHash)
 		return computeMACKeySingle(secret, public, nonce)
 	case Version2():
-		nonce := nonceForMACKeyBoxV2(headerHash, index)
-		mac1 := computeMACKeySingle(secret, public, nonce)
-		mac2 := computeMACKeySingle(secret, ePublic, nonce)
-		return sum512Truncate256(append(mac1[:], mac2[:]...))
+		nonce := nonceForMACKeyBoxV2(headerHash, false, index)
+		mac := computeMACKeySingle(secret, public, nonce)
+		eNonce := nonceForMACKeyBoxV2(headerHash, true, index)
+		eMAC := computeMACKeySingle(secret, ePublic, eNonce)
+		return sum512Truncate256(append(mac[:], eMAC[:]...))
 	default:
 		panic(ErrBadVersion{version})
 	}

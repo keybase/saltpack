@@ -32,7 +32,7 @@ func nonceForMACKeyBoxV1(headerHash headerHash) Nonce {
 	return sliceToByte24(headerHash[:nonceBytes])
 }
 
-func nonceForMACKeyBoxV2(headerHash headerHash, recip uint64) Nonce {
+func nonceForMACKeyBoxV2(headerHash headerHash, ephemeral bool, recip uint64) Nonce {
 	var n Nonce
 	copyEqualSize(n[:len(n)-8], headerHash[:len(n)-8])
 	binary.BigEndian.PutUint64(n[len(n)-8:], uint64(recip))
