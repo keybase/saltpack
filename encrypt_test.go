@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"reflect"
 	"testing"
 
 	"golang.org/x/crypto/nacl/box"
@@ -250,11 +251,6 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 	return res, nil
 }
 
-func receiverKeysEqual(rk1, rk2 receiverKeys) bool {
-	return bytes.Equal(rk1.ReceiverKID, rk2.ReceiverKID) &&
-		bytes.Equal(rk1.PayloadKeyBox, rk2.PayloadKeyBox)
-}
-
 func TestBoxPayloadKeyForReceiversV1AllEqual(t *testing.T) {
 	receiver := boxPublicKey{key: RawBoxKey{0x1}}
 	const count = 10
@@ -274,7 +270,7 @@ func TestBoxPayloadKeyForReceiversV1AllEqual(t *testing.T) {
 	// All entries should be the same, since all receivers are the
 	// same, and we use the same nonce.
 	for i, receiverKeys := range receiverKeysArray {
-		if !receiverKeysEqual(receiverKeys, receiverKeysArray[0]) {
+		if !reflect.DeepEqual(receiverKeys, receiverKeysArray[0]) {
 			t.Errorf("receiverKeysArray[%d] == %+v != receiverKeysArray[0] == %+v", i, receiverKeys, receiverKeysArray[0])
 		}
 	}
@@ -299,10 +295,29 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 	// No entries should be the same, since we use different nonces.
 	for i := 1; i < len(receiverKeysArray); i++ {
 		for j := i + 1; j < len(receiverKeysArray); j++ {
-			if receiverKeysEqual(receiverKeysArray[i], receiverKeysArray[j]) {
+			if reflect.DeepEqual(receiverKeysArray[i], receiverKeysArray[j]) {
 				t.Errorf("receiverKeysArray[%d] == receiverKeysArray[%d] == %+v", i, j, receiverKeysArray[i])
 			}
 		}
+	}
+}
+
+func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
+	receiver := boxPublicKey{key: RawBoxKey{0x1}}
+	const count = 10
+	receivers := make([]BoxPublicKey, count)
+	for i := 0; i < count; i++ {
+		receivers[i] = receiver
+	}
+
+	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
+	payloadKey := [32]byte{0x6}
+
+	receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+
+	if reflect.DeepEqual(receiverKeysArray1, receiverKeysArray2) {
+		t.Fatal("Two calls to boxPayloadKeyForReceivers(Version2()) unexpectedly produced the same array")
 	}
 }
 
