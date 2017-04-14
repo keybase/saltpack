@@ -262,7 +262,7 @@ func TestBoxPayloadKeyForReceiversV1AllEqual(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	receiverKeysArray := boxPayloadKeyForReceivers(Version1(), receivers, ephemeralKey, payloadKey)
+	_, receiverKeysArray := boxPayloadKeyForReceivers(Version1(), receivers, ephemeralKey, payloadKey)
 	if len(receiverKeysArray) != len(receivers) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
@@ -287,7 +287,7 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	receiverKeysArray := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	_, receiverKeysArray := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
 	if len(receiverKeysArray) != len(receivers) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
@@ -316,8 +316,8 @@ func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
-	receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	_, receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	_, receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
 
 	// This check is technically flaky, but should happen with low
 	// probability: 1/10! ~ 2^{-22}.
@@ -336,16 +336,16 @@ func testReceiverKeyMACKeyOrder(t *testing.T, version Version) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	receiverKeysArray := boxPayloadKeyForReceivers(version, receivers, ephemeralKey, payloadKey)
+	order, receiverKeysArray := boxPayloadKeyForReceivers(version, receivers, ephemeralKey, payloadKey)
 
 	sender := boxSecretKey{key: RawBoxKey{0x50}}
 	headerHash := headerHash{0x5}
-	macKeys := computeMACKeys(sender, receivers, headerHash)
+	macKeys := computeMACKeysSender(version, order, sender, ephemeralKey, receivers, headerHash)
 
 	// The orders of receiverKeysArray and macKeys should match up.
 	for i := 0; i < len(receiverKeysArray); i++ {
 		publicKey := boxPublicKey{key: sliceToByte32(receiverKeysArray[i].ReceiverKID)}
-		expectedMACKey := computeMACKey(sender, publicKey, headerHash)
+		expectedMACKey := computeMACKeySender(version, uint64(i), sender, ephemeralKey, publicKey, headerHash)
 		if macKeys[i] != expectedMACKey {
 			t.Errorf("macKeys[i] == %v != expectedMacKey == %v", macKeys[i], expectedMACKey)
 		}

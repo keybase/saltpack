@@ -155,7 +155,7 @@ func TestComputeMACKeySenderV2(t *testing.T) {
 
 func TestComputeMACKeySendersSameRecipientV1(t *testing.T) {
 	receivers := []BoxPublicKey{public1, public1}
-	macKeys := computeMACKeysSender(Version1(), secret1, eSecret1, receivers, constHeaderHash)
+	macKeys := computeMACKeysSender(Version1(), []int{0, 1}, secret1, eSecret1, receivers, constHeaderHash)
 
 	if len(macKeys) != 2 {
 		t.Fatalf("len(macKeys)=%d != 2 unexpectedly", len(macKeys))
@@ -170,7 +170,7 @@ func TestComputeMACKeySendersSameRecipientV1(t *testing.T) {
 
 func TestComputeMACKeySendersSameRecipientV2(t *testing.T) {
 	receivers := []BoxPublicKey{public1, public1}
-	macKeys := computeMACKeysSender(Version2(), secret1, eSecret1, receivers, constHeaderHash)
+	macKeys := computeMACKeysSender(Version2(), []int{0, 1}, secret1, eSecret1, receivers, constHeaderHash)
 
 	if len(macKeys) != 2 {
 		t.Fatalf("len(macKeys)=%d != 2 unexpectedly", len(macKeys))

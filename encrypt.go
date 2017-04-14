@@ -162,7 +162,8 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	nonce := nonceForSenderKeySecretBox()
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	eh.Receivers = boxPayloadKeyForReceivers(version, receivers, ephemeralKey, es.payloadKey)
+	var order []int
+	order, eh.Receivers = boxPayloadKeyForReceivers(version, receivers, ephemeralKey, es.payloadKey)
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(es.header)
@@ -179,7 +180,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	//
 	// TODO: Plumb the pre-computed shared keys above through to
 	// computeMACKeysSender.
-	es.macKeys = computeMACKeysSender(es.header.Version, sender, ephemeralKey, receivers, es.headerHash)
+	es.macKeys = computeMACKeysSender(es.header.Version, order, sender, ephemeralKey, receivers, es.headerHash)
 
 	return nil
 }
@@ -202,16 +203,17 @@ func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecre
 	}
 }
 
-func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
-	var macKeys []macKey
+func computeMACKeysSender(version Version, order []int, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
+	macKeys := make([]macKey, len(receivers))
 	for i, receiver := range receivers {
-		macKey := computeMACKeySender(version, uint64(i), sender, ephemeralKey, receiver, headerHash)
-		macKeys = append(macKeys, macKey)
+		index := order[i]
+		macKey := computeMACKeySender(version, uint64(index), sender, ephemeralKey, receiver, headerHash)
+		macKeys[index] = macKey
 	}
 	return macKeys
 }
 
-func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
+func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) ([]int, []receiverKeys) {
 	var order []int
 	switch version.Major {
 	case 1:
@@ -244,7 +246,7 @@ func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, epheme
 		receiverKeysArray[index] = keys
 	}
 
-	return receiverKeysArray
+	return order, receiverKeysArray
 }
 
 func (es *encryptStream) Close() error {
