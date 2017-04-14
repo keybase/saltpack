@@ -29,7 +29,7 @@ func symmetricKeyFromSlice(slice []byte) (*SymmetricKey, error) {
 	if len(slice) != len(result) {
 		return nil, ErrBadSymmetricKey
 	}
-	copyEqualSize(result[:], slice)
+	result = sliceToByte32(slice)
 	return &result, nil
 }
 
