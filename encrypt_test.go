@@ -250,6 +250,34 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 	return res, nil
 }
 
+func receiverKeysEqual(rk1, rk2 receiverKeys) bool {
+	return bytes.Equal(rk1.ReceiverKID, rk2.ReceiverKID) &&
+		bytes.Equal(rk1.PayloadKeyBox, rk2.PayloadKeyBox)
+}
+
+func testBoxPayloadKeyForReceiversV1(t *testing.T) {
+	receiver := boxPublicKey{key: RawBoxKey{0x1}}
+	const count = 10
+	receivers := make([]BoxPublicKey, count)
+	for i := 0; i < count; i++ {
+		receivers[i] = receiver
+	}
+
+	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
+	payloadKey := [32]byte{0x6}
+
+	receiverKeysArray := boxPayloadKeyForReceivers(Version1(), receivers, ephemeralKey, payloadKey)
+	if len(receiverKeysArray) != len(receivers) {
+		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
+	}
+
+	for i, receiverKeys := range receiverKeysArray {
+		if !receiverKeysEqual(receiverKeys, receiverKeysArray[0]) {
+			t.Fatal("receiverKeysArray[%d] = %+v != receiverKeysArray[0] = %+v", i, receiverKeys, receiverKeysArray[0])
+		}
+	}
+}
+
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
 	sndr := newBoxKey(t)
 	var ciphertext bytes.Buffer
