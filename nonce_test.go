@@ -7,6 +7,15 @@ import (
 	"testing"
 )
 
+func TestNonceForPayloadKeyBoxV2(t *testing.T) {
+	nonce1 := nonceForPayloadKeyBoxV2(0)
+	nonce2 := nonceForPayloadKeyBoxV2(1)
+
+	if nonce2 == nonce1 {
+		t.Errorf("nonce2 == nonce1 == %v unexpectedly", nonce1)
+	}
+}
+
 func TestNonceForMACKeyBoxV2(t *testing.T) {
 	hash1 := headerHash{0x01}
 	hash2 := headerHash{0x02}
