@@ -151,9 +151,7 @@ func sum512Truncate256(in []byte) [32]byte {
 	// truncates SHA512 instead of calling SHA512/256, which has
 	// different IVs.
 	sum512 := sha512.Sum512(in)
-	var out [32]byte
-	copyEqualSize(out[:], sum512[:32])
-	return out
+	return sliceToByte32(sum512[:32])
 }
 
 func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
