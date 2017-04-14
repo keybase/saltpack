@@ -249,6 +249,21 @@ func (sss *signcryptSealStream) init(receiverBoxKeys []BoxPublicKey, receiverSym
 	return nil
 }
 
+func sealEncryptionKeyForReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKey BoxSecretKey, encryptionKey SymmetricKey) []receiverKeys {
+	receiverKeysArray := make([]receiverKeys, len(receiverBoxKeys)+len(receiverSymmetricKeys))
+	// Collect all the recipient identifiers, and encrypt the payload key for
+	// all of them.
+	for i, receiverBoxKey := range receiverBoxKeys {
+		receiverKeysArray[i] = receiverEntryForBoxKey(receiverBoxKey, ephemeralKey, encryptionKey, uint64(i))
+	}
+	for i, receiverSymmetricKey := range receiverSymmetricKeys {
+		index := uint64(len(receiverBoxKeys) + i)
+		receiverKeysArray[index] = receiverEntryForSymmetricKey(receiverSymmetricKey, ephemeralKey.GetPublicKey(), encryptionKey, index)
+	}
+
+	return receiverKeysArray
+}
+
 func (sss *signcryptSealStream) Close() error {
 	for sss.buffer.Len() > 0 {
 		err := sss.signcryptBlock()
