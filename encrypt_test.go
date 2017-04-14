@@ -316,13 +316,23 @@ func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	_, receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
-	_, receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	order1, receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	order2, receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
 
 	// This check is technically flaky, but should happen with low
 	// probability: 1/10! ~ 2^{-22}.
 	if reflect.DeepEqual(receiverKeysArray1, receiverKeysArray2) {
 		t.Fatal("Two calls to boxPayloadKeyForReceivers(Version2()) unexpectedly produced the same array")
+	}
+
+	for i := 0; i < len(receiverKeysArray1); i++ {
+		index1 := order1[i]
+		index2 := order2[i]
+		kid1 := receiverKeysArray1[index1].ReceiverKID
+		kid2 := receiverKeysArray2[index2].ReceiverKID
+		if !bytes.Equal(kid1, kid2) {
+			t.Errorf("receiverKeysArray1[%d].ReceiverKID == %+v != receiverKeysArray2[%d].ReceiverKID == %+v", index1, kid1, index2, kid2)
+		}
 	}
 }
 
