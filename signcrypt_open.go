@@ -259,8 +259,7 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(bl *signcryptionBlock) 
 		return nil, ErrBadCiphertext(bl.seqno)
 	}
 
-	var detachedSig [ed25519.SignatureSize]byte
-	copyEqualSize(detachedSig[:], attachedSig[:ed25519.SignatureSize])
+	var detachedSig [ed25519.SignatureSize]byte = sliceToByte64(attachedSig[:ed25519.SignatureSize])
 	chunkPlaintext := attachedSig[ed25519.SignatureSize:]
 
 	plaintextHash := sha512.Sum512(chunkPlaintext)
