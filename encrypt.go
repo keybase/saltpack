@@ -65,7 +65,7 @@ func (es *encryptStream) encryptBytes(b []byte) error {
 	}
 
 	nonce := nonceForChunkSecretBox(es.numBlocks)
-	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(nonce), (*[32]byte)(&es.payloadKey))
+	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
 	block := encryptionBlock{
 		PayloadCiphertext: ciphertext,
@@ -160,7 +160,8 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		return err
 	}
 
-	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(nonceForSenderKeySecretBox()), (*[32]byte)(&es.payloadKey))
+	nonce := nonceForSenderKeySecretBox()
+	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
 	for _, receiver := range receivers {
 		payloadKeyBox := ephemeralKey.Box(receiver, nonceForPayloadKeyBoxV1(), es.payloadKey[:])

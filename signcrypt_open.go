@@ -143,10 +143,11 @@ func (sos *signcryptOpenStream) tryBoxSecretKeys(hdr *SigncryptionHeader, epheme
 			identifier := keyIdentifierFromDerivedKey(derivedKey, uint64(receiverIndex))
 			if hmac.Equal(identifier, receiver.ReceiverKID) {
 				// This is the right key! Open the sender secretbox and return the sender key.
+				nonce := nonceForPayloadKeyBoxV2(uint64(receiverIndex))
 				payloadKey, isValid := secretbox.Open(
 					nil,
 					receiver.PayloadKeyBox,
-					(*[24]byte)(nonceForPayloadKeyBoxV2(uint64(receiverIndex))),
+					(*[24]byte)(&nonce),
 					(*[32]byte)(derivedKey))
 				if !isValid {
 					return nil, ErrDecryptionFailed
@@ -190,10 +191,11 @@ func (sos *signcryptOpenStream) trySharedSymmetricKeys(hdr *SigncryptionHeader, 
 			panic(err) // should be statically impossible, if the slice above is the right length
 		}
 
+		nonce := nonceForPayloadKeyBoxV2(uint64(index))
 		payloadKey, isValid := secretbox.Open(
 			nil,
 			hdr.Receivers[index].PayloadKeyBox,
-			(*[24]byte)(nonceForPayloadKeyBoxV2(uint64(index))),
+			(*[24]byte)(&nonce),
 			(*[32]byte)(derivedKey))
 		if !isValid {
 			return nil, ErrDecryptionFailed
@@ -228,7 +230,8 @@ func (sos *signcryptOpenStream) processSigncryptionHeader(hdr *SigncryptionHeade
 	}
 
 	// Decrypt the sender's public key, and check for anonymous mode.
-	senderKeySlice, ok := secretbox.Open([]byte{}, hdr.SenderSecretbox, (*[24]byte)(nonceForSenderKeySecretBox()), (*[32]byte)(sos.payloadKey))
+	nonce := nonceForSenderKeySecretBox()
+	senderKeySlice, ok := secretbox.Open([]byte{}, hdr.SenderSecretbox, (*[24]byte)(&nonce), (*[32]byte)(sos.payloadKey))
 	if !ok {
 		return ErrBadSenderKeySecretbox
 	}
@@ -254,7 +257,7 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(bl *signcryptionBlock) 
 
 	nonce := nonceForChunkSigncryption(blockNum)
 
-	attachedSig, isValid := secretbox.Open([]byte{}, bl.PayloadCiphertext, (*[24]byte)(nonce), (*[32]byte)(sos.payloadKey))
+	attachedSig, isValid := secretbox.Open([]byte{}, bl.PayloadCiphertext, (*[24]byte)(&nonce), (*[32]byte)(sos.payloadKey))
 	if !isValid || len(attachedSig) < ed25519.SignatureSize {
 		return nil, ErrBadCiphertext(bl.seqno)
 	}

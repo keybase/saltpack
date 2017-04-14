@@ -237,7 +237,8 @@ func (ds *decryptStream) processEncryptionHeader(hdr *EncryptionHeader) error {
 	ds.mki.ReceiverKey = secretKey
 
 	// Decrypt the sender's public key
-	senderKeySlice, ok := secretbox.Open([]byte{}, hdr.SenderSecretbox, (*[24]byte)(nonceForSenderKeySecretBox()), (*[32]byte)(ds.payloadKey))
+	nonce := nonceForSenderKeySecretBox()
+	senderKeySlice, ok := secretbox.Open([]byte{}, hdr.SenderSecretbox, (*[24]byte)(&nonce), (*[32]byte)(ds.payloadKey))
 	if !ok {
 		return ErrBadSenderKeySecretbox
 	}
@@ -285,7 +286,7 @@ func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlock) ([]byte, er
 		return nil, ErrBadTag(bl.seqno)
 	}
 
-	plaintext, ok := secretbox.Open([]byte{}, ciphertext, (*[24]byte)(nonce), (*[32]byte)(ds.payloadKey))
+	plaintext, ok := secretbox.Open([]byte{}, ciphertext, (*[24]byte)(&nonce), (*[32]byte)(ds.payloadKey))
 	if !ok {
 		return nil, ErrBadCiphertext(bl.seqno)
 	}

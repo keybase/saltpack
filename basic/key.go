@@ -64,15 +64,15 @@ func (k PublicKey) CreateEphemeralKey() (saltpack.BoxSecretKey, error) {
 var _ saltpack.BoxPublicKey = PublicKey{}
 
 // Box runs the NaCl box for the given sender and receiver key.
-func (k SecretKey) Box(receiver saltpack.BoxPublicKey, nonce *saltpack.Nonce, msg []byte) []byte {
-	ret := box.Seal([]byte{}, msg, (*[24]byte)(nonce), (*[32]byte)(receiver.ToRawBoxKeyPointer()), (*[32]byte)(&k.sec))
+func (k SecretKey) Box(receiver saltpack.BoxPublicKey, nonce saltpack.Nonce, msg []byte) []byte {
+	ret := box.Seal([]byte{}, msg, (*[24]byte)(&nonce), (*[32]byte)(receiver.ToRawBoxKeyPointer()), (*[32]byte)(&k.sec))
 	return ret
 }
 
 // Unbox runs the NaCl unbox operation on the given ciphertext and nonce,
 // using the receiver as the secret key.
-func (k SecretKey) Unbox(sender saltpack.BoxPublicKey, nonce *saltpack.Nonce, msg []byte) ([]byte, error) {
-	ret, ok := box.Open([]byte{}, msg, (*[24]byte)(nonce), (*[32]byte)(sender.ToRawBoxKeyPointer()), (*[32]byte)(&k.sec))
+func (k SecretKey) Unbox(sender saltpack.BoxPublicKey, nonce saltpack.Nonce, msg []byte) ([]byte, error) {
+	ret, ok := box.Open([]byte{}, msg, (*[24]byte)(&nonce), (*[32]byte)(sender.ToRawBoxKeyPointer()), (*[32]byte)(&k.sec))
 	if !ok {
 		return nil, saltpack.ErrDecryptionFailed
 	}
@@ -103,14 +103,14 @@ func NewSecretKey(pub, sec *[32]byte) SecretKey {
 var _ saltpack.BoxSecretKey = SecretKey{}
 
 // Box runs the box computation given a precomputed key.
-func (k PrecomputedSharedKey) Box(nonce *saltpack.Nonce, msg []byte) []byte {
-	ret := box.SealAfterPrecomputation([]byte{}, msg, (*[24]byte)(nonce), (*[32]byte)(&k))
+func (k PrecomputedSharedKey) Box(nonce saltpack.Nonce, msg []byte) []byte {
+	ret := box.SealAfterPrecomputation([]byte{}, msg, (*[24]byte)(&nonce), (*[32]byte)(&k))
 	return ret
 }
 
 // Unbox runs the unbox computation given a precomputed key.
-func (k PrecomputedSharedKey) Unbox(nonce *saltpack.Nonce, msg []byte) ([]byte, error) {
-	ret, ok := box.OpenAfterPrecomputation([]byte{}, msg, (*[24]byte)(nonce), (*[32]byte)(&k))
+func (k PrecomputedSharedKey) Unbox(nonce saltpack.Nonce, msg []byte) ([]byte, error) {
+	ret, ok := box.OpenAfterPrecomputation([]byte{}, msg, (*[24]byte)(&nonce), (*[32]byte)(&k))
 	if !ok {
 		return nil, saltpack.ErrDecryptionFailed
 	}

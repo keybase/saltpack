@@ -140,21 +140,21 @@ func (b boxSecretKey) Precompute(pk BoxPublicKey) BoxPrecomputedSharedKey {
 	return res
 }
 
-func (b boxPrecomputedSharedKey) Unbox(nonce *Nonce, msg []byte) ([]byte, error) {
-	out, ok := box.OpenAfterPrecomputation([]byte{}, msg, (*[24]byte)(nonce), (*[32]byte)(&b))
+func (b boxPrecomputedSharedKey) Unbox(nonce Nonce, msg []byte) ([]byte, error) {
+	out, ok := box.OpenAfterPrecomputation([]byte{}, msg, (*[24]byte)(&nonce), (*[32]byte)(&b))
 	if !ok {
 		return nil, errPublicKeyDecryptionFailed
 	}
 	return out, nil
 }
 
-func (b boxPrecomputedSharedKey) Box(nonce *Nonce, msg []byte) []byte {
-	out := box.SealAfterPrecomputation([]byte{}, msg, (*[24]byte)(nonce), (*[32]byte)(&b))
+func (b boxPrecomputedSharedKey) Box(nonce Nonce, msg []byte) []byte {
+	out := box.SealAfterPrecomputation([]byte{}, msg, (*[24]byte)(&nonce), (*[32]byte)(&b))
 	return out
 }
 
-func (b boxSecretKey) Box(receiver BoxPublicKey, nonce *Nonce, msg []byte) []byte {
-	ret := box.Seal([]byte{}, msg, (*[24]byte)(nonce),
+func (b boxSecretKey) Box(receiver BoxPublicKey, nonce Nonce, msg []byte) []byte {
+	ret := box.Seal([]byte{}, msg, (*[24]byte)(&nonce),
 		(*[32]byte)(receiver.ToRawBoxKeyPointer()), (*[32]byte)(&b.key))
 	return ret
 }
@@ -162,8 +162,8 @@ func (b boxSecretKey) Box(receiver BoxPublicKey, nonce *Nonce, msg []byte) []byt
 var errPublicKeyDecryptionFailed = errors.New("public key decryption failed")
 var errPublicKeyEncryptionFailed = errors.New("public key encryption failed")
 
-func (b boxSecretKey) Unbox(sender BoxPublicKey, nonce *Nonce, msg []byte) ([]byte, error) {
-	out, ok := box.Open([]byte{}, msg, (*[24]byte)(nonce),
+func (b boxSecretKey) Unbox(sender BoxPublicKey, nonce Nonce, msg []byte) ([]byte, error) {
+	out, ok := box.Open([]byte{}, msg, (*[24]byte)(&nonce),
 		(*[32]byte)(sender.ToRawBoxKeyPointer()), (*[32]byte)(&b.key))
 	if !ok {
 		return nil, errPublicKeyDecryptionFailed
@@ -550,10 +550,10 @@ func testEmptyReceivers(t *testing.T, version Version) {
 func testCorruptHeaderNonce(t *testing.T, version Version) {
 	msg := randomMsg(t, 129)
 	teo := testEncryptionOptions{
-		corruptKeysNonce: func(n *Nonce, rid int) *Nonce {
-			ret := *n
+		corruptKeysNonce: func(n Nonce, rid int) Nonce {
+			ret := n
 			ret[4] ^= 1
-			return &ret
+			return ret
 		},
 	}
 	sender := newBoxKey(t)
@@ -571,11 +571,11 @@ func testCorruptHeaderNonce(t *testing.T, version Version) {
 func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 	msg := randomMsg(t, 129)
 	teo := testEncryptionOptions{
-		corruptKeysNonce: func(n *Nonce, rid int) *Nonce {
+		corruptKeysNonce: func(n Nonce, rid int) Nonce {
 			if rid == 5 {
-				ret := *n
+				ret := n
 				ret[4] ^= 1
-				return &ret
+				return ret
 			}
 			return n
 		},
@@ -603,11 +603,11 @@ func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 	// If someone else's encryption was tampered with, we don't care and
 	// shouldn't get an error.
 	teo = testEncryptionOptions{
-		corruptKeysNonce: func(n *Nonce, rid int) *Nonce {
+		corruptKeysNonce: func(n Nonce, rid int) Nonce {
 			if rid != 5 {
-				ret := *n
+				ret := n
 				ret[4] ^= 1
-				return &ret
+				return ret
 			}
 			return n
 		},
@@ -871,7 +871,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	msg = randomMsg(t, 1024*2-1)
 	ciphertext, err = testSeal(version, msg, sender, receivers, testEncryptionOptions{
 		blockSize: 1024,
-		corruptPayloadNonce: func(n *Nonce, ebn encryptionBlockNumber) *Nonce {
+		corruptPayloadNonce: func(n Nonce, ebn encryptionBlockNumber) Nonce {
 			switch ebn {
 			case 1:
 				return nonceForChunkSecretBox(encryptionBlockNumber(0))
@@ -918,11 +918,11 @@ func testCorruptNonce(t *testing.T, version Version) {
 	msg := randomMsg(t, 1024*11)
 	teo := testEncryptionOptions{
 		blockSize: 1024,
-		corruptPayloadNonce: func(n *Nonce, ebn encryptionBlockNumber) *Nonce {
+		corruptPayloadNonce: func(n Nonce, ebn encryptionBlockNumber) Nonce {
 			if ebn == 2 {
-				ret := *n
+				ret := n
 				ret[23]++
-				return &ret
+				return ret
 			}
 			return n
 		},

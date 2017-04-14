@@ -147,7 +147,7 @@ func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash headerHa
 	return sliceToByte32(macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes])
 }
 
-func computePayloadHash(headerHash headerHash, nonce *Nonce, payloadCiphertext []byte) payloadHash {
+func computePayloadHash(headerHash headerHash, nonce Nonce, payloadCiphertext []byte) payloadHash {
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])

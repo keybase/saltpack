@@ -16,8 +16,8 @@ type testEncryptionOptions struct {
 	skipFooter                  bool
 	corruptEncryptionBlock      func(bl *encryptionBlock, ebn encryptionBlockNumber)
 	corruptCiphertextBeforeHash func(c []byte, ebn encryptionBlockNumber)
-	corruptPayloadNonce         func(n *Nonce, ebn encryptionBlockNumber) *Nonce
-	corruptKeysNonce            func(n *Nonce, rid int) *Nonce
+	corruptPayloadNonce         func(n Nonce, ebn encryptionBlockNumber) Nonce
+	corruptKeysNonce            func(n Nonce, rid int) Nonce
 	corruptPayloadKey           func(pk *[]byte, rid int)
 	corruptReceiverKeys         func(rk *receiverKeys, rid int)
 	corruptSenderKeyPlaintext   func(pk *[]byte)
@@ -92,7 +92,7 @@ func (pes *testEncryptStream) encryptBytes(b []byte) error {
 		nonce = pes.options.corruptPayloadNonce(nonce, pes.numBlocks)
 	}
 
-	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(nonce), (*[32]byte)(&pes.payloadKey))
+	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(&nonce), (*[32]byte)(&pes.payloadKey))
 
 	if pes.options.corruptCiphertextBeforeHash != nil {
 		pes.options.corruptCiphertextBeforeHash(ciphertext, pes.numBlocks)
@@ -152,7 +152,8 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 	if pes.options.corruptSenderKeyPlaintext != nil {
 		pes.options.corruptSenderKeyPlaintext(&senderPlaintextSlice)
 	}
-	eh.SenderSecretbox = secretbox.Seal([]byte{}, senderPlaintextSlice, (*[24]byte)(nonceForSenderKeySecretBox()), (*[32]byte)(&pes.payloadKey))
+	nonce := nonceForSenderKeySecretBox()
+	eh.SenderSecretbox = secretbox.Seal([]byte{}, senderPlaintextSlice, (*[24]byte)(&nonce), (*[32]byte)(&pes.payloadKey))
 	if pes.options.corruptSenderKeyCiphertext != nil {
 		pes.options.corruptSenderKeyCiphertext(eh.SenderSecretbox)
 	}

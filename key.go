@@ -61,8 +61,8 @@ type BoxPublicKey interface {
 
 // BoxPrecomputedSharedKey results from a Precomputation below.
 type BoxPrecomputedSharedKey interface {
-	Unbox(nonce *Nonce, msg []byte) ([]byte, error)
-	Box(nonce *Nonce, msg []byte) []byte
+	Unbox(nonce Nonce, msg []byte) ([]byte, error)
+	Box(nonce Nonce, msg []byte) []byte
 }
 
 // BoxSecretKey is the secret key corresponding to a BoxPublicKey
@@ -70,11 +70,11 @@ type BoxSecretKey interface {
 
 	// Box boxes up data, sent from this secret key, and to the receiver
 	// specified.
-	Box(receiver BoxPublicKey, nonce *Nonce, msg []byte) []byte
+	Box(receiver BoxPublicKey, nonce Nonce, msg []byte) []byte
 
 	// Unbox opens up the box, using this secret key as the receiver key
 	// abd the give public key as the sender key.
-	Unbox(sender BoxPublicKey, nonce *Nonce, msg []byte) ([]byte, error)
+	Unbox(sender BoxPublicKey, nonce Nonce, msg []byte) ([]byte, error)
 
 	// GetPublicKey gets the public key associated with this secret key.
 	GetPublicKey() BoxPublicKey

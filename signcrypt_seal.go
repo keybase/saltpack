@@ -90,7 +90,7 @@ func (sss *signcryptSealStream) signcryptBytes(b []byte) error {
 
 	attachedSig := append(detachedSig, b...)
 
-	ciphertext := secretbox.Seal([]byte{}, attachedSig, (*[24]byte)(nonce), (*[32]byte)(&sss.encryptionKey))
+	ciphertext := secretbox.Seal([]byte{}, attachedSig, (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 
 	block := []interface{}{ciphertext}
 
@@ -129,7 +129,8 @@ func keyIdentifierFromDerivedKey(derivedKey *SymmetricKey, recipientIndex uint64
 	keyIdentifierDigest := sha512.New()
 	keyIdentifierDigest.Write([]byte("saltpack signcryption derived key identifier\x00"))
 	keyIdentifierDigest.Write(derivedKey[:])
-	keyIdentifierDigest.Write(nonceForPayloadKeyBoxV2(recipientIndex)[:])
+	nonce := nonceForPayloadKeyBoxV2(recipientIndex)
+	keyIdentifierDigest.Write(nonce[:])
 	return keyIdentifierDigest.Sum(nil)[0:32]
 }
 
@@ -137,10 +138,11 @@ func receiverEntryForBoxKey(receiverBoxKey BoxPublicKey, ephemeralPriv BoxSecret
 	derivedKey := derivedEphemeralKeyFromBoxKeys(receiverBoxKey, ephemeralPriv)
 	identifier := keyIdentifierFromDerivedKey(derivedKey, index)
 
+	nonce := nonceForPayloadKeyBoxV2(index)
 	payloadKeyBox := secretbox.Seal(
 		nil,
 		payloadKey[:],
-		(*[24]byte)(nonceForPayloadKeyBoxV2(index)),
+		(*[24]byte)(&nonce),
 		(*[32]byte)(derivedKey))
 
 	return receiverKeys{
@@ -169,10 +171,11 @@ func receiverEntryForSymmetricKey(receiverSymmetricKey ReceiverSymmetricKey, eph
 		panic(err) // should be statically impossible, if the slice above is the right length
 	}
 
+	nonce := nonceForPayloadKeyBoxV2(index)
 	payloadKeyBox := secretbox.Seal(
 		nil,
 		payloadKey[:],
-		(*[24]byte)(nonceForPayloadKeyBoxV2(index)),
+		(*[24]byte)(&nonce),
 		(*[32]byte)(derivedKey))
 
 	// Unlike the box key case, the identifier is supplied by the caller rather
@@ -207,16 +210,17 @@ func (sss *signcryptSealStream) init(receiverBoxKeys []BoxPublicKey, receiverSym
 	// Prepare the secretbox that contains the sender's public key. If the
 	// sender is anonymous, use an all-zeros key, so that the anonymity bit
 	// doesn't leak out.
+	nonce := nonceForSenderKeySecretBox()
 	if sss.signingKey == nil {
 		// anonymous sender mode, all zeros
-		eh.SenderSecretbox = secretbox.Seal([]byte{}, make([]byte, ed25519.PublicKeySize), (*[24]byte)(nonceForSenderKeySecretBox()), (*[32]byte)(&sss.encryptionKey))
+		eh.SenderSecretbox = secretbox.Seal([]byte{}, make([]byte, ed25519.PublicKeySize), (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 	} else {
 		// regular sender mode, an actual key
 		signingPublicKeyBytes := sss.signingKey.GetPublicKey().ToKID()
 		if len(signingPublicKeyBytes) != ed25519.PublicKeySize {
 			panic("unexpected signing key length, anonymity bit will leak")
 		}
-		eh.SenderSecretbox = secretbox.Seal([]byte{}, sss.signingKey.GetPublicKey().ToKID(), (*[24]byte)(nonceForSenderKeySecretBox()), (*[32]byte)(&sss.encryptionKey))
+		eh.SenderSecretbox = secretbox.Seal([]byte{}, sss.signingKey.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 	}
 
 	// Collect all the recipient identifiers, and encrypt the payload key for
