@@ -16,8 +16,11 @@ func nonceForSenderKeySecretBox() Nonce {
 }
 
 func nonceForPayloadKeyBoxV2(recip uint64) Nonce {
-	// TODO: Actually mix in recip.
-	return stringToByte24("saltpack_recipsbXXXXXXXX")
+	var n Nonce
+	off := len(n) - 8
+	copyEqualSizeStr(n[:off], "saltpack_recipsb")
+	binary.BigEndian.PutUint64(n[off:], uint64(recip))
+	return n
 }
 
 func nonceForPayloadKeyBox(version Version, recip uint64) Nonce {
