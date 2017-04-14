@@ -292,12 +292,17 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
 
-	// No two entries should be the same, since we use different
-	// nonces.
+	expectedKID := receiver.ToKID()
+
+	// No two entries should be have the same box, since we use
+	// different nonces.
 	for i := 1; i < len(receiverKeysArray); i++ {
+		if !bytes.Equal(receiverKeysArray[i].ReceiverKID, expectedKID) {
+			t.Errorf("receiverKeysArray[%d].ReceiverKID = %+v != expectedKID == %+v", i, receiverKeysArray[i].ReceiverKID, expectedKID)
+		}
 		for j := i + 1; j < len(receiverKeysArray); j++ {
-			if reflect.DeepEqual(receiverKeysArray[i], receiverKeysArray[j]) {
-				t.Errorf("receiverKeysArray[%d] == receiverKeysArray[%d] == %+v", i, j, receiverKeysArray[i])
+			if bytes.Equal(receiverKeysArray[i].PayloadKeyBox, receiverKeysArray[j].PayloadKeyBox) {
+				t.Errorf("receiverKeysArray[%d].PayloadKeyBox == receiverKeysArray[%d].PayloadKeyBox == %+v", i, j, receiverKeysArray[i])
 			}
 		}
 	}
