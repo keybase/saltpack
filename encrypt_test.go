@@ -271,6 +271,8 @@ func testBoxPayloadKeyForReceiversV1(t *testing.T) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
 
+	// All entries should be the same, since all receivers are the
+	// same, and we use the same nonce.
 	for i, receiverKeys := range receiverKeysArray {
 		if !receiverKeysEqual(receiverKeys, receiverKeysArray[0]) {
 			t.Fatal("receiverKeysArray[%d] = %+v != receiverKeysArray[0] = %+v", i, receiverKeys, receiverKeysArray[0])
