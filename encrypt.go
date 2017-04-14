@@ -162,7 +162,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	nonce := nonceForSenderKeySecretBox()
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	eh.Receivers = boxPayloadKey(version, receivers, ephemeralKey, es.payloadKey)
+	eh.Receivers = boxPayloadKeyForReceivers(version, receivers, ephemeralKey, es.payloadKey)
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(es.header)
@@ -211,7 +211,7 @@ func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, re
 	return macKeys
 }
 
-func boxPayloadKey(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
+func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
 	receiverKeysArray := make([]receiverKeys, len(receivers))
 	for i, receiver := range receivers {
 		sharedKey := ephemeralKey.Precompute(receiver)
