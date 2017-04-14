@@ -24,6 +24,19 @@ func nonceForPayloadKeyBoxV2(recip uint64) Nonce {
 	return stringToByte24("saltpack_recipsbXXXXXXXX")
 }
 
+func nonceForPayloadKeyBox(version Version, recip uint64) Nonce {
+	switch version.Major {
+	case 1:
+		return nonceForPayloadKeyBoxV1()
+	case 2:
+		return nonceForPayloadKeyBoxV2(recip)
+	default:
+		// Let caller be responsible for filtering out unknown
+		// versions.
+		panic(ErrBadVersion{version})
+	}
+}
+
 func nonceForDerivedSharedKey() Nonce {
 	return stringToByte24("saltpack_derived_sboxkey")
 }

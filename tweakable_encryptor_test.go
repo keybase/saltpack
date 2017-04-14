@@ -165,7 +165,7 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 			pes.options.corruptPayloadKey(&payloadKeySlice, rid)
 		}
 
-		nonceTmp := nonceForPayloadKeyBoxV1()
+		nonceTmp := nonceForPayloadKeyBox(version, uint64(rid))
 		if pes.options.corruptKeysNonce != nil {
 			nonceTmp = pes.options.corruptKeysNonce(nonceTmp, rid)
 		}
