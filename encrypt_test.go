@@ -255,7 +255,7 @@ func receiverKeysEqual(rk1, rk2 receiverKeys) bool {
 		bytes.Equal(rk1.PayloadKeyBox, rk2.PayloadKeyBox)
 }
 
-func TestBoxPayloadKeyForReceiversV1(t *testing.T) {
+func TestBoxPayloadKeyForReceiversV1AllEqual(t *testing.T) {
 	receiver := boxPublicKey{key: RawBoxKey{0x1}}
 	const count = 10
 	receivers := make([]BoxPublicKey, count)
@@ -280,7 +280,7 @@ func TestBoxPayloadKeyForReceiversV1(t *testing.T) {
 	}
 }
 
-func TestBoxPayloadKeyForReceiversV2(t *testing.T) {
+func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 	receiver := boxPublicKey{key: RawBoxKey{0x1}}
 	const count = 10
 	receivers := make([]BoxPublicKey, count)
