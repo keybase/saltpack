@@ -16,7 +16,7 @@ func rawBoxKeyFromSlice(slice []byte) (*RawBoxKey, error) {
 	if len(slice) != len(result) {
 		return nil, ErrBadBoxKey
 	}
-	copyEqualSize(result[:], slice)
+	result = sliceToByte32(slice)
 	return &result, nil
 }
 
