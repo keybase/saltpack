@@ -34,13 +34,14 @@ func nonceForMACKeyBoxV1(headerHash headerHash) Nonce {
 
 func nonceForMACKeyBoxV2(headerHash headerHash, ephemeral bool, recip uint64) Nonce {
 	var n Nonce
-	copyEqualSize(n[:len(n)-8], headerHash[:len(n)-8])
-	// Set high bit based on ephemeral.
-	n[0] &^= (1 << 7)
+	off := len(n) - 8
+	copyEqualSize(n[:off], headerHash[:off])
+	// Set LSB of last byte based on ephemeral.
+	n[off-1] &^= 1
 	if ephemeral {
-		n[0] |= (1 << 7)
+		n[off-1] |= 1
 	}
-	binary.BigEndian.PutUint64(n[len(n)-8:], uint64(recip))
+	binary.BigEndian.PutUint64(n[off:], uint64(recip))
 	return n
 }
 
