@@ -6,10 +6,11 @@ package saltpack
 import (
 	"bytes"
 	"crypto/hmac"
-	"crypto/rand"
+	cryptorand "crypto/rand"
 	"crypto/sha512"
 	"encoding/binary"
 	"fmt"
+	mathrand "math/rand"
 
 	"github.com/keybase/go-codec/codec"
 	"golang.org/x/crypto/poly1305"
@@ -27,7 +28,7 @@ func codecHandle() *codec.MsgpackHandle {
 
 func randomFill(b []byte) (err error) {
 	l := len(b)
-	n, err := rand.Read(b)
+	n, err := cryptorand.Read(b)
 	if err != nil {
 		return err
 	}
@@ -35,6 +36,27 @@ func randomFill(b []byte) (err error) {
 		return ErrInsufficientRandomness
 	}
 	return nil
+}
+
+type cryptoSource struct{}
+
+var _ mathrand.Source = cryptoSource{}
+
+// No need to implement Source64, since mathrand.Rand.Perm() doesn't use it.
+
+func (s cryptoSource) Int63() int64 {
+	var buf [8]byte
+	cryptorand.Read(buf[:])
+	return int64(binary.BigEndian.Uint64(buf[:]) >> 1)
+}
+
+func (s cryptoSource) Seed(seed int64) {
+	panic("cryptoSource.Seed() called unexpectedly")
+}
+
+func randomPerm(n int) []int {
+	rnd := mathrand.New(cryptoSource{})
+	return rnd.Perm(n)
 }
 
 func (e encryptionBlockNumber) check() error {
