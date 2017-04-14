@@ -305,6 +305,9 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 
 func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
 	const count = 10
+	// We need the receivers to not all be the same here --
+	// otherwise, the first check below would fail, since the
+	// nonce depends only on the index.
 	receivers := make([]BoxPublicKey, count)
 	for i := 0; i < count; i++ {
 		receivers[i] = boxPublicKey{key: RawBoxKey{byte(i)}}
