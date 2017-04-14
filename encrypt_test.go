@@ -255,7 +255,7 @@ func receiverKeysEqual(rk1, rk2 receiverKeys) bool {
 		bytes.Equal(rk1.PayloadKeyBox, rk2.PayloadKeyBox)
 }
 
-func testBoxPayloadKeyForReceiversV1(t *testing.T) {
+func TestBoxPayloadKeyForReceiversV1(t *testing.T) {
 	receiver := boxPublicKey{key: RawBoxKey{0x1}}
 	const count = 10
 	receivers := make([]BoxPublicKey, count)
@@ -273,6 +273,30 @@ func testBoxPayloadKeyForReceiversV1(t *testing.T) {
 
 	// All entries should be the same, since all receivers are the
 	// same, and we use the same nonce.
+	for i, receiverKeys := range receiverKeysArray {
+		if !receiverKeysEqual(receiverKeys, receiverKeysArray[0]) {
+			t.Fatal("receiverKeysArray[%d] = %+v != receiverKeysArray[0] = %+v", i, receiverKeys, receiverKeysArray[0])
+		}
+	}
+}
+
+func TestBoxPayloadKeyForReceiversV2(t *testing.T) {
+	receiver := boxPublicKey{key: RawBoxKey{0x1}}
+	const count = 10
+	receivers := make([]BoxPublicKey, count)
+	for i := 0; i < count; i++ {
+		receivers[i] = receiver
+	}
+
+	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
+	payloadKey := [32]byte{0x6}
+
+	receiverKeysArray := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	if len(receiverKeysArray) != len(receivers) {
+		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
+	}
+
+	// No entries should be the same, since we use different nonces.
 	for i, receiverKeys := range receiverKeysArray {
 		if !receiverKeysEqual(receiverKeys, receiverKeysArray[0]) {
 			t.Fatal("receiverKeysArray[%d] = %+v != receiverKeysArray[0] = %+v", i, receiverKeys, receiverKeysArray[0])
