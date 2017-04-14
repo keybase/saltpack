@@ -212,7 +212,6 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		return err
 	}
 
-	// Use the header hash to compute the MAC keys.
 	order := make([]int, len(receivers))
 	for i := 0; i < len(receivers); i++ {
 		order[i] = i
