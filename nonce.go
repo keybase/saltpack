@@ -15,10 +15,6 @@ func nonceForSenderKeySecretBox() Nonce {
 	return stringToByte24("saltpack_sender_key_sbox")
 }
 
-func nonceForPayloadKeyBoxV1() Nonce {
-	return stringToByte24("saltpack_payload_key_box")
-}
-
 func nonceForPayloadKeyBoxV2(recip uint64) Nonce {
 	// TODO: Actually mix in recip.
 	return stringToByte24("saltpack_recipsbXXXXXXXX")
@@ -27,7 +23,7 @@ func nonceForPayloadKeyBoxV2(recip uint64) Nonce {
 func nonceForPayloadKeyBox(version Version, recip uint64) Nonce {
 	switch version.Major {
 	case 1:
-		return nonceForPayloadKeyBoxV1()
+		return stringToByte24("saltpack_payload_key_box")
 	case 2:
 		return nonceForPayloadKeyBoxV2(recip)
 	default:
