@@ -326,6 +326,32 @@ func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
 	}
 }
 
+func testReceiverKeyMACKeyOrder(t *testing.T, version Version) {
+	const count = 10
+	receivers := make([]BoxPublicKey, count)
+	for i := 0; i < count; i++ {
+		receivers[i] = boxPublicKey{key: RawBoxKey{byte(i)}}
+	}
+
+	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
+	payloadKey := [32]byte{0x6}
+
+	receiverKeysArray := boxPayloadKeyForReceivers(version, receivers, ephemeralKey, payloadKey)
+
+	sender := boxSecretKey{key: RawBoxKey{0x50}}
+	headerHash := headerHash{0x5}
+	macKeys := computeMACKeys(sender, receivers, headerHash)
+
+	// The orders of receiverKeysArray and macKeys should match up.
+	for i := 0; i < len(receiverKeysArray); i++ {
+		publicKey := boxPublicKey{key: sliceToByte32(receiverKeysArray[i].ReceiverKID)}
+		expectedMACKey := computeMACKey(sender, publicKey, headerHash)
+		if macKeys[i] != expectedMACKey {
+			t.Errorf("macKeys[i] == %v != expectedMacKey == %v", macKeys[i], expectedMACKey)
+		}
+	}
+}
+
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
 	sndr := newBoxKey(t)
 	var ciphertext bytes.Buffer
@@ -1341,6 +1367,7 @@ func testNoWriteMessage(t *testing.T, version Version) {
 
 func TestEncrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
+		testReceiverKeyMACKeyOrder,
 		testEmptyEncryptionOneReceiver,
 		testSmallEncryptionOneReceiver,
 		testMediumEncryptionOneReceiver,
