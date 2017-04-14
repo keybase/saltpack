@@ -292,7 +292,8 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
 
-	// No entries should be the same, since we use different nonces.
+	// No two entries should be the same, since we use different
+	// nonces.
 	for i := 1; i < len(receiverKeysArray); i++ {
 		for j := i + 1; j < len(receiverKeysArray); j++ {
 			if reflect.DeepEqual(receiverKeysArray[i], receiverKeysArray[j]) {
@@ -303,11 +304,10 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 }
 
 func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
-	receiver := boxPublicKey{key: RawBoxKey{0x1}}
 	const count = 10
 	receivers := make([]BoxPublicKey, count)
 	for i := 0; i < count; i++ {
-		receivers[i] = receiver
+		receivers[i] = boxPublicKey{key: RawBoxKey{byte(i)}}
 	}
 
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
