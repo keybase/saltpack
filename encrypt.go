@@ -212,10 +212,26 @@ func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, re
 }
 
 func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
+	var order []int
+	switch version.Major {
+	case 1:
+		order = make([]int, len(receivers))
+		for i := 0; i < len(receivers); i++ {
+			order[i] = i
+		}
+	case 2:
+		order = randomPerm(len(receivers))
+	default:
+		// Let caller be responsible for filtering out unknown
+		// versions.
+		panic(ErrBadVersion{version})
+	}
+
 	receiverKeysArray := make([]receiverKeys, len(receivers))
 	for i, receiver := range receivers {
+		index := order[i]
 		sharedKey := ephemeralKey.Precompute(receiver)
-		nonce := nonceForPayloadKeyBox(version, uint64(i))
+		nonce := nonceForPayloadKeyBox(version, uint64(index))
 		payloadKeyBox := sharedKey.Box(nonce, payloadKey[:])
 
 		keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
@@ -225,7 +241,7 @@ func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, epheme
 			keys.ReceiverKID = receiver.ToKID()
 		}
 
-		receiverKeysArray[i] = keys
+		receiverKeysArray[index] = keys
 	}
 
 	return receiverKeysArray
