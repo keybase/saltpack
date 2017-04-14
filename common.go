@@ -104,6 +104,12 @@ func sliceToByte32(in []byte) [32]byte {
 	return out
 }
 
+func sliceToByte64(in []byte) [64]byte {
+	var out [64]byte
+	copyEqualSize(out[:], in)
+	return out
+}
+
 type macKey [cryptoAuthKeyBytes]byte
 
 type payloadHash [sha512.Size]byte
@@ -126,9 +132,7 @@ func computePayloadAuthenticator(macKey macKey, payloadHash payloadHash) payload
 func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
 	nonce := nonceForMACKeyBox(headerHash)
 	macKeyBox := secret.Box(public, nonce, make([]byte, cryptoAuthKeyBytes))
-	var macKey macKey
-	copyEqualSize(macKey[:], macKeyBox[poly1305.TagSize:poly1305.TagSize+cryptoAuthKeyBytes])
-	return macKey
+	return sliceToByte32(macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes])
 }
 
 func computePayloadHash(headerHash headerHash, nonce *Nonce, payloadCiphertext []byte) payloadHash {
@@ -137,9 +141,7 @@ func computePayloadHash(headerHash headerHash, nonce *Nonce, payloadCiphertext [
 	payloadDigest.Write(nonce[:])
 	payloadDigest.Write(payloadCiphertext)
 	h := payloadDigest.Sum(nil)
-	var payloadHash payloadHash
-	copyEqualSize(payloadHash[:], h)
-	return payloadHash
+	return sliceToByte64(h)
 }
 
 func hashHeader(headerBytes []byte) headerHash {
