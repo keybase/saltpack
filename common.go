@@ -98,6 +98,12 @@ func copyEqualSizeStr(out []byte, in string) {
 	copy(out, in)
 }
 
+func sliceToByte32(in []byte) [32]byte {
+	var out [32]byte
+	copyEqualSize(out[:], in)
+	return out
+}
+
 type macKey [cryptoAuthKeyBytes]byte
 
 type payloadHash [sha512.Size]byte
@@ -114,9 +120,7 @@ func computePayloadAuthenticator(macKey macKey, payloadHash payloadHash) payload
 	authenticatorDigest := hmac.New(sha512.New, macKey[:])
 	authenticatorDigest.Write(payloadHash[:])
 	fullMAC := authenticatorDigest.Sum(nil)
-	var auth payloadAuthenticator
-	copyEqualSize(auth[:], fullMAC[:cryptoAuthBytes])
-	return auth
+	return sliceToByte32(fullMAC[:cryptoAuthBytes])
 }
 
 func computeMACKey(secret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
