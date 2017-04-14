@@ -324,10 +324,12 @@ func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
 	order1, receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
 	order2, receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
 
-	// This check is technically flaky, but should happen with low
-	// probability: 1/10! ~ 2^{-22}.
-	if reflect.DeepEqual(receiverKeysArray1, receiverKeysArray2) {
-		t.Fatal("Two calls to boxPayloadKeyForReceivers(Version2()) unexpectedly produced the same array")
+	if !reflect.DeepEqual(order1, order2) {
+		// This branch will not be taken with probability
+		// 1/10! ~ 2^{-22}.
+		if reflect.DeepEqual(receiverKeysArray1, receiverKeysArray2) {
+			t.Fatal("Two calls to boxPayloadKeyForReceivers(Version2()) unexpectedly produced the same array")
+		}
 	}
 
 	for i := 0; i < len(receiverKeysArray1); i++ {
