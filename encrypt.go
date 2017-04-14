@@ -153,7 +153,6 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		Version:    version,
 		Type:       MessageTypeEncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
-		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
 	es.header = eh
 	if err := randomFill(es.payloadKey[:]); err != nil {
@@ -163,20 +162,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	nonce := nonceForSenderKeySecretBox()
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	for i, receiver := range receivers {
-		sharedKey := ephemeralKey.Precompute(receiver)
-		nonce := nonceForPayloadKeyBox(version, uint64(i))
-		payloadKeyBox := sharedKey.Box(nonce, es.payloadKey[:])
-
-		keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
-
-		// Don't specify the receivers if this public key wants to hide
-		if !receiver.HideIdentity() {
-			keys.ReceiverKID = receiver.ToKID()
-		}
-
-		eh.Receivers = append(eh.Receivers, keys)
-	}
+	eh.Receivers = boxPayloadKey(version, receivers, ephemeralKey, es.payloadKey)
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(es.header)
@@ -223,6 +209,26 @@ func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, re
 		macKeys = append(macKeys, macKey)
 	}
 	return macKeys
+}
+
+func boxPayloadKey(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
+	receiverKeysArray := make([]receiverKeys, len(receivers))
+	for i, receiver := range receivers {
+		sharedKey := ephemeralKey.Precompute(receiver)
+		nonce := nonceForPayloadKeyBox(version, uint64(i))
+		payloadKeyBox := sharedKey.Box(nonce, payloadKey[:])
+
+		keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
+
+		// Don't specify the receivers if this public key wants to hide
+		if !receiver.HideIdentity() {
+			keys.ReceiverKID = receiver.ToKID()
+		}
+
+		receiverKeysArray[i] = keys
+	}
+
+	return receiverKeysArray
 }
 
 func (es *encryptStream) Close() error {
