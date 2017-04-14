@@ -275,7 +275,7 @@ func TestBoxPayloadKeyForReceiversV1(t *testing.T) {
 	// same, and we use the same nonce.
 	for i, receiverKeys := range receiverKeysArray {
 		if !receiverKeysEqual(receiverKeys, receiverKeysArray[0]) {
-			t.Fatal("receiverKeysArray[%d] = %+v != receiverKeysArray[0] = %+v", i, receiverKeys, receiverKeysArray[0])
+			t.Errorf("receiverKeysArray[%d] == %+v != receiverKeysArray[0] == %+v", i, receiverKeys, receiverKeysArray[0])
 		}
 	}
 }
@@ -297,9 +297,11 @@ func TestBoxPayloadKeyForReceiversV2(t *testing.T) {
 	}
 
 	// No entries should be the same, since we use different nonces.
-	for i, receiverKeys := range receiverKeysArray {
-		if !receiverKeysEqual(receiverKeys, receiverKeysArray[0]) {
-			t.Fatal("receiverKeysArray[%d] = %+v != receiverKeysArray[0] = %+v", i, receiverKeys, receiverKeysArray[0])
+	for i := 1; i < len(receiverKeysArray); i++ {
+		for j := i + 1; j < len(receiverKeysArray); j++ {
+			if receiverKeysEqual(receiverKeysArray[i], receiverKeysArray[j]) {
+				t.Errorf("receiverKeysArray[%d] == receiverKeysArray[%d] == %+v", i, j, receiverKeysArray[i])
+			}
 		}
 	}
 }
