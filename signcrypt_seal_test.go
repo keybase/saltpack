@@ -30,6 +30,6 @@ func TestSealEncryptionKeyForReceiversPermuted(t *testing.T) {
 	// Technically this check is flaky, but the flake probability
 	// is 1/20! ~ 2^{-61}.
 	if reflect.DeepEqual(receiverKeysArray1, receiverKeysArray2) {
-		t.Fatal("Two calls to boxPayloadKeyForReceivers(Version2()) unexpectedly produced the same array")
+		t.Fatal("Two calls to sealEncryptionKeyForReceivers() unexpectedly produced the same array")
 	}
 }
