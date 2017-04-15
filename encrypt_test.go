@@ -262,7 +262,8 @@ func TestBoxPayloadKeyForReceiversV1AllEqual(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	_, receiverKeysArray := boxPayloadKeyForReceivers(Version1(), receivers, ephemeralKey, payloadKey)
+	order := computeReceiverOrder(Version1(), len(receivers))
+	receiverKeysArray := boxPayloadKeyForReceivers(Version1(), order, receivers, ephemeralKey, payloadKey)
 	if len(receiverKeysArray) != len(receivers) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
@@ -287,7 +288,8 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	_, receiverKeysArray := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	order := computeReceiverOrder(Version2(), len(receivers))
+	receiverKeysArray := boxPayloadKeyForReceivers(Version2(), order, receivers, ephemeralKey, payloadKey)
 	if len(receiverKeysArray) != len(receivers) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
@@ -321,8 +323,10 @@ func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	order1, receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
-	order2, receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	order1 := computeReceiverOrder(Version2(), len(receivers))
+	receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), order1, receivers, ephemeralKey, payloadKey)
+	order2 := computeReceiverOrder(Version2(), len(receivers))
+	receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), order2, receivers, ephemeralKey, payloadKey)
 
 	if !reflect.DeepEqual(order1, order2) {
 		// This branch will not be taken with probability
@@ -353,7 +357,8 @@ func testReceiverKeyMACKeyOrder(t *testing.T, version Version) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := [32]byte{0x6}
 
-	order, receiverKeysArray := boxPayloadKeyForReceivers(version, receivers, ephemeralKey, payloadKey)
+	order := computeReceiverOrder(Version2(), len(receivers))
+	receiverKeysArray := boxPayloadKeyForReceivers(version, order, receivers, ephemeralKey, payloadKey)
 
 	sender := boxSecretKey{key: RawBoxKey{0x50}}
 	headerHash := headerHash{0x5}

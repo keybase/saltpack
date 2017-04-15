@@ -162,8 +162,8 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	nonce := nonceForSenderKeySecretBox()
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	var order []int
-	order, eh.Receivers = boxPayloadKeyForReceivers(version, receivers, ephemeralKey, es.payloadKey)
+	order := computeReceiverOrder(version, len(receivers))
+	eh.Receivers = boxPayloadKeyForReceivers(version, order, receivers, ephemeralKey, es.payloadKey)
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(es.header)
@@ -247,16 +247,13 @@ func boxPayloadKeyForReceiver(version Version, index uint64, receiver BoxPublicK
 // boxPayloadKeyForReceivers returns an order and an array of
 // receiverKeys such that the receiverKeys for receivers[i] is in
 // receiverKeysArray[order[i]].
-func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) (order []int, receiverKeysArray []receiverKeys) {
-	order = computeReceiverOrder(version, len(receivers))
-
-	receiverKeysArray = make([]receiverKeys, len(receivers))
+func boxPayloadKeyForReceivers(version Version, order []int, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
+	receiverKeysArray := make([]receiverKeys, len(receivers))
 	for i, receiver := range receivers {
 		index := order[i]
 		receiverKeysArray[index] = boxPayloadKeyForReceiver(version, uint64(index), receiver, ephemeralKey, payloadKey)
 	}
-
-	return order, receiverKeysArray
+	return receiverKeysArray
 }
 
 func (es *encryptStream) Close() error {
