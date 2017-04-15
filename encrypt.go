@@ -212,6 +212,21 @@ func computeMACKeysSender(version Version, order []int, sender, ephemeralKey Box
 	return macKeys
 }
 
+func boxPayloadKeyForReceiver(version Version, index uint64, receiver BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) receiverKeys {
+	sharedKey := ephemeralKey.Precompute(receiver)
+	nonce := nonceForPayloadKeyBox(version, index)
+	payloadKeyBox := sharedKey.Box(nonce, payloadKey[:])
+
+	keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
+
+	// Don't specify the receivers if this public key wants to hide
+	if !receiver.HideIdentity() {
+		keys.ReceiverKID = receiver.ToKID()
+	}
+
+	return keys
+}
+
 // boxPayloadKeyForReceivers returns an order and an array of
 // receiverKeys such that the receiverKeys for receivers[i] is in
 // receiverKeysArray[order[i]].
@@ -233,18 +248,7 @@ func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, epheme
 	receiverKeysArray = make([]receiverKeys, len(receivers))
 	for i, receiver := range receivers {
 		index := order[i]
-		sharedKey := ephemeralKey.Precompute(receiver)
-		nonce := nonceForPayloadKeyBox(version, uint64(index))
-		payloadKeyBox := sharedKey.Box(nonce, payloadKey[:])
-
-		keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
-
-		// Don't specify the receivers if this public key wants to hide
-		if !receiver.HideIdentity() {
-			keys.ReceiverKID = receiver.ToKID()
-		}
-
-		receiverKeysArray[index] = keys
+		receiverKeysArray[index] = boxPayloadKeyForReceiver(version, uint64(index), receiver, ephemeralKey, payloadKey)
 	}
 
 	return order, receiverKeysArray

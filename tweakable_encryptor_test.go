@@ -159,8 +159,8 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 	}
 
 	for rid, receiver := range receivers {
-
-		payloadKeySlice := pes.payloadKey[:]
+		payloadKeyCopy := pes.payloadKey
+		payloadKeySlice := payloadKeyCopy[:]
 		if pes.options.corruptPayloadKey != nil {
 			pes.options.corruptPayloadKey(&payloadKeySlice, rid)
 		}
