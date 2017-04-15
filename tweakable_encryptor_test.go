@@ -159,31 +159,7 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 	}
 
 	for rid, receiver := range receivers {
-		payloadKeyCopy := pes.payloadKey
-		payloadKeySlice := payloadKeyCopy[:]
-		if pes.options.corruptPayloadKey != nil {
-			pes.options.corruptPayloadKey(&payloadKeySlice, rid)
-		}
-
-		nonceTmp := nonceForPayloadKeyBox(version, uint64(rid))
-		if pes.options.corruptKeysNonce != nil {
-			nonceTmp = pes.options.corruptKeysNonce(nonceTmp, rid)
-		}
-
-		payloadKeyBox := ephemeralKey.Box(receiver, nonceTmp, payloadKeySlice)
-
-		keys := receiverKeys{
-			PayloadKeyBox: payloadKeyBox,
-		}
-
-		// Don't specify the receivers if this public key wants to hide
-		if !receiver.HideIdentity() {
-			keys.ReceiverKID = receiver.ToKID()
-		}
-
-		if pes.options.corruptReceiverKeys != nil {
-			pes.options.corruptReceiverKeys(&keys, rid)
-		}
+		keys := pes.boxPayloadKeyForReceiver(version, rid, receiver, ephemeralKey)
 
 		eh.Receivers = append(eh.Receivers, keys)
 	}
@@ -216,6 +192,34 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 	pes.macKeys = computeMACKeysSender(pes.header.Version, order, sender, ephemeralKey, receivers, pes.headerHash)
 
 	return nil
+}
+
+func (pes *testEncryptStream) boxPayloadKeyForReceiver(version Version, index int, receiver BoxPublicKey, ephemeralKey BoxSecretKey) receiverKeys {
+	nonce := nonceForPayloadKeyBox(version, uint64(index))
+	if pes.options.corruptKeysNonce != nil {
+		nonce = pes.options.corruptKeysNonce(nonce, index)
+	}
+
+	payloadKeyCopy := pes.payloadKey
+	payloadKeySlice := payloadKeyCopy[:]
+	if pes.options.corruptPayloadKey != nil {
+		pes.options.corruptPayloadKey(&payloadKeySlice, index)
+	}
+
+	payloadKeyBox := ephemeralKey.Box(receiver, nonce, payloadKeySlice)
+
+	keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
+
+	// Don't specify the receivers if this public key wants to hide
+	if !receiver.HideIdentity() {
+		keys.ReceiverKID = receiver.ToKID()
+	}
+
+	if pes.options.corruptReceiverKeys != nil {
+		pes.options.corruptReceiverKeys(&keys, index)
+	}
+
+	return keys
 }
 
 func (pes *testEncryptStream) Close() error {
