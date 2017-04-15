@@ -201,6 +201,8 @@ func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecre
 	}
 }
 
+// computeMACKeysSender returns an array of macKeys such that the
+// macKey for receivers[i] is in macKeys[order[i]].
 func computeMACKeysSender(version Version, order []int, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
 	macKeys := make([]macKey, len(receivers))
 	// Use the header hash to compute the MAC keys.
@@ -244,8 +246,8 @@ func boxPayloadKeyForReceiver(version Version, index uint64, receiver BoxPublicK
 	return keys
 }
 
-// boxPayloadKeyForReceivers returns an order and an array of
-// receiverKeys such that the receiverKeys for receivers[i] is in
+// boxPayloadKeyForReceivers returns an array of receiverKeys such
+// that the receiverKeys for receivers[i] is in
 // receiverKeysArray[order[i]].
 func boxPayloadKeyForReceivers(version Version, order []int, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
 	receiverKeysArray := make([]receiverKeys, len(receivers))
