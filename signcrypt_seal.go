@@ -240,15 +240,18 @@ func (sss *signcryptSealStream) init(receiverBoxKeys []BoxPublicKey, receiverSym
 }
 
 func sealEncryptionKeyForReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKey BoxSecretKey, encryptionKey SymmetricKey) []receiverKeys {
+	order := randomPerm(len(receiverBoxKeys) + len(receiverSymmetricKeys))
+
 	receiverKeysArray := make([]receiverKeys, len(receiverBoxKeys)+len(receiverSymmetricKeys))
 	// Collect all the recipient identifiers, and encrypt the payload key for
 	// all of them.
 	for i, receiverBoxKey := range receiverBoxKeys {
-		receiverKeysArray[i] = receiverEntryForBoxKey(receiverBoxKey, ephemeralKey, encryptionKey, uint64(i))
+		index := order[i]
+		receiverKeysArray[index] = receiverEntryForBoxKey(receiverBoxKey, ephemeralKey, encryptionKey, uint64(index))
 	}
 	for i, receiverSymmetricKey := range receiverSymmetricKeys {
-		index := uint64(len(receiverBoxKeys) + i)
-		receiverKeysArray[index] = receiverEntryForSymmetricKey(receiverSymmetricKey, ephemeralKey.GetPublicKey(), encryptionKey, index)
+		index := order[len(receiverBoxKeys)+i]
+		receiverKeysArray[index] = receiverEntryForSymmetricKey(receiverSymmetricKey, ephemeralKey.GetPublicKey(), encryptionKey, uint64(index))
 	}
 
 	return receiverKeysArray
