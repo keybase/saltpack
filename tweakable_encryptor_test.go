@@ -22,7 +22,7 @@ type testEncryptionOptions struct {
 	corruptReceiverKeys         func(rk *receiverKeys, rid int)
 	corruptSenderKeyPlaintext   func(pk *[]byte)
 	corruptSenderKeyCiphertext  func(pk []byte)
-	corruptHeader               func(eh *EncryptionHeader)
+	corruptHeader               func(order []int, eh *EncryptionHeader)
 	corruptHeaderPacked         func(b []byte)
 }
 
@@ -158,17 +158,14 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		pes.options.corruptSenderKeyCiphertext(eh.SenderSecretbox)
 	}
 
-	for rid, receiver := range receivers {
-		keys := pes.boxPayloadKeyForReceiver(version, rid, receiver, ephemeralKey)
-
-		eh.Receivers = append(eh.Receivers, keys)
-	}
+	order := computeReceiverOrder(version, len(receivers))
+	eh.Receivers = pes.boxPayloadKeyForReceivers(version, order, receivers, ephemeralKey)
 
 	// Corrupt a copy so that the corruption doesn't cause
 	// e.g. computeMACKeys to panic.
 	ehMaybeCorrupt := *eh
 	if pes.options.corruptHeader != nil {
-		pes.options.corruptHeader(&ehMaybeCorrupt)
+		pes.options.corruptHeader(order, &ehMaybeCorrupt)
 	}
 
 	// Encode the header and the header length, and write them out immediately.
@@ -185,25 +182,21 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		return err
 	}
 
-	order := make([]int, len(receivers))
-	for i := 0; i < len(receivers); i++ {
-		order[i] = i
-	}
 	pes.macKeys = computeMACKeysSender(pes.header.Version, order, sender, ephemeralKey, receivers, pes.headerHash)
 
 	return nil
 }
 
-func (pes *testEncryptStream) boxPayloadKeyForReceiver(version Version, index int, receiver BoxPublicKey, ephemeralKey BoxSecretKey) receiverKeys {
+func (pes *testEncryptStream) boxPayloadKeyForReceiver(version Version, rid, index int, receiver BoxPublicKey, ephemeralKey BoxSecretKey) receiverKeys {
 	nonce := nonceForPayloadKeyBox(version, uint64(index))
 	if pes.options.corruptKeysNonce != nil {
-		pes.options.corruptKeysNonce(&nonce, index)
+		pes.options.corruptKeysNonce(&nonce, rid)
 	}
 
 	payloadKeyCopy := pes.payloadKey
 	payloadKeySlice := payloadKeyCopy[:]
 	if pes.options.corruptPayloadKey != nil {
-		pes.options.corruptPayloadKey(&payloadKeySlice, index)
+		pes.options.corruptPayloadKey(&payloadKeySlice, rid)
 	}
 
 	payloadKeyBox := ephemeralKey.Box(receiver, nonce, payloadKeySlice)
@@ -216,10 +209,19 @@ func (pes *testEncryptStream) boxPayloadKeyForReceiver(version Version, index in
 	}
 
 	if pes.options.corruptReceiverKeys != nil {
-		pes.options.corruptReceiverKeys(&keys, index)
+		pes.options.corruptReceiverKeys(&keys, rid)
 	}
 
 	return keys
+}
+
+func (pes *testEncryptStream) boxPayloadKeyForReceivers(version Version, order []int, receivers []BoxPublicKey, ephemeralKey BoxSecretKey) []receiverKeys {
+	receiverKeysArray := make([]receiverKeys, len(receivers))
+	for i, receiver := range receivers {
+		index := order[i]
+		receiverKeysArray[index] = pes.boxPayloadKeyForReceiver(version, i, index, receiver, ephemeralKey)
+	}
+	return receiverKeysArray
 }
 
 func (pes *testEncryptStream) Close() error {
