@@ -674,10 +674,8 @@ func testEmptyReceivers(t *testing.T, version Version) {
 func testCorruptHeaderNonce(t *testing.T, version Version) {
 	msg := randomMsg(t, 129)
 	teo := testEncryptionOptions{
-		corruptKeysNonce: func(n Nonce, rid int) Nonce {
-			ret := n
-			ret[4] ^= 1
-			return ret
+		corruptKeysNonce: func(n *Nonce, rid int) {
+			n[4] ^= 1
 		},
 	}
 	sender := newBoxKey(t)
@@ -695,13 +693,10 @@ func testCorruptHeaderNonce(t *testing.T, version Version) {
 func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 	msg := randomMsg(t, 129)
 	teo := testEncryptionOptions{
-		corruptKeysNonce: func(n Nonce, rid int) Nonce {
+		corruptKeysNonce: func(n *Nonce, rid int) {
 			if rid == 5 {
-				ret := n
-				ret[4] ^= 1
-				return ret
+				n[4] ^= 1
 			}
-			return n
 		},
 	}
 	sender := newBoxKey(t)
@@ -727,13 +722,10 @@ func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 	// If someone else's encryption was tampered with, we don't care and
 	// shouldn't get an error.
 	teo = testEncryptionOptions{
-		corruptKeysNonce: func(n Nonce, rid int) Nonce {
+		corruptKeysNonce: func(n *Nonce, rid int) {
 			if rid != 5 {
-				ret := n
-				ret[4] ^= 1
-				return ret
+				n[4] ^= 1
 			}
-			return n
 		},
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
@@ -995,14 +987,13 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	msg = randomMsg(t, 1024*2-1)
 	ciphertext, err = testSeal(version, msg, sender, receivers, testEncryptionOptions{
 		blockSize: 1024,
-		corruptPayloadNonce: func(n Nonce, ebn encryptionBlockNumber) Nonce {
+		corruptPayloadNonce: func(n *Nonce, ebn encryptionBlockNumber) {
 			switch ebn {
 			case 1:
-				return nonceForChunkSecretBox(encryptionBlockNumber(0))
+				*n = nonceForChunkSecretBox(encryptionBlockNumber(0))
 			case 0:
-				return nonceForChunkSecretBox(encryptionBlockNumber(1))
+				*n = nonceForChunkSecretBox(encryptionBlockNumber(1))
 			}
-			return n
 		},
 	})
 	if err != nil {
@@ -1042,13 +1033,10 @@ func testCorruptNonce(t *testing.T, version Version) {
 	msg := randomMsg(t, 1024*11)
 	teo := testEncryptionOptions{
 		blockSize: 1024,
-		corruptPayloadNonce: func(n Nonce, ebn encryptionBlockNumber) Nonce {
+		corruptPayloadNonce: func(n *Nonce, ebn encryptionBlockNumber) {
 			if ebn == 2 {
-				ret := n
-				ret[23]++
-				return ret
+				n[23]++
 			}
-			return n
 		},
 	}
 	sender := newBoxKey(t)
