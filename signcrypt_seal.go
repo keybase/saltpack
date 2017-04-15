@@ -222,17 +222,7 @@ func (sss *signcryptSealStream) init(receiverBoxKeys []BoxPublicKey, receiverSym
 		eh.SenderSecretbox = secretbox.Seal([]byte{}, sss.signingKey.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 	}
 
-	// Collect all the recipient identifiers, and encrypt the payload key for
-	// all of them.
-	var recipientIndex uint64
-	for _, receiverBoxKey := range receiverBoxKeys {
-		eh.Receivers = append(eh.Receivers, receiverEntryForBoxKey(receiverBoxKey, ephemeralKey, sss.encryptionKey, recipientIndex))
-		recipientIndex++
-	}
-	for _, receiverSymmetricKey := range receiverSymmetricKeys {
-		eh.Receivers = append(eh.Receivers, receiverEntryForSymmetricKey(receiverSymmetricKey, ephemeralKey.GetPublicKey(), sss.encryptionKey, recipientIndex))
-		recipientIndex++
-	}
+	eh.Receivers = sealEncryptionKeyForReceivers(receiverBoxKeys, receiverSymmetricKeys, ephemeralKey, sss.encryptionKey)
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(sss.header)
