@@ -260,7 +260,7 @@ func TestBoxPayloadKeyForReceiversV1AllEqual(t *testing.T) {
 	}
 
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
-	payloadKey := [32]byte{0x6}
+	payloadKey := SymmetricKey{0x6}
 
 	order := computeReceiverOrder(Version1(), len(receivers))
 	receiverKeysArray := boxPayloadKeyForReceivers(Version1(), order, receivers, ephemeralKey, payloadKey)
@@ -286,7 +286,7 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 	}
 
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
-	payloadKey := [32]byte{0x6}
+	payloadKey := SymmetricKey{0x6}
 
 	order := computeReceiverOrder(Version2(), len(receivers))
 	receiverKeysArray := boxPayloadKeyForReceivers(Version2(), order, receivers, ephemeralKey, payloadKey)
@@ -321,7 +321,7 @@ func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
 	}
 
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
-	payloadKey := [32]byte{0x6}
+	payloadKey := SymmetricKey{0x6}
 
 	order1 := computeReceiverOrder(Version2(), len(receivers))
 	receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), order1, receivers, ephemeralKey, payloadKey)
@@ -355,7 +355,7 @@ func testReceiverKeyMACKeyOrder(t *testing.T, version Version) {
 	}
 
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
-	payloadKey := [32]byte{0x6}
+	payloadKey := SymmetricKey{0x6}
 
 	order := computeReceiverOrder(Version2(), len(receivers))
 	receiverKeysArray := boxPayloadKeyForReceivers(version, order, receivers, ephemeralKey, payloadKey)
