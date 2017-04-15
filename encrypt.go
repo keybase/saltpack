@@ -212,6 +212,23 @@ func computeMACKeysSender(version Version, order []int, sender, ephemeralKey Box
 	return macKeys
 }
 
+func computeReceiverOrder(version Version, receiverCount int) []int {
+	switch version.Major {
+	case 1:
+		order := make([]int, receiverCount)
+		for i := 0; i < receiverCount; i++ {
+			order[i] = i
+		}
+		return order
+	case 2:
+		return randomPerm(receiverCount)
+	default:
+		// Let caller be responsible for filtering out unknown
+		// versions.
+		panic(ErrBadVersion{version})
+	}
+}
+
 func boxPayloadKeyForReceiver(version Version, index uint64, receiver BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) receiverKeys {
 	sharedKey := ephemeralKey.Precompute(receiver)
 	nonce := nonceForPayloadKeyBox(version, index)
@@ -231,19 +248,7 @@ func boxPayloadKeyForReceiver(version Version, index uint64, receiver BoxPublicK
 // receiverKeys such that the receiverKeys for receivers[i] is in
 // receiverKeysArray[order[i]].
 func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) (order []int, receiverKeysArray []receiverKeys) {
-	switch version.Major {
-	case 1:
-		order = make([]int, len(receivers))
-		for i := 0; i < len(receivers); i++ {
-			order[i] = i
-		}
-	case 2:
-		order = randomPerm(len(receivers))
-	default:
-		// Let caller be responsible for filtering out unknown
-		// versions.
-		panic(ErrBadVersion{version})
-	}
+	order = computeReceiverOrder(version, len(receivers))
 
 	receiverKeysArray = make([]receiverKeys, len(receivers))
 	for i, receiver := range receivers {
