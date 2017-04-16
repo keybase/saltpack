@@ -176,8 +176,8 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		return err
 	}
 
-	// TODO: Plumb the pre-computed shared keys above through to
-	// computeMACKeysSender.
+	// TODO: Plumb the pre-computed shared ephemeral keys from
+	// boxPayloadKeyForReceivers through to computeMACKeysSender.
 	es.macKeys = computeMACKeysSender(es.header.Version, order, sender, ephemeralKey, receivers, es.headerHash)
 
 	return nil
