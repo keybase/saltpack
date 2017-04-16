@@ -271,11 +271,13 @@ func (ds *decryptStream) processEncryptionHeader(hdr *EncryptionHeader) error {
 }
 
 func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, public, ePublic BoxPublicKey, headerHash headerHash) macKey {
-	switch version {
-	case Version1():
+	// Switch on the major version since we're reading, and so may
+	// encounter headers written by unknown minor versions.
+	switch version.Major {
+	case 1:
 		nonce := nonceForMACKeyBoxV1(headerHash)
 		return computeMACKeySingle(secret, public, nonce)
-	case Version2():
+	case 2:
 		nonce := nonceForMACKeyBoxV2(headerHash, false, index)
 		mac := computeMACKeySingle(secret, public, nonce)
 		eNonce := nonceForMACKeyBoxV2(headerHash, true, index)

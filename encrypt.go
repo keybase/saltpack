@@ -199,6 +199,8 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 }
 
 func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
+	// Switch on the whole version (i.e., not just the major
+	// version) since we're writing.
 	switch version {
 	case Version1():
 		nonce := nonceForMACKeyBoxV1(headerHash)
