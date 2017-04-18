@@ -198,33 +198,6 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	return nil
 }
 
-func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
-	// Switch on the whole version (i.e., not just the major
-	// version) since we're writing.
-	switch version {
-	case Version1():
-		nonce := nonceForMACKeyBoxV1(headerHash)
-		return computeMACKeySingle(secret, public, nonce)
-	case Version2():
-		nonce := nonceForMACKeyBoxV2(headerHash, false, index)
-		mac := computeMACKeySingle(secret, public, nonce)
-		eNonce := nonceForMACKeyBoxV2(headerHash, true, index)
-		eMAC := computeMACKeySingle(eSecret, public, eNonce)
-		return sum512Truncate256(append(mac[:], eMAC[:]...))
-	default:
-		panic(ErrBadVersion{version})
-	}
-}
-
-func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
-	var macKeys []macKey
-	for i, receiver := range receivers {
-		macKey := computeMACKeySender(version, uint64(i), sender, ephemeralKey, receiver, headerHash)
-		macKeys = append(macKeys, macKey)
-	}
-	return macKeys
-}
-
 func (es *encryptStream) Close() error {
 	for es.buffer.Len() > 0 {
 		err := es.encryptBlock()

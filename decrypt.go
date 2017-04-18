@@ -270,24 +270,6 @@ func (ds *decryptStream) processEncryptionHeader(hdr *EncryptionHeader) error {
 	return nil
 }
 
-func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, public, ePublic BoxPublicKey, headerHash headerHash) macKey {
-	// Switch on the major version since we're reading, and so may
-	// encounter headers written by unknown minor versions.
-	switch version.Major {
-	case 1:
-		nonce := nonceForMACKeyBoxV1(headerHash)
-		return computeMACKeySingle(secret, public, nonce)
-	case 2:
-		nonce := nonceForMACKeyBoxV2(headerHash, false, index)
-		mac := computeMACKeySingle(secret, public, nonce)
-		eNonce := nonceForMACKeyBoxV2(headerHash, true, index)
-		eMAC := computeMACKeySingle(secret, ePublic, eNonce)
-		return sum512Truncate256(append(mac[:], eMAC[:]...))
-	default:
-		panic(ErrBadVersion{version})
-	}
-}
-
 func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlock) ([]byte, error) {
 
 	blockNum := encryptionBlockNumber(bl.seqno - 1)
