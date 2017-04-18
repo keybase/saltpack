@@ -24,6 +24,9 @@ func nonceForPayloadKeyBoxV2(recip uint64) Nonce {
 }
 
 func nonceForPayloadKeyBox(version Version, recip uint64) Nonce {
+	// Switch on the major version since this is called during
+	// both writing and reading, and in the latter we may
+	// encounter headers written by unknown minor versions.
 	switch version.Major {
 	case 1:
 		return stringToByte24("saltpack_payload_key_box")

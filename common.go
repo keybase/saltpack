@@ -154,47 +154,6 @@ func sum512Truncate256(in []byte) [32]byte {
 	return sliceToByte32(sum512[:32])
 }
 
-func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecretKey, public BoxPublicKey, headerHash headerHash) macKey {
-	switch version {
-	case Version1():
-		nonce := nonceForMACKeyBoxV1(headerHash)
-		return computeMACKeySingle(secret, public, nonce)
-	case Version2():
-		nonce := nonceForMACKeyBoxV2(headerHash, false, index)
-		mac := computeMACKeySingle(secret, public, nonce)
-		eNonce := nonceForMACKeyBoxV2(headerHash, true, index)
-		eMAC := computeMACKeySingle(eSecret, public, eNonce)
-		return sum512Truncate256(append(mac[:], eMAC[:]...))
-	default:
-		panic(ErrBadVersion{version})
-	}
-}
-
-func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, public, ePublic BoxPublicKey, headerHash headerHash) macKey {
-	switch version {
-	case Version1():
-		nonce := nonceForMACKeyBoxV1(headerHash)
-		return computeMACKeySingle(secret, public, nonce)
-	case Version2():
-		nonce := nonceForMACKeyBoxV2(headerHash, false, index)
-		mac := computeMACKeySingle(secret, public, nonce)
-		eNonce := nonceForMACKeyBoxV2(headerHash, true, index)
-		eMAC := computeMACKeySingle(secret, ePublic, eNonce)
-		return sum512Truncate256(append(mac[:], eMAC[:]...))
-	default:
-		panic(ErrBadVersion{version})
-	}
-}
-
-func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
-	var macKeys []macKey
-	for i, receiver := range receivers {
-		macKey := computeMACKeySender(version, uint64(i), sender, ephemeralKey, receiver, headerHash)
-		macKeys = append(macKeys, macKey)
-	}
-	return macKeys
-}
-
 func computePayloadHash(headerHash headerHash, nonce Nonce, payloadCiphertext []byte) payloadHash {
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
