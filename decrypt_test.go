@@ -7,9 +7,9 @@ import "testing"
 
 func TestVersionValidator(t *testing.T) {
 	plaintext := []byte{0x01}
-	sndr := newBoxKey(t)
+	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
-	ciphertext, err := Seal(Version1(), plaintext, sndr, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -18,4 +18,36 @@ func TestVersionValidator(t *testing.T) {
 	if err == nil {
 		t.Fatal("Unexpected nil error")
 	}
+}
+
+func testNewMinorVersion(t *testing.T, version Version) {
+	plaintext := []byte{0x01}
+
+	newVersion := version
+	newVersion.Minor++
+
+	teo := testEncryptionOptions{
+		blockSize: 1024,
+		corruptHeader: func(eh *EncryptionHeader) {
+			eh.Version = newVersion
+		},
+	}
+	sender := newBoxKey(t)
+	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
+	ciphertext, err := testSeal(version, plaintext, sender, receivers, teo)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err = Open(SingleVersionValidator(newVersion), ciphertext, kr)
+	if err != nil {
+		t.Fatalf("Unepected error %v", err)
+	}
+}
+
+func TestDecrypt(t *testing.T) {
+	tests := []func(*testing.T, Version){
+		testNewMinorVersion,
+	}
+	runTestsOverVersions(t, "test", tests)
 }
