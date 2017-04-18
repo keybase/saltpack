@@ -217,6 +217,8 @@ func computeMACKeysSender(version Version, order []int, sender, ephemeralKey Box
 func computeReceiverOrder(version Version, receiverCount int) []int {
 	switch version.Major {
 	case 1:
+		// TODO: Consider randomizing this also for v1, since
+		// that shouldn't break anything.
 		order := make([]int, receiverCount)
 		for i := 0; i < receiverCount; i++ {
 			order[i] = i
