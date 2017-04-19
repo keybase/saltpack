@@ -50,6 +50,11 @@ type encryptionBlockV1 struct {
 	seqno              packetSeqno
 }
 
+type encryptionBlockV2 struct {
+	encryptionBlockV1
+	IsFinal []byte `codec:"final"`
+}
+
 func (h *EncryptionHeader) validate(versionValidator func(Version) error) error {
 	if h.Type != MessageTypeEncryption {
 		return ErrWrongMessageType{MessageTypeEncryption, h.Type}
