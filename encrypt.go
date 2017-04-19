@@ -77,7 +77,7 @@ func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, ciphertext)
+	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, ciphertext, isFinal)
 	for _, macKey := range es.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		blockV1.HashAuthenticators = append(blockV1.HashAuthenticators, authenticator)

@@ -109,7 +109,7 @@ func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, ciphertext)
+	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, ciphertext, isFinal)
 	for _, macKey := range pes.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		blockV1.HashAuthenticators = append(blockV1.HashAuthenticators, authenticator)

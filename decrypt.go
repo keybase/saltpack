@@ -133,7 +133,7 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 		ebV1.seqno = seqno
 
 		var plaintext []byte
-		plaintext, err = ds.processEncryptionBlockV1(&ebV1)
+		plaintext, err = ds.processEncryptionBlock(&ebV1, false)
 		if err != nil {
 			return 0, false, err
 		}
@@ -165,7 +165,7 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 		ebV2.seqno = seqno
 
 		var plaintext []byte
-		plaintext, err = ds.processEncryptionBlockV1(&ebV2.encryptionBlockV1)
+		plaintext, err = ds.processEncryptionBlock(&ebV2.encryptionBlockV1, ebV2.IsFinal)
 		if err != nil {
 			return 0, false, err
 		}
@@ -332,7 +332,7 @@ func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, p
 	}
 }
 
-func (ds *decryptStream) processEncryptionBlockV1(bl *encryptionBlockV1) ([]byte, error) {
+func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlockV1, v2IsFinal bool) ([]byte, error) {
 
 	blockNum := encryptionBlockNumber(bl.seqno - 1)
 
@@ -344,7 +344,7 @@ func (ds *decryptStream) processEncryptionBlockV1(bl *encryptionBlockV1) ([]byte
 	ciphertext := bl.PayloadCiphertext
 
 	// Check the authenticator.
-	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, ciphertext)
+	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, ciphertext, v2IsFinal)
 	ourAuthenticator := computePayloadAuthenticator(ds.macKey, hashToAuthenticate)
 	if !ourAuthenticator.Equal(bl.HashAuthenticators[ds.position]) {
 		return nil, ErrBadTag(bl.seqno)
