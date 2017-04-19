@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"encoding/hex"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/nacl/secretbox"
@@ -53,6 +54,9 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 	var n int
 	var err error
 	n, err = es.buffer.Read(es.inblock[:])
+	if err == io.EOF && isFinal {
+		err = nil
+	}
 	if err != nil {
 		return err
 	}
@@ -60,7 +64,6 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 }
 
 func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
-
 	if err := es.numBlocks.check(); err != nil {
 		return err
 	}
@@ -249,17 +252,40 @@ func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, re
 }
 
 func (es *encryptStream) Close() error {
-	for es.buffer.Len() > 0 {
+	switch es.header.Version {
+	case Version1():
+		if es.buffer.Len() > 0 {
+			err := es.encryptBlock(true)
+			if err != nil {
+				return err
+			}
+		}
+	case Version2():
 		err := es.encryptBlock(true)
 		if err != nil {
 			return err
 		}
+	default:
+		panic(ErrBadVersion{es.header.Version})
 	}
+
+	if es.buffer.Len() > 0 {
+		panic(fmt.Sprintf("es.buffer.Len()=%d > 0", es.buffer.Len()))
+	}
+
 	return es.writeFooter()
 }
 
 func (es *encryptStream) writeFooter() error {
-	return es.encryptBytes([]byte{}, true)
+	switch es.header.Version {
+	case Version1():
+		return es.encryptBytes([]byte{}, true)
+	case Version2():
+		// Nothing left to do.
+		return nil
+	default:
+		panic(ErrBadVersion{es.header.Version})
+	}
 }
 
 // NewEncryptStream creates a stream that consumes plaintext data.

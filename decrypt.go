@@ -27,6 +27,7 @@ type decryptStream struct {
 	macKey           macKey
 	position         int
 	mki              MessageKeyInfo
+	onLastBlockV2    bool
 }
 
 // MessageKeyInfo conveys all of the data about the keys used in this encrypted message.
@@ -86,6 +87,9 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 
 	if ds.state == stateEndOfStream {
 		ds.err = assertEndOfStream(ds.mps)
+		if ds.err == io.EOF {
+			return n, ds.err
+		}
 		if ds.err != nil {
 			return 0, ds.err
 		}
@@ -119,43 +123,65 @@ func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 }
 
 func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) {
-	var ebV1 *encryptionBlockV1
-	var seqno packetSeqno
 	switch ds.version.Major {
 	case 1:
-		var tmp encryptionBlockV1
-		seqno, err = ds.mps.Read(&tmp)
+		var ebV1 encryptionBlockV1
+		seqno, err := ds.mps.Read(&ebV1)
 		if err != nil {
 			return 0, false, err
 		}
-		tmp.seqno = seqno
-		ebV1 = &tmp
+		ebV1.seqno = seqno
+
+		var plaintext []byte
+		plaintext, err = ds.processEncryptionBlockV1(&ebV1)
+		if err != nil {
+			return 0, false, err
+		}
+
+		if plaintext == nil {
+			return 0, true, nil
+		}
+
+		// Copy as much as we can into the given outbuffer
+		n = copy(b, plaintext)
+		// Leave the remainder for a subsequent read
+		ds.buf = plaintext[n:]
+
+		return n, false, nil
 	case 2:
+		if ds.onLastBlockV2 {
+			// Copy as much as we can into the given outbuffer
+			n = copy(b, ds.buf)
+			// Leave the remainder for a subsequent read
+			ds.buf = ds.buf[n:]
+			return n, len(ds.buf) == 0, nil
+		}
+
 		var ebV2 encryptionBlockV2
-		seqno, err = ds.mps.Read(&ebV2)
+		seqno, err := ds.mps.Read(&ebV2)
 		if err != nil {
 			return 0, false, err
 		}
 		ebV2.seqno = seqno
-		ebV1 = &ebV2.encryptionBlockV1
+
+		var plaintext []byte
+		plaintext, err = ds.processEncryptionBlockV1(&ebV2.encryptionBlockV1)
+		if err != nil {
+			return 0, false, err
+		}
+
+		if len(plaintext) > 0 {
+			// Copy as much as we can into the given outbuffer
+			n = copy(b, plaintext)
+			// Leave the remainder for a subsequent read
+			ds.buf = plaintext[n:]
+		}
+
+		ds.onLastBlockV2 = ebV2.IsFinal
+		return n, len(ds.buf) == 0 && ebV2.IsFinal, nil
 	default:
 		panic(ErrBadVersion{ds.version})
 	}
-	var plaintext []byte
-	plaintext, err = ds.processEncryptionBlockV1(ebV1)
-	if err != nil {
-		return 0, false, err
-	}
-	if plaintext == nil {
-		return 0, true, err
-	}
-
-	// Copy as much as we can into the given outbuffer
-	n = copy(b, plaintext)
-	// Leave the remainder for a subsequent read
-	ds.buf = plaintext[n:]
-
-	return n, false, err
 }
 
 func (ds *decryptStream) tryVisibleReceivers(hdr *EncryptionHeader, ephemeralKey BoxPublicKey) (BoxSecretKey, *SymmetricKey, int, error) {

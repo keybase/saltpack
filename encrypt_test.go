@@ -365,7 +365,7 @@ func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPub
 		t.Fatal(err)
 	}
 	if !bytes.Equal(plaintext, msg) {
-		t.Fatal("decryption mismatch")
+		t.Fatalf("decryption mismatch %v %v", plaintext, msg)
 	}
 }
 

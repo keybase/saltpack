@@ -6,6 +6,7 @@ package saltpack
 import (
 	"bytes"
 	"crypto/sha512"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/nacl/secretbox"
@@ -75,6 +76,10 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 	var n int
 	var err error
 	n, err = pes.buffer.Read(pes.inblock[:])
+	if err == io.EOF && isFinal {
+		err = nil
+	}
+
 	if err != nil {
 		return err
 	}
@@ -82,7 +87,6 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 }
 
 func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
-
 	if err := pes.numBlocks.check(); err != nil {
 		return err
 	}
@@ -234,21 +238,43 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 }
 
 func (pes *testEncryptStream) Close() error {
-	for pes.buffer.Len() > 0 {
+	switch pes.header.Version {
+	case Version1():
+		if pes.buffer.Len() > 0 {
+			err := pes.encryptBlock(true)
+			if err != nil {
+				return err
+			}
+		}
+	case Version2():
 		err := pes.encryptBlock(true)
 		if err != nil {
 			return err
 		}
+	default:
+		panic(ErrBadVersion{pes.header.Version})
 	}
+
+	if pes.buffer.Len() > 0 {
+		panic(fmt.Sprintf("pes.buffer.Len()=%d > 0", pes.buffer.Len()))
+	}
+
 	return pes.writeFooter()
 }
 
 func (pes *testEncryptStream) writeFooter() error {
-	var err error
-	if !pes.options.skipFooter {
-		err = pes.encryptBytes([]byte{}, true)
+	if pes.options.skipFooter {
+		return nil
 	}
-	return err
+	switch pes.header.Version {
+	case Version1():
+		return pes.encryptBytes([]byte{}, true)
+	case Version2():
+		// Nothing left to do.
+		return nil
+	default:
+		panic(ErrBadVersion{pes.header.Version})
+	}
 }
 
 // Options are available mainly for testing.  Can't think of a good reason for
