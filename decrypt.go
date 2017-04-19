@@ -344,7 +344,7 @@ func (ds *decryptStream) processEncryptionBlockV1(bl *encryptionBlockV1) ([]byte
 	ciphertext := bl.PayloadCiphertext
 
 	// Check the authenticator.
-	hashToAuthenticate := computePayloadHash(ds.headerHash, nonce, ciphertext)
+	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, ciphertext)
 	ourAuthenticator := computePayloadAuthenticator(ds.macKey, hashToAuthenticate)
 	if !ourAuthenticator.Equal(bl.HashAuthenticators[ds.position]) {
 		return nil, ErrBadTag(bl.seqno)

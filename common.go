@@ -176,7 +176,7 @@ func sum512Truncate256(in []byte) [32]byte {
 	return sliceToByte32(sum512[:32])
 }
 
-func computePayloadHash(headerHash headerHash, nonce Nonce, payloadCiphertext []byte) payloadHash {
+func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, payloadCiphertext []byte) payloadHash {
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
