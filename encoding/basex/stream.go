@@ -7,7 +7,7 @@ import "io"
 
 // Much of this code is adopted from Go's encoding/base64
 
-// EncodeToString returns the base64 encoding of src.
+// EncodeToString returns the baseX encoding of src.
 func (enc *Encoding) EncodeToString(src []byte) string {
 	buf := make([]byte, enc.EncodedLen(len(src)))
 	enc.Encode(buf, src)
@@ -208,6 +208,7 @@ func (r *filteringReader) Read(p []byte) (int, error) {
 		for i, b := range p[:n] {
 			typ := r.enc.getByteType(b)
 			if typ == invalidByteType {
+				// TODO: Return n?
 				return 0, CorruptInputError(r.nRead)
 			}
 			r.nRead++
