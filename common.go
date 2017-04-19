@@ -182,6 +182,7 @@ func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, pay
 	payloadDigest.Write(nonce[:])
 	payloadDigest.Write(payloadCiphertext)
 	if version.Major == 2 {
+		// TODO: Do msgpack encoding.
 		var b byte
 		if isFinal {
 			b = 1
