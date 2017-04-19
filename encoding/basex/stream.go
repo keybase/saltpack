@@ -155,19 +155,16 @@ func (d *decoder) Read(p []byte) (int, error) {
 		nn = len(d.buf)
 	}
 
-	// Try to read up to the next full block. We already have d.nbuf in
-	// there. Need another (obl - d.nbuf) to round up.
-	nn, d.err = readAtLeast(d.r, d.buf[d.nbuf:nn], obl-d.nbuf)
-	d.nbuf += nn
+	// Try to read up to the next full block.
+	for d.nbuf < obl && d.err == nil {
+		var n int
+		n, d.err = d.r.Read(d.buf[d.nbuf:nn])
+		d.nbuf += n
+	}
 
 	eof := false
 
-	// This condition is actually OK, we just shouldn't read any more data
-	// afterwards. We should get an EOF the next time through.
-	if d.err == io.ErrUnexpectedEOF {
-		d.err = nil
-		eof = true
-	} else if d.err == io.EOF {
+	if d.err == io.EOF {
 		if d.nbuf == 0 {
 			return 0, d.err
 		}
