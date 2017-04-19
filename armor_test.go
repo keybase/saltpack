@@ -16,6 +16,55 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// encryptionBlock contains a block of encrypted data. It contains
+// the ciphertext, and any necessary authentication Tags.
+type encryptionBlock1 struct {
+	_struct            bool                   `codec:",toarray"`
+	HashAuthenticators []payloadAuthenticator `codec:"authenticators"`
+	PayloadCiphertext  []byte                 `codec:"ctext"`
+}
+
+// encryptionBlock contains a block of encrypted data. It contains
+// the ciphertext, and any necessary authentication Tags.
+type encryptionBlock2 struct {
+	_struct            bool                   `codec:",toarray"`
+	HashAuthenticators []payloadAuthenticator `codec:"authenticators"`
+	PayloadCiphertext  []byte                 `codec:"ctext"`
+	V2IsFinal          bool                   `codec:"final,omitempty"`
+}
+
+func TestFoo(t *testing.T) {
+	var eb1 encryptionBlock1
+	var eb2, eb3 encryptionBlock2
+	eb3.V2IsFinal = true
+	x1, err := encodeToBytes(eb1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	x2, err := encodeToBytes(eb2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	x3, err := encodeToBytes(eb3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log(x1, x2, x3)
+
+	if !bytes.Equal(x1, x2) {
+		t.Error(x1, x2)
+	}
+
+	var eb encryptionBlock1
+	err = decodeFromBytes(&eb, x2)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func msg(sz int) []byte {
 	res := make([]byte, sz)
 	for i := 0; i < sz; i++ {
