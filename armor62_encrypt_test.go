@@ -106,14 +106,14 @@ func testBadArmor62(t *testing.T, version Version) {
 	bad2 := ciphertext[0:1] + "z" + ciphertext[2:]
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad2, kr)
 	if _, ok := err.(ErrBadFrame); !ok {
-		t.Fatalf("Wanted of type ErrBadFrame; got %v", err)
+		t.Fatalf("Wanted error of type ErrBadFrame; got %v", err)
 	}
 
 	l := len(ciphertext)
 	bad3 := ciphertext[0:(l-8)] + "z" + ciphertext[(l-7):]
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad3, kr)
 	if _, ok := err.(ErrBadFrame); !ok {
-		t.Fatalf("Wanted of type ErrBadFrmae; got %v", err)
+		t.Fatalf("Wanted error of type ErrBadFrame; got %v", err)
 	}
 
 	bad4 := ciphertext + "䁕"
