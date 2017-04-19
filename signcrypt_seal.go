@@ -69,6 +69,7 @@ func (sss *signcryptSealStream) signcryptBytes(b []byte) error {
 
 	nonce := nonceForChunkSigncryption(sss.numBlocks)
 
+	// TODO: Encode payload chunk.
 	plaintextHash := sha512.Sum512(b)
 
 	signatureInput := []byte(signatureEncryptedString)
