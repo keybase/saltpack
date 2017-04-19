@@ -116,21 +116,6 @@ type decoder struct {
 	scratchbuf []byte // a temporary scratch buf, for reuse
 }
 
-func readAtLeast(r io.Reader, buf []byte, min int) (n int, err error) {
-	if len(buf) < min {
-		return 0, io.ErrShortBuffer
-	}
-	for n < min && err == nil {
-		var nn int
-		nn, err = r.Read(buf[n:])
-		n += nn
-	}
-	if n > 0 && err == io.EOF {
-		err = io.ErrUnexpectedEOF
-	}
-	return
-}
-
 func (d *decoder) Read(p []byte) (int, error) {
 
 	if d.err != nil {
