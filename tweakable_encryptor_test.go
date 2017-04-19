@@ -61,8 +61,9 @@ func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
 	if ret, pes.err = pes.buffer.Write(plaintext); pes.err != nil {
 		return 0, pes.err
 	}
+	// TODO: This is wrong in the == case.
 	for pes.buffer.Len() >= pes.options.getBlockSize() {
-		pes.err = pes.encryptBlock()
+		pes.err = pes.encryptBlock(false)
 		if pes.err != nil {
 			return 0, pes.err
 		}
@@ -70,17 +71,17 @@ func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
 	return ret, nil
 }
 
-func (pes *testEncryptStream) encryptBlock() error {
+func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 	var n int
 	var err error
 	n, err = pes.buffer.Read(pes.inblock[:])
 	if err != nil {
 		return err
 	}
-	return pes.encryptBytes(pes.inblock[0:n])
+	return pes.encryptBytes(pes.inblock[0:n], isFinal)
 }
 
-func (pes *testEncryptStream) encryptBytes(b []byte) error {
+func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
 
 	if err := pes.numBlocks.check(); err != nil {
 		return err
@@ -122,8 +123,7 @@ func (pes *testEncryptStream) encryptBytes(b []byte) error {
 	case Version2():
 		blockV2 := encryptionBlockV2{
 			encryptionBlockV1: blockV1,
-			// TODO: Fill in.
-			IsFinal: false,
+			IsFinal:           isFinal,
 		}
 
 		if err := pes.encoder.Encode(blockV2); err != nil {
@@ -235,7 +235,7 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 
 func (pes *testEncryptStream) Close() error {
 	for pes.buffer.Len() > 0 {
-		err := pes.encryptBlock()
+		err := pes.encryptBlock(true)
 		if err != nil {
 			return err
 		}
@@ -246,7 +246,7 @@ func (pes *testEncryptStream) Close() error {
 func (pes *testEncryptStream) writeFooter() error {
 	var err error
 	if !pes.options.skipFooter {
-		err = pes.encryptBytes([]byte{})
+		err = pes.encryptBytes([]byte{}, true)
 	}
 	return err
 }

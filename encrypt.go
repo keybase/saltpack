@@ -39,8 +39,9 @@ func (es *encryptStream) Write(plaintext []byte) (int, error) {
 	if ret, es.err = es.buffer.Write(plaintext); es.err != nil {
 		return 0, es.err
 	}
+	// TODO: This is wrong in the == case.
 	for es.buffer.Len() >= encryptionBlockSize {
-		es.err = es.encryptBlock()
+		es.err = es.encryptBlock(false)
 		if es.err != nil {
 			return 0, es.err
 		}
@@ -48,17 +49,17 @@ func (es *encryptStream) Write(plaintext []byte) (int, error) {
 	return ret, nil
 }
 
-func (es *encryptStream) encryptBlock() error {
+func (es *encryptStream) encryptBlock(isFinal bool) error {
 	var n int
 	var err error
 	n, err = es.buffer.Read(es.inblock[:])
 	if err != nil {
 		return err
 	}
-	return es.encryptBytes(es.inblock[0:n])
+	return es.encryptBytes(es.inblock[0:n], isFinal)
 }
 
-func (es *encryptStream) encryptBytes(b []byte) error {
+func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 
 	if err := es.numBlocks.check(); err != nil {
 		return err
@@ -87,8 +88,7 @@ func (es *encryptStream) encryptBytes(b []byte) error {
 	case Version2():
 		blockV2 := encryptionBlockV2{
 			encryptionBlockV1: blockV1,
-			// TODO: Fill in.
-			IsFinal: false,
+			IsFinal:           isFinal,
 		}
 		if err := es.encoder.Encode(blockV2); err != nil {
 			return err
@@ -250,7 +250,7 @@ func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, re
 
 func (es *encryptStream) Close() error {
 	for es.buffer.Len() > 0 {
-		err := es.encryptBlock()
+		err := es.encryptBlock(true)
 		if err != nil {
 			return err
 		}
@@ -259,7 +259,7 @@ func (es *encryptStream) Close() error {
 }
 
 func (es *encryptStream) writeFooter() error {
-	return es.encryptBytes([]byte{})
+	return es.encryptBytes([]byte{}, true)
 }
 
 // NewEncryptStream creates a stream that consumes plaintext data.
