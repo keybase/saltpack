@@ -181,6 +181,13 @@ func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, pay
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
 	payloadDigest.Write(payloadCiphertext)
+	if version.Major == 2 {
+		var b byte
+		if isFinal {
+			b = 1
+		}
+		payloadDigest.Write([]byte{b})
+	}
 	h := payloadDigest.Sum(nil)
 	return sliceToByte64(h)
 }
