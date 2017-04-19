@@ -6,6 +6,8 @@ package basex
 import (
 	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type fakeReader struct {
@@ -33,7 +35,5 @@ func TestDecodeReaderError(t *testing.T) {
 	decoder := NewDecoder(Base58StdEncoding, reader)
 	var buf [100]byte
 	_, err := decoder.Read(buf[:])
-	if err != fakeErr {
-		t.Fatalf("Expected %v, got %v", fakeErr, err)
-	}
+	require.Equal(t, fakeErr, err)
 }
