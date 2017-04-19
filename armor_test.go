@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func msg(sz int) []byte {
@@ -176,7 +178,5 @@ func TestBinaryInput(t *testing.T) {
 
 	// Armor62Open shouldtry to find the punctuation for the
 	// header and hit EOF.
-	if err != io.ErrUnexpectedEOF {
-		t.Errorf("Armor62Open didn't return io.ErrUnexpectedEOF: m == %v, hdr == %q, ftr == %q, err == %v", m, hdr, ftr, err)
-	}
+	require.Equal(t, io.ErrUnexpectedEOF, err, "Armor62Open didn't return io.ErrUnexpectedEOF: m == %v, hdr == %q, ftr == %q, err == %v", m, hdr, ftr, err)
 }
