@@ -21,10 +21,16 @@ func (r fakeReader) Read(b []byte) (int, error) {
 	return r.n, r.err
 }
 
+// TestDecodeReaderError tests that errors are propagated properly
+// from the source reader. In particular, if decoder.Read uses
+// io.ReadAtLeast, which drops errors if the minimum is met, then this
+// will fail.
 func TestDecodeReaderError(t *testing.T) {
 	fakeErr := errors.New("fake error")
 	encoding := Base58StdEncoding
-	decoder := NewDecoder(Base58StdEncoding, fakeReader{'1', encoding.baseXBlockLen, fakeErr})
+	// The minimum passed to io.ReadAtLeast is encoding.baseXBlockLen.
+	reader := fakeReader{'1', encoding.baseXBlockLen, fakeErr}
+	decoder := NewDecoder(Base58StdEncoding, reader)
 	var buf [100]byte
 	_, err := decoder.Read(buf[:])
 	if err != fakeErr {
