@@ -205,7 +205,7 @@ func (r *filteringReader) Read(p []byte) (int, error) {
 		for i, b := range p[:n] {
 			typ := r.enc.getByteType(b)
 			if typ == invalidByteType {
-				// TODO: Return n?
+				// TODO: Return n, i.e. partial results?
 				return 0, CorruptInputError(r.nRead)
 			}
 			r.nRead++
