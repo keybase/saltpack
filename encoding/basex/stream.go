@@ -116,6 +116,21 @@ type decoder struct {
 	scratchbuf []byte // a temporary scratch buf, for reuse
 }
 
+func readAtLeast(r io.Reader, buf []byte, min int) (n int, err error) {
+	if len(buf) < min {
+		return 0, io.ErrShortBuffer
+	}
+	for n < min && err == nil {
+		var nn int
+		nn, err = r.Read(buf[n:])
+		n += nn
+	}
+	if n > 0 && err == io.EOF {
+		err = io.ErrUnexpectedEOF
+	}
+	return
+}
+
 func (d *decoder) Read(p []byte) (int, error) {
 
 	if d.err != nil {
@@ -142,7 +157,7 @@ func (d *decoder) Read(p []byte) (int, error) {
 
 	// Try to read up to the next full block. We already have d.nbuf in
 	// there. Need another (obl - d.nbuf) to round up.
-	nn, d.err = io.ReadAtLeast(d.r, d.buf[d.nbuf:nn], obl-d.nbuf)
+	nn, d.err = readAtLeast(d.r, d.buf[d.nbuf:nn], obl-d.nbuf)
 	d.nbuf += nn
 
 	eof := false
