@@ -174,10 +174,7 @@ func TestBinaryInput(t *testing.T) {
 		t.Fatal("timed out waiting for Armor62Open to finish")
 	}
 
-	// PC this seems like a bug to me, but leaving it alone for now:
-	/*
-		if err == nil {
-			t.Errorf("Armor62Open worked on binary data: m == %x, hdr == %q, ftr == %q", m, hdr, ftr)
-		}
-	*/
+	if err == nil {
+		t.Errorf("Armor62Open worked on binary data: m == %v, hdr == %q, ftr == %q", m, hdr, ftr)
+	}
 }
