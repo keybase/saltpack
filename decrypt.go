@@ -15,6 +15,7 @@ import (
 
 type decryptStream struct {
 	versionValidator VersionValidator
+	version          Version
 	ring             Keyring
 	mps              *msgpackStream
 	err              error
@@ -118,15 +119,30 @@ func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 }
 
 func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) {
-	var eb encryptionBlockV1
+	var ebV1 *encryptionBlockV1
 	var seqno packetSeqno
-	seqno, err = ds.mps.Read(&eb)
-	if err != nil {
-		return 0, false, err
+	switch ds.version.Major {
+	case 1:
+		var tmp encryptionBlockV1
+		seqno, err = ds.mps.Read(&tmp)
+		if err != nil {
+			return 0, false, err
+		}
+		tmp.seqno = seqno
+		ebV1 = &tmp
+	case 2:
+		var ebV2 encryptionBlockV2
+		seqno, err = ds.mps.Read(&ebV2)
+		if err != nil {
+			return 0, false, err
+		}
+		ebV2.seqno = seqno
+		ebV1 = &ebV2.encryptionBlockV1
+	default:
+		panic(ErrBadVersion{ds.version})
 	}
-	eb.seqno = seqno
 	var plaintext []byte
-	plaintext, err = ds.processEncryptionBlock(&eb)
+	plaintext, err = ds.processEncryptionBlockV1(ebV1)
 	if err != nil {
 		return 0, false, err
 	}
@@ -214,6 +230,8 @@ func (ds *decryptStream) processEncryptionHeader(hdr *EncryptionHeader) error {
 		return err
 	}
 
+	ds.version = hdr.Version
+
 	ephemeralKey := ds.ring.ImportBoxEphemeralKey(hdr.Ephemeral)
 	if ephemeralKey == nil {
 		return ErrBadEphemeralKey
@@ -288,7 +306,7 @@ func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, p
 	}
 }
 
-func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlockV1) ([]byte, error) {
+func (ds *decryptStream) processEncryptionBlockV1(bl *encryptionBlockV1) ([]byte, error) {
 
 	blockNum := encryptionBlockNumber(bl.seqno - 1)
 

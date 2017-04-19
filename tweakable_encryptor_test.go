@@ -98,7 +98,7 @@ func (pes *testEncryptStream) encryptBytes(b []byte) error {
 		pes.options.corruptCiphertextBeforeHash(ciphertext, pes.numBlocks)
 	}
 
-	block := encryptionBlockV1{
+	blockV1 := encryptionBlockV1{
 		PayloadCiphertext: ciphertext,
 	}
 
@@ -107,15 +107,30 @@ func (pes *testEncryptStream) encryptBytes(b []byte) error {
 	hashToAuthenticate := computePayloadHash(pes.headerHash, nonce, ciphertext)
 	for _, macKey := range pes.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
-		block.HashAuthenticators = append(block.HashAuthenticators, authenticator)
+		blockV1.HashAuthenticators = append(blockV1.HashAuthenticators, authenticator)
 	}
 
 	if pes.options.corruptEncryptionBlock != nil {
-		pes.options.corruptEncryptionBlock(&block, pes.numBlocks)
+		pes.options.corruptEncryptionBlock(&blockV1, pes.numBlocks)
 	}
 
-	if err := pes.encoder.Encode(block); err != nil {
-		return err
+	switch pes.header.Version {
+	case Version1():
+		if err := pes.encoder.Encode(blockV1); err != nil {
+			return err
+		}
+	case Version2():
+		blockV2 := encryptionBlockV2{
+			encryptionBlockV1: blockV1,
+			// TODO: Fill in.
+			IsFinal: false,
+		}
+
+		if err := pes.encoder.Encode(blockV2); err != nil {
+			return err
+		}
+	default:
+		panic(ErrBadVersion{pes.header.Version})
 	}
 
 	pes.numBlocks++

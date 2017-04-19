@@ -52,7 +52,7 @@ type encryptionBlockV1 struct {
 
 type encryptionBlockV2 struct {
 	encryptionBlockV1
-	IsFinal []byte `codec:"final"`
+	IsFinal bool `codec:"final"`
 }
 
 func (h *EncryptionHeader) validate(versionValidator func(Version) error) error {
