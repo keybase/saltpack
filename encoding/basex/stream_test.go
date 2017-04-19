@@ -23,7 +23,8 @@ func (r fakeReader) Read(b []byte) (int, error) {
 
 func TestDecodeReaderError(t *testing.T) {
 	fakeErr := errors.New("fake error")
-	decoder := NewDecoder(Base58StdEncoding, fakeReader{'1', 100, fakeErr})
+	encoding := Base58StdEncoding
+	decoder := NewDecoder(Base58StdEncoding, fakeReader{'1', encoding.baseXBlockLen, fakeErr})
 	var buf [100]byte
 	_, err := decoder.Read(buf[:])
 	if err != fakeErr {
