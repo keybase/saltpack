@@ -889,18 +889,18 @@ func testCorruptSenderSecretboxCiphertext(t *testing.T, version Version) {
 	}
 }
 
-func testMissingFooter(t *testing.T, version Version) {
+func TestMissingFooterV1(t *testing.T) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	msg := randomMsg(t, 1024*9)
-	ciphertext, err := testSeal(version, msg, sender, receivers, testEncryptionOptions{
+	ciphertext, err := testSeal(Version1(), msg, sender, receivers, testEncryptionOptions{
 		skipFooter: true,
 		blockSize:  1024,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
+	_, _, err = Open(SingleVersionValidator(Version1()), ciphertext, kr)
 	if err != io.ErrUnexpectedEOF {
 		t.Fatalf("Wanted %v but got %v", io.ErrUnexpectedEOF, err)
 	}
@@ -1372,7 +1372,6 @@ func TestEncrypt(t *testing.T) {
 		testCorruptPayloadKeyPlaintext,
 		testCorruptSenderSecretboxPlaintext,
 		testCorruptSenderSecretboxCiphertext,
-		testMissingFooter,
 		testCorruptEncryption,
 		testCorruptButAuthenticPayloadBox,
 		testCorruptNonce,
