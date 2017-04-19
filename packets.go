@@ -43,7 +43,7 @@ type EncryptionHeader struct {
 
 // encryptionBlock contains a block of encrypted data. It contains
 // the ciphertext, and any necessary authentication Tags.
-type encryptionBlock struct {
+type encryptionBlockV1 struct {
 	_struct            bool                   `codec:",toarray"`
 	HashAuthenticators []payloadAuthenticator `codec:"authenticators"`
 	PayloadCiphertext  []byte                 `codec:"ctext"`

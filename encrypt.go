@@ -67,7 +67,7 @@ func (es *encryptStream) encryptBytes(b []byte) error {
 	nonce := nonceForChunkSecretBox(es.numBlocks)
 	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	block := encryptionBlock{
+	block := encryptionBlockV1{
 		PayloadCiphertext: ciphertext,
 	}
 
