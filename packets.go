@@ -47,8 +47,7 @@ type encryptionBlock struct {
 	_struct            bool                   `codec:",toarray"`
 	HashAuthenticators []payloadAuthenticator `codec:"authenticators"`
 	PayloadCiphertext  []byte                 `codec:"ctext"`
-	V2IsFinal
-	seqno packetSeqno
+	seqno              packetSeqno
 }
 
 func (h *EncryptionHeader) validate(versionValidator func(Version) error) error {
