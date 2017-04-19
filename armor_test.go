@@ -174,7 +174,9 @@ func TestBinaryInput(t *testing.T) {
 		t.Fatal("timed out waiting for Armor62Open to finish")
 	}
 
-	if err == nil {
-		t.Errorf("Armor62Open worked on binary data: m == %v, hdr == %q, ftr == %q", m, hdr, ftr)
+	// Armor62Open shouldtry to find the punctuation for the
+	// header and hit EOF.
+	if err != io.ErrUnexpectedEOF {
+		t.Errorf("Armor62Open didn't return io.ErrUnexpectedEOF: m == %v, hdr == %q, ftr == %q, err == %v", m, hdr, ftr, err)
 	}
 }
