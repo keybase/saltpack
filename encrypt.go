@@ -40,8 +40,8 @@ func (es *encryptStream) Write(plaintext []byte) (int, error) {
 	if ret, es.err = es.buffer.Write(plaintext); es.err != nil {
 		return 0, es.err
 	}
-	// TODO: This is wrong in the == case.
-	for es.buffer.Len() >= encryptionBlockSize {
+
+	for es.buffer.Len() > encryptionBlockSize {
 		es.err = es.encryptBlock(false)
 		if es.err != nil {
 			return 0, es.err
