@@ -163,6 +163,15 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
 	order := computeReceiverOrder(version, len(receivers))
+	receiversTmp := make([]BoxPublicKey, len(receivers))
+	for i := 0; i < len(receivers); i++ {
+		receiversTmp[i] = receivers[order[i]]
+	}
+	receivers = receiversTmp
+	for i := 0; i < len(order); i++ {
+		order[i] = i
+	}
+
 	eh.Receivers = boxPayloadKeyForReceivers(version, order, receivers, ephemeralKey, es.payloadKey)
 
 	// Encode the header to bytes, hash it, then double encode it.
