@@ -162,6 +162,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		Version:    version,
 		Type:       MessageTypeEncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
+		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
 	es.header = eh
 	if err := randomFill(es.payloadKey[:]); err != nil {
@@ -197,8 +198,8 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		return err
 	}
 
-	// TODO: Plumb the pre-computed shared ephemeral keys from
-	// boxPayloadKeyForReceivers through to computeMACKeysSender.
+	// TODO: Plumb the pre-computed shared keys above through to
+	// computeMACKeysSender.
 	es.macKeys = computeMACKeysSender(es.header.Version, sender, ephemeralKey, receivers, es.headerHash)
 
 	return nil
