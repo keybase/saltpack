@@ -47,7 +47,6 @@ type encryptionBlockV1 struct {
 	_struct            bool                   `codec:",toarray"`
 	HashAuthenticators []payloadAuthenticator `codec:"authenticators"`
 	PayloadCiphertext  []byte                 `codec:"ctext"`
-	seqno              packetSeqno
 }
 
 type encryptionBlockV2 struct {

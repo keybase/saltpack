@@ -130,10 +130,9 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 		if err != nil {
 			return 0, false, err
 		}
-		ebV1.seqno = seqno
 
 		var plaintext []byte
-		plaintext, err = ds.processEncryptionBlock(&ebV1, false)
+		plaintext, err = ds.processEncryptionBlock(&ebV1, seqno, false)
 		if err != nil {
 			return 0, false, err
 		}
@@ -162,10 +161,9 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 		if err != nil {
 			return 0, false, err
 		}
-		ebV2.seqno = seqno
 
 		var plaintext []byte
-		plaintext, err = ds.processEncryptionBlock(&ebV2.encryptionBlockV1, ebV2.IsFinal)
+		plaintext, err = ds.processEncryptionBlock(&ebV2.encryptionBlockV1, seqno, ebV2.IsFinal)
 		if err != nil {
 			return 0, false, err
 		}
@@ -332,9 +330,9 @@ func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, p
 	}
 }
 
-func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlockV1, v2IsFinal bool) ([]byte, error) {
+func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlockV1, seqno packetSeqno, v2IsFinal bool) ([]byte, error) {
 
-	blockNum := encryptionBlockNumber(bl.seqno - 1)
+	blockNum := encryptionBlockNumber(seqno - 1)
 
 	if err := blockNum.check(); err != nil {
 		return nil, err
@@ -347,12 +345,12 @@ func (ds *decryptStream) processEncryptionBlock(bl *encryptionBlockV1, v2IsFinal
 	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, ciphertext, v2IsFinal)
 	ourAuthenticator := computePayloadAuthenticator(ds.macKey, hashToAuthenticate)
 	if !ourAuthenticator.Equal(bl.HashAuthenticators[ds.position]) {
-		return nil, ErrBadTag(bl.seqno)
+		return nil, ErrBadTag(seqno)
 	}
 
 	plaintext, ok := secretbox.Open([]byte{}, ciphertext, (*[24]byte)(&nonce), (*[32]byte)(ds.payloadKey))
 	if !ok {
-		return nil, ErrBadCiphertext(bl.seqno)
+		return nil, ErrBadCiphertext(seqno)
 	}
 
 	// The encoding of the empty buffer implies the EOF.  But otherwise, all mechanisms are the same.
