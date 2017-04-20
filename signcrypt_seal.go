@@ -243,7 +243,11 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 		eh.SenderSecretbox = secretbox.Seal([]byte{}, sss.signingKey.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 	}
 
-	eh.Receivers = sealEncryptionKeyForReceivers(receivers, ephemeralKey, sss.encryptionKey)
+	// Collect all the recipient identifiers, and encrypt the payload key for
+	// all of them.
+	for i, r := range receivers {
+		eh.Receivers = append(eh.Receivers, r.makeReceiverKeys(ephemeralKey, sss.encryptionKey, uint64(i)))
+	}
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(sss.header)
@@ -258,17 +262,6 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 	}
 
 	return nil
-}
-
-func sealEncryptionKeyForReceivers(receivers []receiverKeysMaker, ephemeralKey BoxSecretKey, encryptionKey SymmetricKey) []receiverKeys {
-	receiverKeysArray := make([]receiverKeys, len(receivers))
-	// Collect all the recipient identifiers, and encrypt the payload key for
-	// all of them.
-	for i, r := range receivers {
-		receiverKeysArray[i] = r.makeReceiverKeys(ephemeralKey, encryptionKey, uint64(i))
-	}
-
-	return receiverKeysArray
 }
 
 func (sss *signcryptSealStream) Close() error {
