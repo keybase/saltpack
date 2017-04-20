@@ -3,7 +3,10 @@
 
 package saltpack
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func getSigncryptionReceiverOrder(receivers []receiverKeysMaker) []int {
 	order := make([]int, len(receivers))
@@ -40,6 +43,35 @@ func TestShuffleSigncryptionReceivers(t *testing.T) {
 	shuffled := shuffleSigncryptionReceivers(receiverBoxKeys, receiverSymmetricKeys)
 
 	shuffledOrder := getSigncryptionReceiverOrder(shuffled)
+	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
+		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
+	}
+}
+
+func TestNewSigncryptSealStreamShuffledReaders(t *testing.T) {
+	receiverCount := 20
+
+	// Don't include any BoxPublicKeys as it's hard to go from the
+	// identifier to the index.
+
+	var receiverSymmetricKeys []ReceiverSymmetricKey
+	for i := 0; i < receiverCount; i++ {
+		k := ReceiverSymmetricKey{
+			Key:        SymmetricKey{byte(i)},
+			Identifier: []byte{byte(i)},
+		}
+		receiverSymmetricKeys = append(receiverSymmetricKeys, k)
+	}
+
+	keyring := makeEmptyKeyring(t)
+
+	var ciphertext bytes.Buffer
+	strm, err := NewSigncryptSealStream(&ciphertext, keyring, nil, nil, receiverSymmetricKeys)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	shuffledOrder := getEncryptReceiverKeysOrder(strm.(*signcryptSealStream).header.Receivers)
 	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
 		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
 	}
