@@ -172,7 +172,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		order[i] = i
 	}
 
-	eh.Receivers = boxPayloadKeyForReceivers(version, order, receivers, ephemeralKey, es.payloadKey)
+	eh.Receivers = boxPayloadKeyForReceivers(version, receivers, ephemeralKey, es.payloadKey)
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(es.header)
@@ -187,7 +187,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 
 	// TODO: Plumb the pre-computed shared ephemeral keys from
 	// boxPayloadKeyForReceivers through to computeMACKeysSender.
-	es.macKeys = computeMACKeysSender(es.header.Version, order, sender, ephemeralKey, receivers, es.headerHash)
+	es.macKeys = computeMACKeysSender(es.header.Version, sender, ephemeralKey, receivers, es.headerHash)
 
 	return nil
 }
@@ -212,13 +212,12 @@ func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecre
 
 // computeMACKeysSender returns an array of macKeys such that the
 // macKey for receivers[i] is in macKeys[order[i]].
-func computeMACKeysSender(version Version, order []int, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
+func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
 	macKeys := make([]macKey, len(receivers))
 	// Use the header hash to compute the MAC keys.
 	for i, receiver := range receivers {
-		index := order[i]
-		macKey := computeMACKeySender(version, uint64(index), sender, ephemeralKey, receiver, headerHash)
-		macKeys[index] = macKey
+		macKey := computeMACKeySender(version, uint64(i), sender, ephemeralKey, receiver, headerHash)
+		macKeys[i] = macKey
 	}
 	return macKeys
 }
@@ -260,11 +259,10 @@ func boxPayloadKeyForReceiver(version Version, index uint64, receiver BoxPublicK
 // boxPayloadKeyForReceivers returns an array of receiverKeys such
 // that the receiverKeys for receivers[i] is in
 // receiverKeysArray[order[i]].
-func boxPayloadKeyForReceivers(version Version, order []int, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
+func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
 	receiverKeysArray := make([]receiverKeys, len(receivers))
 	for i, receiver := range receivers {
-		index := order[i]
-		receiverKeysArray[index] = boxPayloadKeyForReceiver(version, uint64(index), receiver, ephemeralKey, payloadKey)
+		receiverKeysArray[i] = boxPayloadKeyForReceiver(version, uint64(i), receiver, ephemeralKey, payloadKey)
 	}
 	return receiverKeysArray
 }

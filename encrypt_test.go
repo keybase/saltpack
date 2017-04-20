@@ -262,8 +262,7 @@ func TestBoxPayloadKeyForReceiversV1AllEqual(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := SymmetricKey{0x6}
 
-	order := computeReceiverOrder(Version1(), len(receivers))
-	receiverKeysArray := boxPayloadKeyForReceivers(Version1(), order, receivers, ephemeralKey, payloadKey)
+	receiverKeysArray := boxPayloadKeyForReceivers(Version1(), receivers, ephemeralKey, payloadKey)
 	if len(receiverKeysArray) != len(receivers) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
@@ -288,8 +287,7 @@ func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := SymmetricKey{0x6}
 
-	order := computeReceiverOrder(Version2(), len(receivers))
-	receiverKeysArray := boxPayloadKeyForReceivers(Version2(), order, receivers, ephemeralKey, payloadKey)
+	receiverKeysArray := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
 	if len(receiverKeysArray) != len(receivers) {
 		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
 	}
@@ -323,26 +321,14 @@ func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := SymmetricKey{0x6}
 
-	order1 := computeReceiverOrder(Version2(), len(receivers))
-	receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), order1, receivers, ephemeralKey, payloadKey)
-	order2 := computeReceiverOrder(Version2(), len(receivers))
-	receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), order2, receivers, ephemeralKey, payloadKey)
-
-	if !reflect.DeepEqual(order1, order2) {
-		// This branch will not be taken with probability
-		// 1/10! ~ 2^{-22}.
-		if reflect.DeepEqual(receiverKeysArray1, receiverKeysArray2) {
-			t.Fatal("Two calls to boxPayloadKeyForReceivers(Version2()) unexpectedly produced the same array")
-		}
-	}
+	receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
+	receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
 
 	for i := 0; i < len(receiverKeysArray1); i++ {
-		index1 := order1[i]
-		index2 := order2[i]
-		kid1 := receiverKeysArray1[index1].ReceiverKID
-		kid2 := receiverKeysArray2[index2].ReceiverKID
+		kid1 := receiverKeysArray1[i].ReceiverKID
+		kid2 := receiverKeysArray2[i].ReceiverKID
 		if !bytes.Equal(kid1, kid2) {
-			t.Errorf("receiverKeysArray1[%d].ReceiverKID == %+v != receiverKeysArray2[%d].ReceiverKID == %+v", index1, kid1, index2, kid2)
+			t.Errorf("receiverKeysArray1[%d].ReceiverKID == %+v != receiverKeysArray2[%d].ReceiverKID == %+v", i, kid1, i, kid2)
 		}
 	}
 }
@@ -357,12 +343,11 @@ func testReceiverKeyMACKeyOrder(t *testing.T, version Version) {
 	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
 	payloadKey := SymmetricKey{0x6}
 
-	order := computeReceiverOrder(Version2(), len(receivers))
-	receiverKeysArray := boxPayloadKeyForReceivers(version, order, receivers, ephemeralKey, payloadKey)
+	receiverKeysArray := boxPayloadKeyForReceivers(version, receivers, ephemeralKey, payloadKey)
 
 	sender := boxSecretKey{key: RawBoxKey{0x50}}
 	headerHash := headerHash{0x5}
-	macKeys := computeMACKeysSender(version, order, sender, ephemeralKey, receivers, headerHash)
+	macKeys := computeMACKeysSender(version, sender, ephemeralKey, receivers, headerHash)
 
 	// The orders of receiverKeysArray and macKeys should match up.
 	for i := 0; i < len(receiverKeysArray); i++ {

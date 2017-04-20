@@ -159,7 +159,7 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 	}
 
 	order := computeReceiverOrder(version, len(receivers))
-	eh.Receivers = pes.boxPayloadKeyForReceivers(version, order, receivers, ephemeralKey)
+	eh.Receivers = pes.boxPayloadKeyForReceivers(version, receivers, ephemeralKey)
 
 	// Corrupt a copy so that the corruption doesn't cause
 	// e.g. computeMACKeys to panic.
@@ -182,13 +182,13 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		return err
 	}
 
-	pes.macKeys = computeMACKeysSender(pes.header.Version, order, sender, ephemeralKey, receivers, pes.headerHash)
+	pes.macKeys = computeMACKeysSender(pes.header.Version, sender, ephemeralKey, receivers, pes.headerHash)
 
 	return nil
 }
 
-func (pes *testEncryptStream) boxPayloadKeyForReceiver(version Version, rid, index int, receiver BoxPublicKey, ephemeralKey BoxSecretKey) receiverKeys {
-	nonce := nonceForPayloadKeyBox(version, uint64(index))
+func (pes *testEncryptStream) boxPayloadKeyForReceiver(version Version, rid int, receiver BoxPublicKey, ephemeralKey BoxSecretKey) receiverKeys {
+	nonce := nonceForPayloadKeyBox(version, uint64(rid))
 	if pes.options.corruptKeysNonce != nil {
 		pes.options.corruptKeysNonce(&nonce, rid)
 	}
@@ -215,11 +215,10 @@ func (pes *testEncryptStream) boxPayloadKeyForReceiver(version Version, rid, ind
 	return keys
 }
 
-func (pes *testEncryptStream) boxPayloadKeyForReceivers(version Version, order []int, receivers []BoxPublicKey, ephemeralKey BoxSecretKey) []receiverKeys {
+func (pes *testEncryptStream) boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey) []receiverKeys {
 	receiverKeysArray := make([]receiverKeys, len(receivers))
 	for i, receiver := range receivers {
-		index := order[i]
-		receiverKeysArray[index] = pes.boxPayloadKeyForReceiver(version, i, index, receiver, ephemeralKey)
+		receiverKeysArray[i] = pes.boxPayloadKeyForReceiver(version, i, receiver, ephemeralKey)
 	}
 	return receiverKeysArray
 }
