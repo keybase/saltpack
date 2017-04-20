@@ -171,9 +171,20 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	nonce := nonceForSenderKeySecretBox()
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	receivers = shuffleReceivers(receivers)
+	for i, receiver := range receivers {
+		sharedKey := ephemeralKey.Precompute(receiver)
+		nonce := nonceForPayloadKeyBox(version, uint64(i))
+		payloadKeyBox := sharedKey.Box(nonce, es.payloadKey[:])
 
-	eh.Receivers = boxPayloadKeyForReceivers(version, receivers, ephemeralKey, es.payloadKey)
+		keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
+
+		// Don't specify the receivers if this public key wants to hide
+		if !receiver.HideIdentity() {
+			keys.ReceiverKID = receiver.ToKID()
+		}
+
+		eh.Receivers = append(eh.Receivers, keys)
+	}
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(es.header)
@@ -242,32 +253,6 @@ func computeReceiverOrder(version Version, receiverCount int) []int {
 	}
 }
 
-func boxPayloadKeyForReceiver(version Version, index uint64, receiver BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) receiverKeys {
-	sharedKey := ephemeralKey.Precompute(receiver)
-	nonce := nonceForPayloadKeyBox(version, index)
-	payloadKeyBox := sharedKey.Box(nonce, payloadKey[:])
-
-	keys := receiverKeys{PayloadKeyBox: payloadKeyBox}
-
-	// Don't specify the receivers if this public key wants to hide
-	if !receiver.HideIdentity() {
-		keys.ReceiverKID = receiver.ToKID()
-	}
-
-	return keys
-}
-
-// boxPayloadKeyForReceivers returns an array of receiverKeys such
-// that the receiverKeys for receivers[i] is in
-// receiverKeysArray[order[i]].
-func boxPayloadKeyForReceivers(version Version, receivers []BoxPublicKey, ephemeralKey BoxSecretKey, payloadKey SymmetricKey) []receiverKeys {
-	receiverKeysArray := make([]receiverKeys, len(receivers))
-	for i, receiver := range receivers {
-		receiverKeysArray[i] = boxPayloadKeyForReceiver(version, uint64(i), receiver, ephemeralKey, payloadKey)
-	}
-	return receiverKeysArray
-}
-
 func (es *encryptStream) Close() error {
 	for es.buffer.Len() > 0 {
 		err := es.encryptBlock()
@@ -295,7 +280,7 @@ func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey
 		encoder: newEncoder(ciphertext),
 		inblock: make([]byte, encryptionBlockSize),
 	}
-	err := es.init(version, sender, receivers)
+	err := es.init(version, sender, shuffleReceivers(receivers))
 	return es, err
 }
 
