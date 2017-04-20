@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"sort"
@@ -906,6 +907,17 @@ func TestMissingFooterV1(t *testing.T) {
 	}
 }
 
+func getEncryptionBlockV1(eb *interface{}) encryptionBlockV1 {
+	switch eb := (*eb).(type) {
+	case encryptionBlockV1:
+		return eb
+	case encryptionBlockV2:
+		return eb.encryptionBlockV1
+	default:
+		panic(fmt.Sprintf("Unknown type %T", eb))
+	}
+}
+
 func testCorruptEncryption(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
@@ -914,9 +926,10 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	// First check that a corrupted ciphertext fails the Poly1305
 	ciphertext, err := testSeal(version, msg, sender, receivers, testEncryptionOptions{
 		blockSize: 1024,
-		corruptEncryptionBlock: func(eb *encryptionBlockV1, ebn encryptionBlockNumber) {
+		corruptEncryptionBlock: func(eb *interface{}, ebn encryptionBlockNumber) {
 			if ebn == 2 {
-				eb.PayloadCiphertext[8] ^= 1
+				ebV1 := getEncryptionBlockV1(eb)
+				ebV1.PayloadCiphertext[8] ^= 1
 			}
 		},
 	})
@@ -933,9 +946,10 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	// Next check that a corruption of the Poly1305 tags causes a failure
 	ciphertext, err = testSeal(version, msg, sender, receivers, testEncryptionOptions{
 		blockSize: 1024,
-		corruptEncryptionBlock: func(eb *encryptionBlockV1, ebn encryptionBlockNumber) {
+		corruptEncryptionBlock: func(eb *interface{}, ebn encryptionBlockNumber) {
 			if ebn == 2 {
-				eb.HashAuthenticators[0][2] ^= 1
+				ebV1 := getEncryptionBlockV1(eb)
+				ebV1.HashAuthenticators[0][2] ^= 1
 			}
 		},
 	})

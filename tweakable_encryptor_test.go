@@ -15,7 +15,7 @@ import (
 type testEncryptionOptions struct {
 	blockSize                   int
 	skipFooter                  bool
-	corruptEncryptionBlock      func(bl *encryptionBlockV1, ebn encryptionBlockNumber)
+	corruptEncryptionBlock      func(bl *interface{}, ebn encryptionBlockNumber)
 	corruptCiphertextBeforeHash func(c []byte, ebn encryptionBlockNumber)
 	corruptPayloadNonce         func(n Nonce, ebn encryptionBlockNumber) Nonce
 	corruptKeysNonce            func(n Nonce, rid int) Nonce
@@ -102,38 +102,30 @@ func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
 		pes.options.corruptCiphertextBeforeHash(ciphertext, pes.numBlocks)
 	}
 
-	blockV1 := encryptionBlockV1{
-		PayloadCiphertext: ciphertext,
-	}
+	cBlock := ciphertextBlock{ciphertext, isFinal}
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, ciphertextBlock{ciphertext, isFinal})
+	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, cBlock)
+	var authenticators []payloadAuthenticator
 	for _, macKey := range pes.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
-		blockV1.HashAuthenticators = append(blockV1.HashAuthenticators, authenticator)
+		authenticators = append(authenticators, authenticator)
+	}
+
+	eBlock, err := cBlock.toEncryptionBlock(pes.header.Version, authenticators)
+	// The only possible error is ErrBadVersion, which we should
+	// have already checked against.
+	if err != nil {
+		panic(err)
 	}
 
 	if pes.options.corruptEncryptionBlock != nil {
-		pes.options.corruptEncryptionBlock(&blockV1, pes.numBlocks)
+		pes.options.corruptEncryptionBlock(&eBlock, pes.numBlocks)
 	}
 
-	switch pes.header.Version {
-	case Version1():
-		if err := pes.encoder.Encode(blockV1); err != nil {
-			return err
-		}
-	case Version2():
-		blockV2 := encryptionBlockV2{
-			encryptionBlockV1: blockV1,
-			IsFinal:           isFinal,
-		}
-
-		if err := pes.encoder.Encode(blockV2); err != nil {
-			return err
-		}
-	default:
-		panic(ErrBadVersion{pes.header.Version})
+	if err := pes.encoder.Encode(eBlock); err != nil {
+		return err
 	}
 
 	pes.numBlocks++
