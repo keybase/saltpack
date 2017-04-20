@@ -550,8 +550,10 @@ func testEmptyReceivers(t *testing.T, version Version) {
 func testCorruptHeaderNonce(t *testing.T, version Version) {
 	msg := randomMsg(t, 129)
 	teo := testEncryptionOptions{
-		corruptKeysNonce: func(n *Nonce, rid int) {
-			n[4] ^= 1
+		corruptKeysNonce: func(n Nonce, rid int) Nonce {
+			ret := n
+			ret[4] ^= 1
+			return ret
 		},
 	}
 	sender := newBoxKey(t)
@@ -569,10 +571,13 @@ func testCorruptHeaderNonce(t *testing.T, version Version) {
 func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 	msg := randomMsg(t, 129)
 	teo := testEncryptionOptions{
-		corruptKeysNonce: func(n *Nonce, rid int) {
+		corruptKeysNonce: func(n Nonce, rid int) Nonce {
 			if rid == 5 {
-				n[4] ^= 1
+				ret := n
+				ret[4] ^= 1
+				return ret
 			}
+			return n
 		},
 	}
 	sender := newBoxKey(t)
@@ -598,10 +603,13 @@ func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 	// If someone else's encryption was tampered with, we don't care and
 	// shouldn't get an error.
 	teo = testEncryptionOptions{
-		corruptKeysNonce: func(n *Nonce, rid int) {
+		corruptKeysNonce: func(n Nonce, rid int) Nonce {
 			if rid != 5 {
-				n[4] ^= 1
+				ret := n
+				ret[4] ^= 1
+				return ret
 			}
+			return n
 		},
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
@@ -863,13 +871,14 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	msg = randomMsg(t, 1024*2-1)
 	ciphertext, err = testSeal(version, msg, sender, receivers, testEncryptionOptions{
 		blockSize: 1024,
-		corruptPayloadNonce: func(n *Nonce, ebn encryptionBlockNumber) {
+		corruptPayloadNonce: func(n Nonce, ebn encryptionBlockNumber) Nonce {
 			switch ebn {
 			case 1:
-				*n = nonceForChunkSecretBox(encryptionBlockNumber(0))
+				return nonceForChunkSecretBox(encryptionBlockNumber(0))
 			case 0:
-				*n = nonceForChunkSecretBox(encryptionBlockNumber(1))
+				return nonceForChunkSecretBox(encryptionBlockNumber(1))
 			}
+			return n
 		},
 	})
 	if err != nil {
@@ -909,10 +918,13 @@ func testCorruptNonce(t *testing.T, version Version) {
 	msg := randomMsg(t, 1024*11)
 	teo := testEncryptionOptions{
 		blockSize: 1024,
-		corruptPayloadNonce: func(n *Nonce, ebn encryptionBlockNumber) {
+		corruptPayloadNonce: func(n Nonce, ebn encryptionBlockNumber) Nonce {
 			if ebn == 2 {
-				n[23]++
+				ret := n
+				ret[23]++
+				return ret
 			}
+			return n
 		},
 	}
 	sender := newBoxKey(t)
@@ -938,7 +950,7 @@ func testCorruptHeader(t *testing.T, version Version) {
 	// Test bad Header version
 	teo := testEncryptionOptions{
 		blockSize: 1024,
-		corruptHeader: func(_ []int, eh *EncryptionHeader) {
+		corruptHeader: func(eh *EncryptionHeader) {
 			eh.Version = badVersion
 		},
 	}
@@ -958,7 +970,7 @@ func testCorruptHeader(t *testing.T, version Version) {
 	// Test bad header Tag
 	teo = testEncryptionOptions{
 		blockSize: 1024,
-		corruptHeader: func(_ []int, eh *EncryptionHeader) {
+		corruptHeader: func(eh *EncryptionHeader) {
 			eh.Type = MessageTypeAttachedSignature
 		},
 	}
@@ -1113,7 +1125,7 @@ func testCorruptEphemeralKey(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{newHiddenBoxKey(t).GetPublicKey()}
 	plaintext := randomMsg(t, 1024*3)
 	teo := testEncryptionOptions{
-		corruptHeader: func(_ []int, eh *EncryptionHeader) {
+		corruptHeader: func(eh *EncryptionHeader) {
 			eh.Ephemeral = eh.Ephemeral[0 : len(eh.Ephemeral)-1]
 		},
 	}
@@ -1135,10 +1147,8 @@ func testCiphertextSwapKeys(t *testing.T, version Version) {
 	}
 	plaintext := randomMsg(t, 1024*3)
 	teo := testEncryptionOptions{
-		corruptHeader: func(order []int, h *EncryptionHeader) {
-			i := 0
-			j := 1
-			h.Receivers[i].PayloadKeyBox, h.Receivers[j].PayloadKeyBox = h.Receivers[j].PayloadKeyBox, h.Receivers[i].PayloadKeyBox
+		corruptHeader: func(h *EncryptionHeader) {
+			h.Receivers[1].PayloadKeyBox, h.Receivers[0].PayloadKeyBox = h.Receivers[0].PayloadKeyBox, h.Receivers[1].PayloadKeyBox
 		},
 	}
 	ciphertext, err := testSeal(version, plaintext, nil, receivers, teo)
