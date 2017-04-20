@@ -10,7 +10,6 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"reflect"
 	"sort"
 	"testing"
 
@@ -252,6 +251,28 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 	return res, nil
 }
 
+func isValidNonTrivialPermutation(n int, a []int) bool {
+	if len(a) != n {
+		return false
+	}
+	// Technically this check is flaky, but the flake probability
+	// is 1/n!, which is very small for n ~ 20.
+	if sort.IntsAreSorted(a) {
+		return false
+	}
+
+	aCopy := make([]int, len(a))
+	copy(aCopy, a)
+	sort.Ints(aCopy)
+	for i := 0; i < len(a); i++ {
+		if aCopy[i] != i {
+			return false
+		}
+	}
+
+	return true
+}
+
 func getEncryptReceiverOrder(receivers []BoxPublicKey) []int {
 	order := make([]int, len(receivers))
 	for i, r := range receivers {
@@ -272,57 +293,43 @@ func TestShuffleEncryptReceivers(t *testing.T) {
 
 	shuffled := shuffleEncryptReceivers(receivers)
 
-	initialOrder := getEncryptReceiverOrder(receivers)
 	shuffledOrder := getEncryptReceiverOrder(shuffled)
-	// Technically this check is flaky, but the flake probability
-	// is 1/20! ~ 2^{-61}.
-	if reflect.DeepEqual(initialOrder, shuffledOrder) {
-		t.Fatalf("initialOrder == shuffledOrder == %+v", initialOrder)
-	}
-
-	unshuffledOrder := make([]int, len(shuffled))
-	copy(unshuffledOrder, shuffledOrder)
-	sort.Ints(unshuffledOrder)
-	if !reflect.DeepEqual(initialOrder, unshuffledOrder) {
-		t.Fatalf("initialOrder == %+v != unshuffledOrder == %+v", initialOrder, unshuffledOrder)
+	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
+		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
 	}
 }
 
+func getEncryptReceiverKeysOrder(receiverKeys []receiverKeys) []int {
+	order := make([]int, len(receiverKeys))
+	for i, k := range receiverKeys {
+		order[i] = int(k.ReceiverKID[0])
+	}
+	return order
+}
+
 func testNewEncryptStreamShuffledReaders(t *testing.T, version Version) {
-	/*	receiverCount := 20
-		var receivers []BoxPublicKey
-		for i := 0; i < receiverCount; i++ {
-			k := boxPublicKey{
-				key: RawBoxKey{byte(i)},
-			}
-			receivers = append(receivers, k)
+	receiverCount := 20
+	var receivers []BoxPublicKey
+	for i := 0; i < receiverCount; i++ {
+		k := boxPublicKey{
+			key: RawBoxKey{byte(i)},
 		}
+		receivers = append(receivers, k)
+	}
 
-		sndr := boxSecretKey{
-			key: RawBoxKey{0x08},
-		}
-		var ciphertext bytes.Buffer
-		strm, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
-		if err != nil {
-			t.Fatal(err)
-		}
+	sndr := boxSecretKey{
+		key: RawBoxKey{0x08},
+	}
+	var ciphertext bytes.Buffer
+	strm, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-		receiverKeys := strm.(*encryptStream).header.Receivers
-
-		found := make(map[int]bool)
-		for _, r := range receiverKeys {
-			i := int(r.(boxPublicKey).key[0])
-			found[i] = true
-		}
-
-		expectedFound := make(map[int]bool)
-		for i := 0; i < receiverCount; i++ {
-			expectedFound[i] = true
-		}
-
-		if !reflect.DeepEqual(found, expectedFound) {
-			t.Fatalf("found == %+v != expectedFound == %+v", found, expectedFound)
-		}*/
+	shuffledOrder := getEncryptReceiverKeysOrder(strm.(*encryptStream).header.Receivers)
+	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
+		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
+	}
 }
 
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
