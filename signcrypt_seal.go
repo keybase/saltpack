@@ -134,8 +134,16 @@ func keyIdentifierFromDerivedKey(derivedKey *SymmetricKey, recipientIndex uint64
 	return keyIdentifierDigest.Sum(nil)[0:32]
 }
 
-func receiverEntryForBoxKey(receiverBoxKey BoxPublicKey, ephemeralPriv BoxSecretKey, payloadKey SymmetricKey, index uint64) receiverKeys {
-	derivedKey := derivedEphemeralKeyFromBoxKeys(receiverBoxKey, ephemeralPriv)
+type receiverKeysMaker interface {
+	makeReceiverKeys(ephemeralPriv BoxSecretKey, payloadKey SymmetricKey, index uint64) receiverKeys
+}
+
+type receiverBoxKey struct {
+	pk BoxPublicKey
+}
+
+func (r receiverBoxKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, payloadKey SymmetricKey, index uint64) receiverKeys {
+	derivedKey := derivedEphemeralKeyFromBoxKeys(r.pk, ephemeralPriv)
 	identifier := keyIdentifierFromDerivedKey(derivedKey, index)
 
 	nonce := nonceForPayloadKeyBoxV2(index)
@@ -158,13 +166,13 @@ type ReceiverSymmetricKey struct {
 	Identifier []byte
 }
 
-func receiverEntryForSymmetricKey(receiverSymmetricKey ReceiverSymmetricKey, ephemeralPub BoxPublicKey, payloadKey SymmetricKey, index uint64) receiverKeys {
+func (r ReceiverSymmetricKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, payloadKey SymmetricKey, index uint64) receiverKeys {
 	// Derive a message-specific shared secret by hashing the symmetric key and
 	// the ephemeral public key together. This lets us use nonces that are
 	// simple counters.
 	derivedKeyDigest := hmac.New(sha512.New, []byte(signcryptionSymmetricKeyContext))
-	derivedKeyDigest.Write(ephemeralPub.ToKID())
-	derivedKeyDigest.Write(receiverSymmetricKey.Key[:])
+	derivedKeyDigest.Write(ephemeralPriv.GetPublicKey().ToKID())
+	derivedKeyDigest.Write(r.Key[:])
 	derivedKey, err := rawBoxKeyFromSlice(derivedKeyDigest.Sum(nil)[0:32])
 	if err != nil {
 		panic(err) // should be statically impossible, if the slice above is the right length
@@ -180,7 +188,7 @@ func receiverEntryForSymmetricKey(receiverSymmetricKey ReceiverSymmetricKey, eph
 	// Unlike the box key case, the identifier is supplied by the caller rather
 	// than computed. (These will be KBFS TLF pseudonyms.)
 	return receiverKeys{
-		ReceiverKID:   receiverSymmetricKey.Identifier,
+		ReceiverKID:   r.Identifier,
 		PayloadKeyBox: payloadKeyBox,
 	}
 }
@@ -245,13 +253,13 @@ func sealEncryptionKeyForReceivers(receiverBoxKeys []BoxPublicKey, receiverSymme
 	receiverKeysArray := make([]receiverKeys, len(receiverBoxKeys)+len(receiverSymmetricKeys))
 	// Collect all the recipient identifiers, and encrypt the payload key for
 	// all of them.
-	for i, receiverBoxKey := range receiverBoxKeys {
+	for i, r := range receiverBoxKeys {
 		index := order[i]
-		receiverKeysArray[index] = receiverEntryForBoxKey(receiverBoxKey, ephemeralKey, encryptionKey, uint64(index))
+		receiverKeysArray[index] = (receiverBoxKey{r}).makeReceiverKeys(ephemeralKey, encryptionKey, uint64(index))
 	}
-	for i, receiverSymmetricKey := range receiverSymmetricKeys {
+	for i, r := range receiverSymmetricKeys {
 		index := order[len(receiverBoxKeys)+i]
-		receiverKeysArray[index] = receiverEntryForSymmetricKey(receiverSymmetricKey, ephemeralKey.GetPublicKey(), encryptionKey, uint64(index))
+		receiverKeysArray[index] = r.makeReceiverKeys(ephemeralKey, encryptionKey, uint64(index))
 	}
 
 	return receiverKeysArray
