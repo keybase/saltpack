@@ -72,17 +72,17 @@ func (sss *signcryptSealStream) signcryptBytes(b []byte) error {
 	// TODO: Encode payload chunk.
 	plaintextHash := sha512.Sum512(b)
 
-	signatureInput := []byte(signatureEncryptedString)
-	signatureInput = append(signatureInput, sss.headerHash...)
-	signatureInput = append(signatureInput, nonce[:]...)
-	signatureInput = append(signatureInput, plaintextHash[:]...)
-
 	// Handle regular signing mode and anonymous mode (where we don't actually
 	// sign anything).
 	var detachedSig []byte
 	if sss.signingKey == nil {
 		detachedSig = make([]byte, ed25519.SignatureSize)
 	} else {
+		signatureInput := []byte(signatureEncryptedString)
+		signatureInput = append(signatureInput, sss.headerHash...)
+		signatureInput = append(signatureInput, nonce[:]...)
+		signatureInput = append(signatureInput, plaintextHash[:]...)
+
 		var err error
 		detachedSig, err = sss.signingKey.Sign(signatureInput)
 		if err != nil {
