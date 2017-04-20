@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"reflect"
+	"sort"
 	"testing"
 
 	"golang.org/x/crypto/nacl/box"
@@ -251,6 +252,14 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 	return res, nil
 }
 
+func getEncryptReceiverOrder(receivers []BoxPublicKey) []int {
+	order := make([]int, len(receivers))
+	for i, r := range receivers {
+		order[i] = int(r.(boxPublicKey).key[0])
+	}
+	return order
+}
+
 func TestShuffleEncryptReceivers(t *testing.T) {
 	receiverCount := 20
 	var receivers []BoxPublicKey
@@ -263,26 +272,57 @@ func TestShuffleEncryptReceivers(t *testing.T) {
 
 	shuffled := shuffleEncryptReceivers(receivers)
 
+	initialOrder := getEncryptReceiverOrder(receivers)
+	shuffledOrder := getEncryptReceiverOrder(shuffled)
 	// Technically this check is flaky, but the flake probability
 	// is 1/20! ~ 2^{-61}.
-	if reflect.DeepEqual(receivers, shuffled) {
-		t.Fatalf("receivers == shuffled == %+v", receivers)
+	if reflect.DeepEqual(initialOrder, shuffledOrder) {
+		t.Fatalf("initialOrder == shuffledOrder == %+v", initialOrder)
 	}
 
-	found := make(map[int]bool)
-	for _, r := range shuffled {
-		i := int(r.(boxPublicKey).key[0])
-		found[i] = true
+	unshuffledOrder := make([]int, len(shuffled))
+	copy(unshuffledOrder, shuffledOrder)
+	sort.Ints(unshuffledOrder)
+	if !reflect.DeepEqual(initialOrder, unshuffledOrder) {
+		t.Fatalf("initialOrder == %+v != unshuffledOrder == %+v", initialOrder, unshuffledOrder)
 	}
+}
 
-	expectedFound := make(map[int]bool)
-	for i := 0; i < receiverCount; i++ {
-		expectedFound[i] = true
-	}
+func testNewEncryptStreamShuffledReaders(t *testing.T, version Version) {
+	/*	receiverCount := 20
+		var receivers []BoxPublicKey
+		for i := 0; i < receiverCount; i++ {
+			k := boxPublicKey{
+				key: RawBoxKey{byte(i)},
+			}
+			receivers = append(receivers, k)
+		}
 
-	if !reflect.DeepEqual(found, expectedFound) {
-		t.Fatalf("found == %+v != expectedFound == %+v", found, expectedFound)
-	}
+		sndr := boxSecretKey{
+			key: RawBoxKey{0x08},
+		}
+		var ciphertext bytes.Buffer
+		strm, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		receiverKeys := strm.(*encryptStream).header.Receivers
+
+		found := make(map[int]bool)
+		for _, r := range receiverKeys {
+			i := int(r.(boxPublicKey).key[0])
+			found[i] = true
+		}
+
+		expectedFound := make(map[int]bool)
+		for i := 0; i < receiverCount; i++ {
+			expectedFound[i] = true
+		}
+
+		if !reflect.DeepEqual(found, expectedFound) {
+			t.Fatalf("found == %+v != expectedFound == %+v", found, expectedFound)
+		}*/
 }
 
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
@@ -1300,6 +1340,7 @@ func testNoWriteMessage(t *testing.T, version Version) {
 
 func TestEncrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
+		testNewEncryptStreamShuffledReaders,
 		testEmptyEncryptionOneReceiver,
 		testSmallEncryptionOneReceiver,
 		testMediumEncryptionOneReceiver,
