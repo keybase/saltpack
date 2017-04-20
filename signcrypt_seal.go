@@ -134,6 +134,8 @@ func keyIdentifierFromDerivedKey(derivedKey *SymmetricKey, recipientIndex uint64
 	return keyIdentifierDigest.Sum(nil)[0:32]
 }
 
+// A receiverKeysMaker is either a (wrapped) BoxPublicKey or a
+// ReceiverSymmetricKey.
 type receiverKeysMaker interface {
 	makeReceiverKeys(ephemeralPriv BoxSecretKey, payloadKey SymmetricKey, index uint64) receiverKeys
 }
