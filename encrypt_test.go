@@ -1345,6 +1345,47 @@ func testNoWriteMessage(t *testing.T, version Version) {
 	}
 }
 
+func TestEncryptSinglePacketV1(t *testing.T) {
+	sender := boxSecretKey{
+		key: RawBoxKey{0x08},
+	}
+	receivers := []BoxPublicKey{boxPublicKey{key: RawBoxKey{0x1}}}
+
+	plaintext := make([]byte, encryptionBlockSize)
+	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mps := newMsgpackStream(bytes.NewReader(ciphertext))
+
+	var headerBytes []byte
+	_, err = mps.Read(&headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var block encryptionBlockV1
+
+	// Payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Empty footer payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Empty footer payload packet.
+	_, err = mps.Read(&block)
+	if err != io.EOF {
+		t.Fatalf("err=%v != io.EOF", err)
+	}
+}
+
 func TestEncrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
 		testNewEncryptStreamShuffledReaders,
