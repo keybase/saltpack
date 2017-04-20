@@ -193,11 +193,24 @@ func (r ReceiverSymmetricKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, paylo
 	}
 }
 
+func shuffleSigncryptionReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker {
+	order := randomPerm(len(receiverBoxKeys) + len(receiverSymmetricKeys))
+	receivers := make([]receiverKeysMaker, len(receiverBoxKeys)+len(receiverSymmetricKeys))
+	for i, r := range receiverBoxKeys {
+		receivers[order[i]] = receiverBoxKey{r}
+	}
+
+	for i, r := range receiverSymmetricKeys {
+		receivers[order[len(receiverBoxKeys)+i]] = r
+	}
+	return receivers
+}
+
 // This generates the payload key, and encrypts it for all the different
 // recipients of the two different types. Symmetric key recipients and DH key
 // recipients use different types of identifiers, but they are the same length,
 // and should both be indistinguishable from random noise.
-func (sss *signcryptSealStream) init(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) error {
+func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 	ephemeralKey, err := sss.keyring.CreateEphemeralKey()
 	if err != nil {
 		return err
@@ -230,7 +243,7 @@ func (sss *signcryptSealStream) init(receiverBoxKeys []BoxPublicKey, receiverSym
 		eh.SenderSecretbox = secretbox.Seal([]byte{}, sss.signingKey.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 	}
 
-	eh.Receivers = sealEncryptionKeyForReceivers(receiverBoxKeys, receiverSymmetricKeys, ephemeralKey, sss.encryptionKey)
+	eh.Receivers = sealEncryptionKeyForReceivers(receivers, ephemeralKey, sss.encryptionKey)
 
 	// Encode the header to bytes, hash it, then double encode it.
 	headerBytes, err := encodeToBytes(sss.header)
@@ -247,19 +260,12 @@ func (sss *signcryptSealStream) init(receiverBoxKeys []BoxPublicKey, receiverSym
 	return nil
 }
 
-func sealEncryptionKeyForReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKey BoxSecretKey, encryptionKey SymmetricKey) []receiverKeys {
-	order := randomPerm(len(receiverBoxKeys) + len(receiverSymmetricKeys))
-
-	receiverKeysArray := make([]receiverKeys, len(receiverBoxKeys)+len(receiverSymmetricKeys))
+func sealEncryptionKeyForReceivers(receivers []receiverKeysMaker, ephemeralKey BoxSecretKey, encryptionKey SymmetricKey) []receiverKeys {
+	receiverKeysArray := make([]receiverKeys, len(receivers))
 	// Collect all the recipient identifiers, and encrypt the payload key for
 	// all of them.
-	for i, r := range receiverBoxKeys {
-		index := order[i]
-		receiverKeysArray[index] = (receiverBoxKey{r}).makeReceiverKeys(ephemeralKey, encryptionKey, uint64(index))
-	}
-	for i, r := range receiverSymmetricKeys {
-		index := order[len(receiverBoxKeys)+i]
-		receiverKeysArray[index] = r.makeReceiverKeys(ephemeralKey, encryptionKey, uint64(index))
+	for i, r := range receivers {
+		receiverKeysArray[i] = r.makeReceiverKeys(ephemeralKey, encryptionKey, uint64(i))
 	}
 
 	return receiverKeysArray
@@ -294,7 +300,8 @@ func NewSigncryptSealStream(ciphertext io.Writer, keyring Keyring, sender Signin
 		signingKey: sender,
 		keyring:    keyring,
 	}
-	err := sss.init(receiverBoxKeys, receiverSymmetricKeys)
+	receivers := shuffleSigncryptionReceivers(receiverBoxKeys, receiverSymmetricKeys)
+	err := sss.init(receivers)
 	return sss, err
 }
 
