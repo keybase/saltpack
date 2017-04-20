@@ -62,8 +62,7 @@ func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
 	if ret, pes.err = pes.buffer.Write(plaintext); pes.err != nil {
 		return 0, pes.err
 	}
-	// TODO: This is wrong in the == case.
-	for pes.buffer.Len() >= pes.options.getBlockSize() {
+	for pes.buffer.Len() > pes.options.getBlockSize() {
 		pes.err = pes.encryptBlock(false)
 		if pes.err != nil {
 			return 0, pes.err
@@ -109,7 +108,7 @@ func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, ciphertext, isFinal)
+	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, ciphertextBlock{ciphertext, isFinal})
 	for _, macKey := range pes.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		blockV1.HashAuthenticators = append(blockV1.HashAuthenticators, authenticator)

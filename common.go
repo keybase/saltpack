@@ -20,6 +20,11 @@ import (
 // of encrypted blocks. Each encrypted block of course fits into a packet.
 type encryptionBlockNumber uint64
 
+type ciphertextBlock struct {
+	ciphertext []byte
+	isFinal    bool
+}
+
 func codecHandle() *codec.MsgpackHandle {
 	var mh codec.MsgpackHandle
 	mh.WriteExt = true
@@ -176,18 +181,13 @@ func sum512Truncate256(in []byte) [32]byte {
 	return sliceToByte32(sum512[:32])
 }
 
-func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, payloadCiphertext []byte, isFinal bool) payloadHash {
+func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, block ciphertextBlock) payloadHash {
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
-	payloadDigest.Write(payloadCiphertext)
-	if version.Major == 2 {
-		// TODO: Do msgpack encoding.
-		var b byte
-		if isFinal {
-			b = 1
-		}
-		payloadDigest.Write([]byte{b})
+	payloadDigest.Write(block.ciphertext)
+	if version.Major == 2 && block.isFinal {
+		payloadDigest.Write([]byte{1})
 	}
 	h := payloadDigest.Sum(nil)
 	return sliceToByte64(h)

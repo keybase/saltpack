@@ -51,9 +51,7 @@ func (es *encryptStream) Write(plaintext []byte) (int, error) {
 }
 
 func (es *encryptStream) encryptBlock(isFinal bool) error {
-	var n int
-	var err error
-	n, err = es.buffer.Read(es.inblock[:])
+	n, err := es.buffer.Read(es.inblock[:])
 	if err == io.EOF && isFinal {
 		err = nil
 	}
@@ -77,7 +75,7 @@ func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, ciphertext, isFinal)
+	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, ciphertextBlock{ciphertext, isFinal})
 	for _, macKey := range es.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		blockV1.HashAuthenticators = append(blockV1.HashAuthenticators, authenticator)
