@@ -10,7 +10,6 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"reflect"
 	"testing"
 
 	"golang.org/x/crypto/nacl/box"
@@ -249,114 +248,6 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 		res = append(res, buf[0:n]...)
 	}
 	return res, nil
-}
-
-func TestBoxPayloadKeyForReceiversV1AllEqual(t *testing.T) {
-	receiver := boxPublicKey{key: RawBoxKey{0x1}}
-	const count = 10
-	receivers := make([]BoxPublicKey, count)
-	for i := 0; i < count; i++ {
-		receivers[i] = receiver
-	}
-
-	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
-	payloadKey := SymmetricKey{0x6}
-
-	receiverKeysArray := boxPayloadKeyForReceivers(Version1(), receivers, ephemeralKey, payloadKey)
-	if len(receiverKeysArray) != len(receivers) {
-		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
-	}
-
-	// All entries should be the same, since all receivers are the
-	// same, and we use the same nonce.
-	for i, receiverKeys := range receiverKeysArray {
-		if !reflect.DeepEqual(receiverKeys, receiverKeysArray[0]) {
-			t.Errorf("receiverKeysArray[%d] == %+v != receiverKeysArray[0] == %+v", i, receiverKeys, receiverKeysArray[0])
-		}
-	}
-}
-
-func TestBoxPayloadKeyForReceiversV2AllDistinct(t *testing.T) {
-	receiver := boxPublicKey{key: RawBoxKey{0x1}}
-	const count = 10
-	receivers := make([]BoxPublicKey, count)
-	for i := 0; i < count; i++ {
-		receivers[i] = receiver
-	}
-
-	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
-	payloadKey := SymmetricKey{0x6}
-
-	receiverKeysArray := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
-	if len(receiverKeysArray) != len(receivers) {
-		t.Fatal("len(receiverKeysArray)=%d != len(receivers)=%d", len(receiverKeysArray), len(receivers))
-	}
-
-	expectedKID := receiver.ToKID()
-
-	// No two entries should be have the same box, since we use
-	// different nonces.
-	for i := 1; i < len(receiverKeysArray); i++ {
-		if !bytes.Equal(receiverKeysArray[i].ReceiverKID, expectedKID) {
-			t.Errorf("receiverKeysArray[%d].ReceiverKID = %+v != expectedKID == %+v", i, receiverKeysArray[i].ReceiverKID, expectedKID)
-		}
-		for j := i + 1; j < len(receiverKeysArray); j++ {
-			if bytes.Equal(receiverKeysArray[i].PayloadKeyBox, receiverKeysArray[j].PayloadKeyBox) {
-				t.Errorf("receiverKeysArray[%d].PayloadKeyBox == receiverKeysArray[%d].PayloadKeyBox == %+v", i, j, receiverKeysArray[i])
-			}
-		}
-	}
-}
-
-func TestBoxPayloadKeyForReceiversV2Permuted(t *testing.T) {
-	const count = 10
-	// We need the receivers to not all be the same here --
-	// otherwise, the first check below would fail, since the
-	// nonce depends only on the index.
-	receivers := make([]BoxPublicKey, count)
-	for i := 0; i < count; i++ {
-		receivers[i] = boxPublicKey{key: RawBoxKey{byte(i)}}
-	}
-
-	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
-	payloadKey := SymmetricKey{0x6}
-
-	receiverKeysArray1 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
-	receiverKeysArray2 := boxPayloadKeyForReceivers(Version2(), receivers, ephemeralKey, payloadKey)
-
-	for i := 0; i < len(receiverKeysArray1); i++ {
-		kid1 := receiverKeysArray1[i].ReceiverKID
-		kid2 := receiverKeysArray2[i].ReceiverKID
-		if !bytes.Equal(kid1, kid2) {
-			t.Errorf("receiverKeysArray1[%d].ReceiverKID == %+v != receiverKeysArray2[%d].ReceiverKID == %+v", i, kid1, i, kid2)
-		}
-	}
-}
-
-func testReceiverKeyMACKeyOrder(t *testing.T, version Version) {
-	const count = 10
-	receivers := make([]BoxPublicKey, count)
-	for i := 0; i < count; i++ {
-		receivers[i] = boxPublicKey{key: RawBoxKey{byte(i)}}
-	}
-
-	ephemeralKey := boxSecretKey{key: RawBoxKey{0x08}}
-	payloadKey := SymmetricKey{0x6}
-
-	receiverKeysArray := boxPayloadKeyForReceivers(version, receivers, ephemeralKey, payloadKey)
-
-	sender := boxSecretKey{key: RawBoxKey{0x50}}
-	headerHash := headerHash{0x5}
-	macKeys := computeMACKeysSender(version, sender, ephemeralKey, receivers, headerHash)
-
-	// The orders of receiverKeysArray and macKeys should match up.
-	for i := 0; i < len(receiverKeysArray); i++ {
-		publicKey := boxPublicKey{key: sliceToByte32(receiverKeysArray[i].ReceiverKID)}
-		expectedMACKey := computeMACKeySender(version, uint64(i), sender, ephemeralKey, publicKey, headerHash)
-		if macKeys[i] != expectedMACKey {
-			t.Errorf("macKeys[i] == %v != expectedMacKey == %v", macKeys[i], expectedMACKey)
-		}
-	}
 }
 
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
@@ -1364,7 +1255,6 @@ func testNoWriteMessage(t *testing.T, version Version) {
 
 func TestEncrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
-		testReceiverKeyMACKeyOrder,
 		testEmptyEncryptionOneReceiver,
 		testSmallEncryptionOneReceiver,
 		testMediumEncryptionOneReceiver,
