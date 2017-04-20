@@ -128,7 +128,7 @@ func checkKnownVersion(version Version) error {
 	return ErrBadVersion{version}
 }
 
-func shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+func shuffleEncryptReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 	order := randomPerm(len(receivers))
 	shuffled := make([]BoxPublicKey, len(receivers))
 	for i := 0; i < len(receivers); i++ {
@@ -261,7 +261,7 @@ func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey
 		encoder: newEncoder(ciphertext),
 		inblock: make([]byte, encryptionBlockSize),
 	}
-	err := es.init(version, sender, shuffleReceivers(receivers))
+	err := es.init(version, sender, shuffleEncryptReceivers(receivers))
 	return es, err
 }
 
