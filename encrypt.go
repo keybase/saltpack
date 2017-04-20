@@ -69,27 +69,31 @@ func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 	nonce := nonceForChunkSecretBox(es.numBlocks)
 	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	blockV1 := encryptionBlockV1{
-		PayloadCiphertext: ciphertext,
-	}
-
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
 	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, ciphertextBlock{ciphertext, isFinal})
+	var hashAuthenticators []payloadAuthenticator
 	for _, macKey := range es.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
-		blockV1.HashAuthenticators = append(blockV1.HashAuthenticators, authenticator)
+		hashAuthenticators = append(hashAuthenticators, authenticator)
 	}
 
 	switch es.header.Version {
 	case Version1():
+		blockV1 := encryptionBlockV1{
+			PayloadCiphertext:  ciphertext,
+			HashAuthenticators: hashAuthenticators,
+		}
 		if err := es.encoder.Encode(blockV1); err != nil {
 			return err
 		}
 	case Version2():
 		blockV2 := encryptionBlockV2{
-			encryptionBlockV1: blockV1,
-			IsFinal:           isFinal,
+			encryptionBlockV1: encryptionBlockV1{
+				PayloadCiphertext:  ciphertext,
+				HashAuthenticators: hashAuthenticators,
+			},
+			IsFinal: isFinal,
 		}
 		if err := es.encoder.Encode(blockV2); err != nil {
 			return err
