@@ -128,6 +128,15 @@ func checkKnownVersion(version Version) error {
 	return ErrBadVersion{version}
 }
 
+func shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+	order := randomPerm(len(receivers))
+	shuffled := make([]BoxPublicKey, len(receivers))
+	for i := 0; i < len(receivers); i++ {
+		shuffled[i] = receivers[order[i]]
+	}
+	return shuffled
+}
+
 func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
 	if err := checkKnownVersion(version); err != nil {
 		return err
@@ -162,15 +171,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	nonce := nonceForSenderKeySecretBox()
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	order := computeReceiverOrder(version, len(receivers))
-	receiversTmp := make([]BoxPublicKey, len(receivers))
-	for i := 0; i < len(receivers); i++ {
-		receiversTmp[i] = receivers[order[i]]
-	}
-	receivers = receiversTmp
-	for i := 0; i < len(order); i++ {
-		order[i] = i
-	}
+	receivers = shuffleReceivers(receivers)
 
 	eh.Receivers = boxPayloadKeyForReceivers(version, receivers, ephemeralKey, es.payloadKey)
 
