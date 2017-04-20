@@ -27,7 +27,7 @@ func testNewMinorVersion(t *testing.T, version Version) {
 	newVersion.Minor++
 
 	teo := testEncryptionOptions{
-		corruptHeader: func(eh *EncryptionHeader) {
+		corruptHeader: func(_ []int, eh *EncryptionHeader) {
 			eh.Version = newVersion
 		},
 	}
