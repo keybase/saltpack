@@ -1136,8 +1136,8 @@ func testCiphertextSwapKeys(t *testing.T, version Version) {
 	plaintext := randomMsg(t, 1024*3)
 	teo := testEncryptionOptions{
 		corruptHeader: func(order []int, h *EncryptionHeader) {
-			i := order[0]
-			j := order[1]
+			i := 0
+			j := 1
 			h.Receivers[i].PayloadKeyBox, h.Receivers[j].PayloadKeyBox = h.Receivers[j].PayloadKeyBox, h.Receivers[i].PayloadKeyBox
 		},
 	}

@@ -198,6 +198,8 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		return err
 	}
 
+	// Use the header hash to compute the MAC keys.
+	//
 	// TODO: Plumb the pre-computed shared keys above through to
 	// computeMACKeysSender.
 	es.macKeys = computeMACKeysSender(es.header.Version, sender, ephemeralKey, receivers, es.headerHash)
@@ -223,35 +225,13 @@ func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecre
 	}
 }
 
-// computeMACKeysSender returns an array of macKeys such that the
-// macKey for receivers[i] is in macKeys[order[i]].
 func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
-	macKeys := make([]macKey, len(receivers))
-	// Use the header hash to compute the MAC keys.
+	var macKeys []macKey
 	for i, receiver := range receivers {
 		macKey := computeMACKeySender(version, uint64(i), sender, ephemeralKey, receiver, headerHash)
-		macKeys[i] = macKey
+		macKeys = append(macKeys, macKey)
 	}
 	return macKeys
-}
-
-func computeReceiverOrder(version Version, receiverCount int) []int {
-	switch version.Major {
-	case 1:
-		// TODO: Consider randomizing this also for v1, since
-		// that shouldn't break anything.
-		order := make([]int, receiverCount)
-		for i := 0; i < receiverCount; i++ {
-			order[i] = i
-		}
-		return order
-	case 2:
-		return randomPerm(receiverCount)
-	default:
-		// Let caller be responsible for filtering out unknown
-		// versions.
-		panic(ErrBadVersion{version})
-	}
 }
 
 func (es *encryptStream) Close() error {

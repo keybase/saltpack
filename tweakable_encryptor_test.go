@@ -158,14 +158,13 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		pes.options.corruptSenderKeyCiphertext(eh.SenderSecretbox)
 	}
 
-	order := computeReceiverOrder(version, len(receivers))
 	eh.Receivers = pes.boxPayloadKeyForReceivers(version, receivers, ephemeralKey)
 
 	// Corrupt a copy so that the corruption doesn't cause
 	// e.g. computeMACKeys to panic.
 	ehMaybeCorrupt := *eh
 	if pes.options.corruptHeader != nil {
-		pes.options.corruptHeader(order, &ehMaybeCorrupt)
+		pes.options.corruptHeader(nil, &ehMaybeCorrupt)
 	}
 
 	// Encode the header and the header length, and write them out immediately.
