@@ -25,6 +25,26 @@ type ciphertextBlock struct {
 	isFinal    bool
 }
 
+func (b ciphertextBlock) toEncryptionBlock(version Version, authenticators []payloadAuthenticator) (interface{}, error) {
+	switch version {
+	case Version1():
+		return encryptionBlockV1{
+			PayloadCiphertext:  b.ciphertext,
+			HashAuthenticators: authenticators,
+		}, nil
+	case Version2():
+		return encryptionBlockV2{
+			encryptionBlockV1: encryptionBlockV1{
+				PayloadCiphertext:  b.ciphertext,
+				HashAuthenticators: authenticators,
+			},
+			IsFinal: b.isFinal,
+		}, nil
+	default:
+		return nil, ErrBadVersion{version}
+	}
+}
+
 func codecHandle() *codec.MsgpackHandle {
 	var mh codec.MsgpackHandle
 	mh.WriteExt = true

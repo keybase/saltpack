@@ -69,37 +69,26 @@ func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 	nonce := nonceForChunkSecretBox(es.numBlocks)
 	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
+	cBlock := ciphertextBlock{ciphertext, isFinal}
+
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, ciphertextBlock{ciphertext, isFinal})
-	var hashAuthenticators []payloadAuthenticator
+	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, cBlock)
+	var authenticators []payloadAuthenticator
 	for _, macKey := range es.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
-		hashAuthenticators = append(hashAuthenticators, authenticator)
+		authenticators = append(authenticators, authenticator)
 	}
 
-	switch es.header.Version {
-	case Version1():
-		blockV1 := encryptionBlockV1{
-			PayloadCiphertext:  ciphertext,
-			HashAuthenticators: hashAuthenticators,
-		}
-		if err := es.encoder.Encode(blockV1); err != nil {
-			return err
-		}
-	case Version2():
-		blockV2 := encryptionBlockV2{
-			encryptionBlockV1: encryptionBlockV1{
-				PayloadCiphertext:  ciphertext,
-				HashAuthenticators: hashAuthenticators,
-			},
-			IsFinal: isFinal,
-		}
-		if err := es.encoder.Encode(blockV2); err != nil {
-			return err
-		}
-	default:
-		panic(ErrBadVersion{es.header.Version})
+	eBlock, err := cBlock.toEncryptionBlock(es.header.Version, authenticators)
+	// The only possible error is ErrBadVersion, which we should
+	// have already checked against.
+	if err != nil {
+		panic(err)
+	}
+
+	if err := es.encoder.Encode(eBlock); err != nil {
+		return err
 	}
 
 	es.numBlocks++
