@@ -268,6 +268,21 @@ func TestShuffleEncryptReceivers(t *testing.T) {
 	if reflect.DeepEqual(receivers, shuffled) {
 		t.Fatalf("receivers == shuffled == %+v", receivers)
 	}
+
+	found := make(map[int]bool)
+	for _, r := range shuffled {
+		i := int(r.(boxPublicKey).key[0])
+		found[i] = true
+	}
+
+	expectedFound := make(map[int]bool)
+	for i := 0; i < receiverCount; i++ {
+		expectedFound[i] = true
+	}
+
+	if !reflect.DeepEqual(found, expectedFound) {
+		t.Fatalf("found == %+v != expectedFound == %+v", found, expectedFound)
+	}
 }
 
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
