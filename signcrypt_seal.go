@@ -196,8 +196,9 @@ func (r ReceiverSymmetricKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, paylo
 }
 
 func shuffleSigncryptionReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker {
-	order := randomPerm(len(receiverBoxKeys) + len(receiverSymmetricKeys))
-	receivers := make([]receiverKeysMaker, len(receiverBoxKeys)+len(receiverSymmetricKeys))
+	totalLen := len(receiverBoxKeys) + len(receiverSymmetricKeys)
+	order := randomPerm(totalLen)
+	receivers := make([]receiverKeysMaker, totalLen)
 	for i, r := range receiverBoxKeys {
 		receivers[order[i]] = receiverBoxKey{r}
 	}
