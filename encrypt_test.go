@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"reflect"
 	"testing"
 
 	"golang.org/x/crypto/nacl/box"
@@ -248,6 +249,25 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 		res = append(res, buf[0:n]...)
 	}
 	return res, nil
+}
+
+func TestShuffleEncryptReceivers(t *testing.T) {
+	receiverCount := 20
+	var receivers []BoxPublicKey
+	for i := 0; i < receiverCount; i++ {
+		k := boxPublicKey{
+			key: RawBoxKey{byte(i)},
+		}
+		receivers = append(receivers, k)
+	}
+
+	shuffled := shuffleEncryptReceivers(receivers)
+
+	// Technically this check is flaky, but the flake probability
+	// is 1/20! ~ 2^{-61}.
+	if reflect.DeepEqual(receivers, shuffled) {
+		t.Fatalf("receivers == shuffled == %+v", receivers)
+	}
 }
 
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
