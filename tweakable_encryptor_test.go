@@ -76,13 +76,10 @@ func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
 }
 
 func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
-	var n int
-	var err error
-	n, err = pes.buffer.Read(pes.inblock[:])
+	n, err := pes.buffer.Read(pes.inblock[:])
 	if err == io.EOF && isFinal {
 		err = nil
 	}
-
 	if err != nil {
 		return err
 	}
