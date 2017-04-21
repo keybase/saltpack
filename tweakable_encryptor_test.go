@@ -62,6 +62,10 @@ func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
 	if ret, pes.err = pes.buffer.Write(plaintext); pes.err != nil {
 		return 0, pes.err
 	}
+
+	// If es.buffer.Len() == encryptionBlockSize, we don't want to
+	// write it out just yet, since for V2 we need to be sure this
+	// isn't the last block.
 	for pes.buffer.Len() > pes.options.getBlockSize() {
 		pes.err = pes.encryptBlock(false)
 		if pes.err != nil {

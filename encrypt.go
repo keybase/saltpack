@@ -41,6 +41,9 @@ func (es *encryptStream) Write(plaintext []byte) (int, error) {
 		return 0, es.err
 	}
 
+	// If es.buffer.Len() == encryptionBlockSize, we don't want to
+	// write it out just yet, since for V2 we need to be sure this
+	// isn't the last block.
 	for es.buffer.Len() > encryptionBlockSize {
 		es.err = es.encryptBlock(false)
 		if es.err != nil {
