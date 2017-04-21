@@ -13,6 +13,7 @@ import (
 	mathrand "math/rand"
 
 	"github.com/keybase/go-codec/codec"
+	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/poly1305"
 )
 
@@ -42,6 +43,29 @@ func (b ciphertextBlock) toEncryptionBlock(version Version, authenticators []pay
 		}, nil
 	default:
 		return nil, ErrBadVersion{version}
+	}
+}
+
+func readEncryptionBlock(version Version, mps *msgpackStream) (cBlock ciphertextBlock, seqno packetSeqno, authenticators []payloadAuthenticator, err error) {
+	switch version.Major {
+	case 1:
+		var ebV1 encryptionBlockV1
+		seqno, err = mps.Read(&ebV1)
+		if err != nil {
+			return ciphertextBlock{}, 0, nil, err
+		}
+
+		return ciphertextBlock{ebV1.PayloadCiphertext, len(ebV1.PayloadCiphertext) == secretbox.Overhead}, seqno, ebV1.HashAuthenticators, nil
+	case 2:
+		var ebV2 encryptionBlockV2
+		seqno, err := mps.Read(&ebV2)
+		if err != nil {
+			return ciphertextBlock{}, 0, nil, err
+		}
+
+		return ciphertextBlock{ebV2.PayloadCiphertext, ebV2.IsFinal}, seqno, ebV2.HashAuthenticators, nil
+	default:
+		panic(ErrBadVersion{version})
 	}
 }
 
