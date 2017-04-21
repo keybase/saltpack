@@ -213,7 +213,6 @@ func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) {
 }
 
 func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, ciphertext []byte, isFinal bool) payloadHash {
-	checkCiphertextState(version, ciphertext, isFinal)
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
