@@ -53,17 +53,6 @@ func (es *encryptStream) Write(plaintext []byte) (int, error) {
 	return ret, nil
 }
 
-func (es *encryptStream) encryptBlock(isFinal bool) error {
-	n, err := es.buffer.Read(es.inblock[:])
-	if err == io.EOF && isFinal {
-		err = nil
-	}
-	if err != nil {
-		return err
-	}
-	return es.encryptBytes(es.inblock[0:n], isFinal)
-}
-
 func makeEncryptionBlock(version Version, ciphertext []byte, isFinal bool, authenticators []payloadAuthenticator) interface{} {
 	ebV1 := encryptionBlockV1{
 		PayloadCiphertext:  ciphertext,
@@ -82,15 +71,24 @@ func makeEncryptionBlock(version Version, ciphertext []byte, isFinal bool, authe
 	}
 }
 
-func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
+func (es *encryptStream) encryptBlock(isFinal bool) error {
+	n, err := es.buffer.Read(es.inblock[:])
+	if err == io.EOF && isFinal {
+		err = nil
+	}
+	if err != nil {
+		return err
+	}
+
 	if err := es.numBlocks.check(); err != nil {
 		return err
 	}
 
+	plaintext := es.inblock[:n]
 	nonce := nonceForChunkSecretBox(es.numBlocks)
-	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
+	ciphertext := secretbox.Seal([]byte{}, plaintext, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	err := checkCiphertextState(es.header.Version, ciphertext, isFinal)
+	err = checkCiphertextState(es.header.Version, ciphertext, isFinal)
 	if err != nil {
 		// We should always create valid ciphertext states.
 		panic(err)

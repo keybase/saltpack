@@ -83,13 +83,12 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 	if err != nil {
 		return err
 	}
-	return pes.encryptBytes(pes.inblock[0:n], isFinal)
-}
 
-func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
 	if err := pes.numBlocks.check(); err != nil {
 		return err
 	}
+
+	plaintext := pes.inblock[:n]
 
 	nonce := nonceForChunkSecretBox(pes.numBlocks)
 
@@ -97,7 +96,13 @@ func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
 		nonce = pes.options.corruptPayloadNonce(nonce, pes.numBlocks)
 	}
 
-	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(&nonce), (*[32]byte)(&pes.payloadKey))
+	ciphertext := secretbox.Seal([]byte{}, plaintext, (*[24]byte)(&nonce), (*[32]byte)(&pes.payloadKey))
+
+	err = checkCiphertextState(pes.header.Version, ciphertext, isFinal)
+	if err != nil {
+		// We should always create valid ciphertext states.
+		panic(err)
+	}
 
 	if pes.options.corruptCiphertextBeforeHash != nil {
 		pes.options.corruptCiphertextBeforeHash(ciphertext, pes.numBlocks)
