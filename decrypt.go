@@ -124,40 +124,41 @@ func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 	return nil
 }
 
-func readEncryptionBlock(version Version, mps *msgpackStream) (cBlock ciphertextBlock, seqno packetSeqno, authenticators []payloadAuthenticator, err error) {
+func readEncryptionBlock(version Version, mps *msgpackStream) (ciphertext []byte, isFinal bool, seqno packetSeqno, authenticators []payloadAuthenticator, err error) {
 	switch version.Major {
 	case 1:
 		var ebV1 encryptionBlockV1
 		seqno, err = mps.Read(&ebV1)
 		if err != nil {
-			return ciphertextBlock{}, 0, nil, err
+			return nil, false, 0, nil, err
 		}
 
-		return ciphertextBlock{ebV1.PayloadCiphertext, len(ebV1.PayloadCiphertext) == secretbox.Overhead}, seqno, ebV1.HashAuthenticators, nil
+		return ebV1.PayloadCiphertext, len(ebV1.PayloadCiphertext) == secretbox.Overhead, seqno, ebV1.HashAuthenticators, nil
 	case 2:
 		var ebV2 encryptionBlockV2
 		seqno, err := mps.Read(&ebV2)
 		if err != nil {
-			return ciphertextBlock{}, 0, nil, err
+			return nil, false, 0, nil, err
 		}
 
-		return ciphertextBlock{ebV2.PayloadCiphertext, ebV2.IsFinal}, seqno, ebV2.HashAuthenticators, nil
+		return ebV2.PayloadCiphertext, ebV2.IsFinal, seqno, ebV2.HashAuthenticators, nil
 	default:
 		panic(ErrBadVersion{version})
 	}
 }
 
 func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) {
-	cBlock, seqno, authenticators, err := readEncryptionBlock(ds.version, ds.mps)
-	if _, ok := err.(ErrBadVersion); ok {
-		// We should have already checked against ErrBadVersion.
-		panic(err)
-	}
+	ciphertext, isFinal, seqno, authenticators, err := readEncryptionBlock(ds.version, ds.mps)
 	if err != nil {
 		return 0, false, err
 	}
 
-	plaintext, err := ds.processCiphertextBlock(cBlock, seqno, authenticators)
+	err = checkCiphertextState(ds.version, ciphertext, isFinal)
+	if err != nil {
+		return 0, false, err
+	}
+
+	plaintext, err := ds.processCiphertextBlock(ciphertext, isFinal, seqno, authenticators)
 	if err != nil {
 		return 0, false, err
 	}
@@ -167,7 +168,7 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 	// Leave the remainder for a subsequent read
 	ds.buf = plaintext[n:]
 
-	return n, cBlock.isFinal, nil
+	return n, isFinal, nil
 }
 
 func (ds *decryptStream) tryVisibleReceivers(hdr *EncryptionHeader, ephemeralKey BoxPublicKey) (BoxSecretKey, *SymmetricKey, int, error) {
@@ -318,7 +319,7 @@ func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, p
 	}
 }
 
-func (ds *decryptStream) processCiphertextBlock(cBlock ciphertextBlock, seqno packetSeqno, authenticators []payloadAuthenticator) ([]byte, error) {
+func (ds *decryptStream) processCiphertextBlock(ciphertext []byte, isFinal bool, seqno packetSeqno, authenticators []payloadAuthenticator) ([]byte, error) {
 
 	blockNum := encryptionBlockNumber(seqno - 1)
 
@@ -329,13 +330,13 @@ func (ds *decryptStream) processCiphertextBlock(cBlock ciphertextBlock, seqno pa
 	nonce := nonceForChunkSecretBox(blockNum)
 
 	// Check the authenticator.
-	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, cBlock.ciphertext, cBlock.isFinal)
+	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, ciphertext, isFinal)
 	ourAuthenticator := computePayloadAuthenticator(ds.macKey, hashToAuthenticate)
 	if !ourAuthenticator.Equal(authenticators[ds.position]) {
 		return nil, ErrBadTag(seqno)
 	}
 
-	plaintext, ok := secretbox.Open([]byte{}, cBlock.ciphertext, (*[24]byte)(&nonce), (*[32]byte)(ds.payloadKey))
+	plaintext, ok := secretbox.Open([]byte{}, ciphertext, (*[24]byte)(&nonce), (*[32]byte)(ds.payloadKey))
 	if !ok {
 		return nil, ErrBadCiphertext(seqno)
 	}

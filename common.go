@@ -182,33 +182,37 @@ func sum512Truncate256(in []byte) [32]byte {
 	return sliceToByte32(sum512[:32])
 }
 
-func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) {
-	die := func() {
-		panic(fmt.Sprintf("invalid ciphertext state: version=%s, len(ciphertext)=%d, isFinal=%t", version, len(ciphertext), isFinal))
+func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) error {
+	makeErr := func() error {
+		return fmt.Errorf("invalid ciphertext state: version=%s, len(ciphertext)=%d, isFinal=%t", version, len(ciphertext), isFinal)
 	}
 
 	switch version.Major {
 	case 1:
 		if len(ciphertext) < secretbox.Overhead {
-			die()
+			return makeErr()
 		}
 
 		if (len(ciphertext) == secretbox.Overhead) != isFinal {
-			die()
+			return makeErr()
 		}
+
+		return nil
 	case 2:
 		if len(ciphertext) < secretbox.Overhead {
-			die()
+			return makeErr()
 		}
 
 		// With v2, it's valid to have a final packet with
 		// non-empty plaintext, so the below is the only
 		// remaining invalid state.
 		if (len(ciphertext) == secretbox.Overhead) && !isFinal {
-			die()
+			return makeErr()
 		}
+
+		return nil
 	default:
-		die()
+		panic(ErrBadVersion{version})
 	}
 }
 

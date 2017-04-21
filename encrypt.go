@@ -87,7 +87,11 @@ func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 	nonce := nonceForChunkSecretBox(es.numBlocks)
 	ciphertext := secretbox.Seal([]byte{}, b, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	checkCiphertextState(es.header.Version, ciphertext, isFinal)
+	err := checkCiphertextState(es.header.Version, ciphertext, isFinal)
+	if err != nil {
+		// We should always create valid ciphertext states.
+		panic(err)
+	}
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
