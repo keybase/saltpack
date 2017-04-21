@@ -227,7 +227,7 @@ func (pes *testEncryptStream) Close() error {
 	switch pes.header.Version {
 	case Version1():
 		if pes.buffer.Len() > 0 {
-			err := pes.encryptBlock(true)
+			err := pes.encryptBlock(false)
 			if err != nil {
 				return err
 			}

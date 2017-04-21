@@ -258,7 +258,7 @@ func (es *encryptStream) Close() error {
 	switch es.header.Version {
 	case Version1():
 		if es.buffer.Len() > 0 {
-			err := es.encryptBlock(true)
+			err := es.encryptBlock(false)
 			if err != nil {
 				return err
 			}

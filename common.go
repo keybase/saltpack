@@ -13,6 +13,7 @@ import (
 	mathrand "math/rand"
 
 	"github.com/keybase/go-codec/codec"
+	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/poly1305"
 )
 
@@ -181,7 +182,20 @@ func sum512Truncate256(in []byte) [32]byte {
 	return sliceToByte32(sum512[:32])
 }
 
+func checkValidIsFinal(version Version, ciphertext []byte, isFinal bool) {
+	switch version.Major {
+	case 1:
+		if (len(ciphertext) == secretbox.Overhead) != isFinal {
+			panic(fmt.Sprintf("invalid isFinal: version=%s, len(ciphertext)=%d, isFinal=%t", version, len(ciphertext), isFinal))
+		}
+	case 2:
+	default:
+		panic(ErrBadVersion{version})
+	}
+}
+
 func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, ciphertext []byte, isFinal bool) payloadHash {
+	checkValidIsFinal(version, ciphertext, isFinal)
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
