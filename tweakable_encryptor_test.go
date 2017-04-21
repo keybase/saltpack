@@ -40,7 +40,6 @@ type testEncryptStream struct {
 	header     *EncryptionHeader
 	payloadKey SymmetricKey
 	buffer     bytes.Buffer
-	inblock    []byte
 	options    testEncryptionOptions
 	headerHash headerHash
 	macKeys    []macKey
@@ -76,20 +75,12 @@ func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
 }
 
 func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
-	n, err := pes.buffer.Read(pes.inblock[:])
-	checkEncryptBlockRead(pes.header.Version, isFinal, n, err, pes.buffer.Len())
-	if err == io.EOF && isFinal {
-		err = nil
-	}
-	if err != nil {
-		return err
-	}
+	plaintext := pes.buffer.Next(pes.options.getBlockSize())
+	checkEncryptBlockRead(pes.header.Version, isFinal, pes.options.getBlockSize(), len(plaintext), pes.buffer.Len())
 
 	if err := pes.numBlocks.check(); err != nil {
 		return err
 	}
-
-	plaintext := pes.inblock[:n]
 
 	nonce := nonceForChunkSecretBox(pes.numBlocks)
 
@@ -99,8 +90,7 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 
 	ciphertext := secretbox.Seal([]byte{}, plaintext, (*[24]byte)(&nonce), (*[32]byte)(&pes.payloadKey))
 
-	err = checkCiphertextState(pes.header.Version, ciphertext, isFinal)
-	if err != nil {
+	if err := checkCiphertextState(pes.header.Version, ciphertext, isFinal); err != nil {
 		// We should always create valid ciphertext states.
 		panic(err)
 	}
@@ -275,7 +265,6 @@ func newTestEncryptStream(version Version, ciphertext io.Writer, sender BoxSecre
 		output:  ciphertext,
 		encoder: newEncoder(ciphertext),
 		options: options,
-		inblock: make([]byte, options.getBlockSize()),
 	}
 	err := pes.init(version, sender, receivers)
 	return pes, err

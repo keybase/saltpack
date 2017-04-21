@@ -19,7 +19,6 @@ type encryptStream struct {
 	header     *EncryptionHeader
 	payloadKey SymmetricKey
 	buffer     bytes.Buffer
-	inblock    []byte
 	headerHash headerHash
 	macKeys    []macKey
 
@@ -71,39 +70,34 @@ func makeEncryptionBlock(version Version, ciphertext []byte, isFinal bool, authe
 	}
 }
 
-func checkEncryptBlockRead(version Version, isFinal bool, n int, err error, bufLen int) {
-	// We have a non-nil, non-EOF error, so there's nothing to check.
-	if err != nil && err != io.EOF {
-		return
+func checkEncryptBlockRead(version Version, isFinal bool, blockSize, plaintextLen, bufLen int) {
+	die := func() error {
+		return fmt.Errorf("invalid encryptBlock read state: version=%s, isFinal=%t, plaintextLen=%d, bufLen=%d", plaintextLen, bufLen)
 	}
 
-	die := func() error {
-		return fmt.Errorf("invalid encryptBlock read state: version=%s, isFinal=%t, n=%d, err=%v, bufLen=%d", version, isFinal, n, err, bufLen)
+	// We shouldn't read more than a full block's worth.
+	if plaintextLen > blockSize {
+		die()
+	}
+
+	// If we read less than a full block's worth, then we
+	// shouldn't have anything left in the buffer.
+	if plaintextLen < blockSize && bufLen > 0 {
+		die()
 	}
 
 	switch version {
 	case Version1():
-		if n > encryptionBlockSize {
-			die()
-		}
-
-		// isFinal must be equivalent to (n == 0) && (err == io.EOF).
-		if isFinal != ((n == 0) && (err == io.EOF)) {
+		// isFinal must be equivalent to plaintextLen being 0
+		// (which, by the above, implies that bufLen == 0).
+		if isFinal != (plaintextLen == 0) {
 			die()
 		}
 
 	case Version2():
-		if n > encryptionBlockSize {
-			die()
-		}
-
-		// If isFinal, then n can be any number. But if n is
-		// exactly encryptionBlockSize, then we won't get an
-		// EOF. So isFinal must be equivalent to
-		//
-		//   ((n < encryptionBlockSize) && (err == io.EOF)) ||
-		//   ((n == encryptionBlockSize) && (err == nil) && (bufLen == 0))
-		if isFinal != (((n < encryptionBlockSize) && (err == io.EOF)) || (n == encryptionBlockSize) && (err == nil) && (bufLen == 0)) {
+		// If isFinal, then plaintextLen can be any number,
+		// buf bufLen must be 0.
+		if isFinal != (bufLen == 0) {
 			die()
 		}
 
@@ -113,25 +107,17 @@ func checkEncryptBlockRead(version Version, isFinal bool, n int, err error, bufL
 }
 
 func (es *encryptStream) encryptBlock(isFinal bool) error {
-	n, err := es.buffer.Read(es.inblock[:])
-	checkEncryptBlockRead(es.header.Version, isFinal, n, err, es.buffer.Len())
-	if err == io.EOF && isFinal {
-		err = nil
-	}
-	if err != nil {
-		return err
-	}
+	plaintext := es.buffer.Next(encryptionBlockSize)
+	checkEncryptBlockRead(es.header.Version, isFinal, encryptionBlockSize, len(plaintext), es.buffer.Len())
 
 	if err := es.numBlocks.check(); err != nil {
 		return err
 	}
 
-	plaintext := es.inblock[:n]
 	nonce := nonceForChunkSecretBox(es.numBlocks)
 	ciphertext := secretbox.Seal([]byte{}, plaintext, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	err = checkCiphertextState(es.header.Version, ciphertext, isFinal)
-	if err != nil {
+	if err := checkCiphertextState(es.header.Version, ciphertext, isFinal); err != nil {
 		// We should always create valid ciphertext states.
 		panic(err)
 	}
@@ -349,7 +335,6 @@ func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey
 	es := &encryptStream{
 		output:  ciphertext,
 		encoder: newEncoder(ciphertext),
-		inblock: make([]byte, encryptionBlockSize),
 	}
 	err := es.init(version, sender, shuffleEncryptReceivers(receivers))
 	return es, err
