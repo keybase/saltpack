@@ -100,6 +100,7 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 	if ds.state == stateEndOfStream {
 		ds.err = assertEndOfStream(ds.mps)
 		if ds.err == io.EOF {
+			// If V2, n can be > 0.
 			return n, ds.err
 		}
 		if ds.err != nil {
