@@ -27,7 +27,6 @@ type decryptStream struct {
 	macKey           macKey
 	position         int
 	mki              MessageKeyInfo
-	onLastBlockV2    bool
 }
 
 // MessageKeyInfo conveys all of the data about the keys used in this encrypted message.
@@ -82,6 +81,9 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 
 		if last {
 			ds.state = stateEndOfStream
+			if len(ds.buf) > 0 {
+				return n, nil
+			}
 		}
 	}
 
@@ -148,14 +150,6 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 
 		return n, false, nil
 	case 2:
-		if ds.onLastBlockV2 {
-			// Copy as much as we can into the given outbuffer
-			n = copy(b, ds.buf)
-			// Leave the remainder for a subsequent read
-			ds.buf = ds.buf[n:]
-			return n, len(ds.buf) == 0, nil
-		}
-
 		var ebV2 encryptionBlockV2
 		seqno, err := ds.mps.Read(&ebV2)
 		if err != nil {
@@ -175,8 +169,7 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 			ds.buf = plaintext[n:]
 		}
 
-		ds.onLastBlockV2 = ebV2.IsFinal
-		return n, len(ds.buf) == 0 && ebV2.IsFinal, nil
+		return n, ebV2.IsFinal, nil
 	default:
 		panic(ErrBadVersion{ds.version})
 	}
