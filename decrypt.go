@@ -124,6 +124,29 @@ func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 	return nil
 }
 
+func readEncryptionBlock(version Version, mps *msgpackStream) (cBlock ciphertextBlock, seqno packetSeqno, authenticators []payloadAuthenticator, err error) {
+	switch version.Major {
+	case 1:
+		var ebV1 encryptionBlockV1
+		seqno, err = mps.Read(&ebV1)
+		if err != nil {
+			return ciphertextBlock{}, 0, nil, err
+		}
+
+		return ciphertextBlock{ebV1.PayloadCiphertext, len(ebV1.PayloadCiphertext) == secretbox.Overhead}, seqno, ebV1.HashAuthenticators, nil
+	case 2:
+		var ebV2 encryptionBlockV2
+		seqno, err := mps.Read(&ebV2)
+		if err != nil {
+			return ciphertextBlock{}, 0, nil, err
+		}
+
+		return ciphertextBlock{ebV2.PayloadCiphertext, ebV2.IsFinal}, seqno, ebV2.HashAuthenticators, nil
+	default:
+		panic(ErrBadVersion{version})
+	}
+}
+
 func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) {
 	cBlock, seqno, authenticators, err := readEncryptionBlock(ds.version, ds.mps)
 	if _, ok := err.(ErrBadVersion); ok {

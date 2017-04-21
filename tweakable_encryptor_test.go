@@ -113,12 +113,7 @@ func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
 		authenticators = append(authenticators, authenticator)
 	}
 
-	eBlock, err := cBlock.toEncryptionBlock(pes.header.Version, authenticators)
-	// The only possible error is ErrBadVersion, which we should
-	// have already checked against.
-	if err != nil {
-		panic(err)
-	}
+	eBlock := makeEncryptionBlock(cBlock, pes.header.Version, authenticators)
 
 	if pes.options.corruptEncryptionBlock != nil {
 		pes.options.corruptEncryptionBlock(&eBlock, pes.numBlocks)
