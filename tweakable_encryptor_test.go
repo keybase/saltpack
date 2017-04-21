@@ -102,18 +102,16 @@ func (pes *testEncryptStream) encryptBytes(b []byte, isFinal bool) error {
 		pes.options.corruptCiphertextBeforeHash(ciphertext, pes.numBlocks)
 	}
 
-	cBlock := ciphertextBlock{ciphertext, isFinal}
-
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, cBlock.ciphertext, cBlock.isFinal)
+	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, ciphertext, isFinal)
 	var authenticators []payloadAuthenticator
 	for _, macKey := range pes.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		authenticators = append(authenticators, authenticator)
 	}
 
-	eBlock := makeEncryptionBlock(pes.header.Version, cBlock.ciphertext, cBlock.isFinal, authenticators)
+	eBlock := makeEncryptionBlock(pes.header.Version, ciphertext, isFinal, authenticators)
 
 	if pes.options.corruptEncryptionBlock != nil {
 		pes.options.corruptEncryptionBlock(&eBlock, pes.numBlocks)

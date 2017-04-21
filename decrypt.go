@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
+	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -81,7 +82,16 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 
 		if last {
 			ds.state = stateEndOfStream
+			// If we've reached the end of the stream, but
+			// have data left (which only happens in V2),
+			// return so that the next call will hit the
+			// case at the top, and then the call after
+			// that will hit the case below.
 			if len(ds.buf) > 0 {
+				if ds.version.Major < 2 {
+					panic(fmt.Sprintf("version=%s, last=true, len(ds.buf)=%d > 0", ds.version, len(ds.buf)))
+				}
+
 				return n, nil
 			}
 		}
