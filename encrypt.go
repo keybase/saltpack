@@ -71,20 +71,42 @@ func makeEncryptionBlock(version Version, ciphertext []byte, isFinal bool, authe
 	}
 }
 
-func checkEncryptBlockRead(version Version, isFinal bool, n int, err error) {
+func checkEncryptBlockRead(version Version, isFinal bool, n int, err error, bufLen int) {
+	// We have a non-nil, non-EOF error, so there's nothing to check.
+	if err != nil && err != io.EOF {
+		return
+	}
+
 	die := func() error {
-		return fmt.Errorf("invalid encryptBlock read state: version=%s, isFinal=%t, n=%d, err=%v", version, isFinal, n, err)
+		return fmt.Errorf("invalid encryptBlock read state: version=%s, isFinal=%t, n=%d, err=%v, bufLen=%d", version, isFinal, n, err, bufLen)
 	}
 
 	switch version {
 	case Version1():
-		if isFinal != (n == 0) {
+		if n > encryptionBlockSize {
 			die()
 		}
-		if isFinal != (err == io.EOF) {
+
+		// isFinal must be equivalent to (n == 0) && (err == io.EOF).
+		if isFinal != ((n == 0) && (err == io.EOF)) {
 			die()
 		}
+
 	case Version2():
+		if n > encryptionBlockSize {
+			die()
+		}
+
+		// If isFinal, then n can be any number. But if n is
+		// exactly encryptionBlockSize, then we won't get an
+		// EOF. So isFinal must be equivalent to
+		//
+		//   ((n < encryptionBlockSize) && (err == io.EOF)) ||
+		//   ((n == encryptionBlockSize) && (err == nil) && (bufLen == 0))
+		if isFinal != (((n < encryptionBlockSize) && (err == io.EOF)) || (n == encryptionBlockSize) && (err == nil) && (bufLen == 0)) {
+			die()
+		}
+
 	default:
 		panic(ErrBadVersion{version})
 	}
@@ -92,7 +114,7 @@ func checkEncryptBlockRead(version Version, isFinal bool, n int, err error) {
 
 func (es *encryptStream) encryptBlock(isFinal bool) error {
 	n, err := es.buffer.Read(es.inblock[:])
-	checkEncryptBlockRead(es.header.Version, isFinal, n, err)
+	checkEncryptBlockRead(es.header.Version, isFinal, n, err, es.buffer.Len())
 	if err == io.EOF && isFinal {
 		err = nil
 	}
