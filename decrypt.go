@@ -169,7 +169,7 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 		return 0, false, err
 	}
 
-	plaintext, err := ds.processCiphertextBlock(ciphertext, isFinal, seqno, authenticators)
+	plaintext, err := ds.processEncryptionBlock(ciphertext, isFinal, seqno, authenticators)
 	if err != nil {
 		return 0, false, err
 	}
@@ -330,7 +330,7 @@ func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, p
 	}
 }
 
-func (ds *decryptStream) processCiphertextBlock(ciphertext []byte, isFinal bool, seqno packetSeqno, authenticators []payloadAuthenticator) ([]byte, error) {
+func (ds *decryptStream) processEncryptionBlock(ciphertext []byte, isFinal bool, seqno packetSeqno, authenticators []payloadAuthenticator) ([]byte, error) {
 
 	blockNum := encryptionBlockNumber(seqno - 1)
 
