@@ -21,11 +21,6 @@ import (
 // of encrypted blocks. Each encrypted block of course fits into a packet.
 type encryptionBlockNumber uint64
 
-type ciphertextBlock struct {
-	ciphertext []byte
-	isFinal    bool
-}
-
 func codecHandle() *codec.MsgpackHandle {
 	var mh codec.MsgpackHandle
 	mh.WriteExt = true
