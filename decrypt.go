@@ -84,9 +84,9 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 			ds.state = stateEndOfStream
 			// If we've reached the end of the stream, but
 			// have data left (which only happens in V2),
-			// return so that the next call will hit the
-			// case at the top, and then the call after
-			// that will hit the case below.
+			// return so that the next call(s) will hit
+			// the case at the top, and then we'll hit the
+			// case below.
 			if len(ds.buf) > 0 {
 				if ds.version.Major < 2 {
 					panic(fmt.Sprintf("version=%s, last=true, len(ds.buf)=%d > 0", ds.version, len(ds.buf)))
@@ -99,8 +99,8 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 
 	if ds.state == stateEndOfStream {
 		ds.err = assertEndOfStream(ds.mps)
+		// If V2, we can hit EOF with n > 0.
 		if ds.err == io.EOF {
-			// If V2, n can be > 0.
 			return n, ds.err
 		}
 		if ds.err != nil {
