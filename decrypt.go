@@ -329,7 +329,7 @@ func (ds *decryptStream) processCiphertextBlock(cBlock ciphertextBlock, seqno pa
 	nonce := nonceForChunkSecretBox(blockNum)
 
 	// Check the authenticator.
-	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, cBlock)
+	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, cBlock.ciphertext, cBlock.isFinal)
 	ourAuthenticator := computePayloadAuthenticator(ds.macKey, hashToAuthenticate)
 	if !ourAuthenticator.Equal(authenticators[ds.position]) {
 		return nil, ErrBadTag(seqno)

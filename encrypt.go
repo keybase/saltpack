@@ -61,9 +61,9 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 	return es.encryptBytes(es.inblock[0:n], isFinal)
 }
 
-func makeEncryptionBlock(cBlock ciphertextBlock, version Version, authenticators []payloadAuthenticator) interface{} {
+func makeEncryptionBlock(version Version, ciphertext []byte, isFinal bool, authenticators []payloadAuthenticator) interface{} {
 	ebV1 := encryptionBlockV1{
-		PayloadCiphertext:  cBlock.ciphertext,
+		PayloadCiphertext:  ciphertext,
 		HashAuthenticators: authenticators,
 	}
 	switch version {
@@ -72,7 +72,7 @@ func makeEncryptionBlock(cBlock ciphertextBlock, version Version, authenticators
 	case Version2():
 		return encryptionBlockV2{
 			encryptionBlockV1: ebV1,
-			IsFinal:           cBlock.isFinal,
+			IsFinal:           isFinal,
 		}
 	default:
 		panic(ErrBadVersion{version})
@@ -91,14 +91,14 @@ func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, cBlock)
+	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, cBlock.ciphertext, cBlock.isFinal)
 	var authenticators []payloadAuthenticator
 	for _, macKey := range es.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		authenticators = append(authenticators, authenticator)
 	}
 
-	eBlock := makeEncryptionBlock(cBlock, es.header.Version, authenticators)
+	eBlock := makeEncryptionBlock(es.header.Version, cBlock.ciphertext, cBlock.isFinal, authenticators)
 	if err := es.encoder.Encode(eBlock); err != nil {
 		return err
 	}
