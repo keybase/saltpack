@@ -253,7 +253,7 @@ func (pes *testEncryptStream) writeFooter() error {
 	}
 	switch pes.header.Version {
 	case Version1():
-		return pes.encryptBytes([]byte{}, true)
+		return pes.encryptBlock(true)
 	case Version2():
 		// Nothing left to do.
 		return nil

@@ -289,7 +289,7 @@ func (es *encryptStream) Close() error {
 func (es *encryptStream) writeFooter() error {
 	switch es.header.Version {
 	case Version1():
-		return es.encryptBytes([]byte{}, true)
+		return es.encryptBlock(true)
 	case Version2():
 		// Nothing left to do.
 		return nil
