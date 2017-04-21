@@ -26,26 +26,6 @@ type ciphertextBlock struct {
 	isFinal    bool
 }
 
-func (b ciphertextBlock) toEncryptionBlock(version Version, authenticators []payloadAuthenticator) (interface{}, error) {
-	switch version {
-	case Version1():
-		return encryptionBlockV1{
-			PayloadCiphertext:  b.ciphertext,
-			HashAuthenticators: authenticators,
-		}, nil
-	case Version2():
-		return encryptionBlockV2{
-			encryptionBlockV1: encryptionBlockV1{
-				PayloadCiphertext:  b.ciphertext,
-				HashAuthenticators: authenticators,
-			},
-			IsFinal: b.isFinal,
-		}, nil
-	default:
-		return nil, ErrBadVersion{version}
-	}
-}
-
 func readEncryptionBlock(version Version, mps *msgpackStream) (cBlock ciphertextBlock, seqno packetSeqno, authenticators []payloadAuthenticator, err error) {
 	switch version.Major {
 	case 1:

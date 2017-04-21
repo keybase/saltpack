@@ -61,6 +61,24 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 	return es.encryptBytes(es.inblock[0:n], isFinal)
 }
 
+func makeEncryptionBlock(cBlock ciphertextBlock, version Version, authenticators []payloadAuthenticator) interface{} {
+	ebV1 := encryptionBlockV1{
+		PayloadCiphertext:  cBlock.ciphertext,
+		HashAuthenticators: authenticators,
+	}
+	switch version {
+	case Version1():
+		return ebV1
+	case Version2():
+		return encryptionBlockV2{
+			encryptionBlockV1: ebV1,
+			IsFinal:           cBlock.isFinal,
+		}
+	default:
+		panic(ErrBadVersion{version})
+	}
+}
+
 func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 	if err := es.numBlocks.check(); err != nil {
 		return err
@@ -80,13 +98,7 @@ func (es *encryptStream) encryptBytes(b []byte, isFinal bool) error {
 		authenticators = append(authenticators, authenticator)
 	}
 
-	eBlock, err := cBlock.toEncryptionBlock(es.header.Version, authenticators)
-	// The only possible error is ErrBadVersion, which we should
-	// have already checked against.
-	if err != nil {
-		panic(err)
-	}
-
+	eBlock := makeEncryptionBlock(cBlock, es.header.Version, authenticators)
 	if err := es.encoder.Encode(eBlock); err != nil {
 		return err
 	}
