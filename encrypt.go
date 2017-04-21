@@ -296,29 +296,26 @@ func (es *encryptStream) Close() error {
 				return err
 			}
 		}
+
+		if es.buffer.Len() > 0 {
+			panic(fmt.Sprintf("es.buffer.Len()=%d > 0", es.buffer.Len()))
+		}
+
+		return es.encryptBlock(true)
+
 	case Version2():
 		err := es.encryptBlock(true)
 		if err != nil {
 			return err
+
 		}
-	default:
-		panic(ErrBadVersion{es.header.Version})
-	}
 
-	if es.buffer.Len() > 0 {
-		panic(fmt.Sprintf("es.buffer.Len()=%d > 0", es.buffer.Len()))
-	}
+		if es.buffer.Len() > 0 {
+			panic(fmt.Sprintf("es.buffer.Len()=%d > 0", es.buffer.Len()))
+		}
 
-	return es.writeFooter()
-}
-
-func (es *encryptStream) writeFooter() error {
-	switch es.header.Version {
-	case Version1():
-		return es.encryptBlock(true)
-	case Version2():
-		// Nothing left to do.
 		return nil
+
 	default:
 		panic(ErrBadVersion{es.header.Version})
 	}

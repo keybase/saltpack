@@ -227,32 +227,29 @@ func (pes *testEncryptStream) Close() error {
 				return err
 			}
 		}
+
+		if pes.buffer.Len() > 0 {
+			panic(fmt.Sprintf("es.buffer.Len()=%d > 0", pes.buffer.Len()))
+		}
+
+		if pes.options.skipFooter {
+			return nil
+		}
+
+		return pes.encryptBlock(true)
+
 	case Version2():
 		err := pes.encryptBlock(true)
 		if err != nil {
 			return err
 		}
-	default:
-		panic(ErrBadVersion{pes.header.Version})
-	}
 
-	if pes.buffer.Len() > 0 {
-		panic(fmt.Sprintf("pes.buffer.Len()=%d > 0", pes.buffer.Len()))
-	}
+		if pes.buffer.Len() > 0 {
+			panic(fmt.Sprintf("pes.buffer.Len()=%d > 0", pes.buffer.Len()))
+		}
 
-	return pes.writeFooter()
-}
-
-func (pes *testEncryptStream) writeFooter() error {
-	if pes.options.skipFooter {
 		return nil
-	}
-	switch pes.header.Version {
-	case Version1():
-		return pes.encryptBlock(true)
-	case Version2():
-		// Nothing left to do.
-		return nil
+
 	default:
 		panic(ErrBadVersion{pes.header.Version})
 	}
