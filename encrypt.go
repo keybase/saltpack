@@ -71,8 +71,28 @@ func makeEncryptionBlock(version Version, ciphertext []byte, isFinal bool, authe
 	}
 }
 
+func checkEncryptBlockRead(version Version, isFinal bool, n int, err error) {
+	die := func() error {
+		return fmt.Errorf("invalid encryptBlock read state: version=%s, isFinal=%t, n=%d, err=%v", version, isFinal, n, err)
+	}
+
+	switch version {
+	case Version1():
+		if isFinal != (n == 0) {
+			die()
+		}
+		if isFinal != (err == io.EOF) {
+			die()
+		}
+	case Version2():
+	default:
+		panic(ErrBadVersion{version})
+	}
+}
+
 func (es *encryptStream) encryptBlock(isFinal bool) error {
 	n, err := es.buffer.Read(es.inblock[:])
+	checkEncryptBlockRead(es.header.Version, isFinal, n, err)
 	if err == io.EOF && isFinal {
 		err = nil
 	}

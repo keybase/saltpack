@@ -77,6 +77,7 @@ func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
 
 func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 	n, err := pes.buffer.Read(pes.inblock[:])
+	checkEncryptBlockRead(pes.header.Version, isFinal, n, err)
 	if err == io.EOF && isFinal {
 		err = nil
 	}
