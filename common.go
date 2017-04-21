@@ -182,20 +182,38 @@ func sum512Truncate256(in []byte) [32]byte {
 	return sliceToByte32(sum512[:32])
 }
 
-func checkValidIsFinal(version Version, ciphertext []byte, isFinal bool) {
+func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) {
+	die := func() {
+		panic(fmt.Sprintf("invalid ciphertext state: version=%s, len(ciphertext)=%d, isFinal=%t", version, len(ciphertext), isFinal))
+	}
+
 	switch version.Major {
 	case 1:
+		if len(ciphertext) < secretbox.Overhead {
+			die()
+		}
+
 		if (len(ciphertext) == secretbox.Overhead) != isFinal {
-			panic(fmt.Sprintf("invalid isFinal: version=%s, len(ciphertext)=%d, isFinal=%t", version, len(ciphertext), isFinal))
+			die()
 		}
 	case 2:
+		if len(ciphertext) < secretbox.Overhead {
+			die()
+		}
+
+		// With v2, it's valid to have a final packet with
+		// non-empty plaintext, so the below is the only
+		// remaining invalid state.
+		if (len(ciphertext) == secretbox.Overhead) && !isFinal {
+			die()
+		}
 	default:
-		panic(ErrBadVersion{version})
+		die()
 	}
 }
 
 func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, ciphertext []byte, isFinal bool) payloadHash {
-	checkValidIsFinal(version, ciphertext, isFinal)
+	checkCiphertextState(version, ciphertext, isFinal)
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
