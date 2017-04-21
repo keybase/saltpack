@@ -215,10 +215,14 @@ func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, cip
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
-	payloadDigest.Write(ciphertext)
-	if version.Major == 2 && isFinal {
-		payloadDigest.Write([]byte{1})
+	if version.Major == 2 {
+		var isFinalByte byte
+		if isFinal {
+			isFinalByte = 1
+		}
+		payloadDigest.Write([]byte{isFinalByte})
 	}
+	payloadDigest.Write(ciphertext)
 	h := payloadDigest.Sum(nil)
 	return sliceToByte64(h)
 }
