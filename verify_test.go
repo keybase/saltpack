@@ -9,6 +9,20 @@ import (
 	"testing"
 )
 
+func TestVerifyVersionValidator(t *testing.T) {
+	in := []byte{0x01}
+	key := newSigPrivKey(t)
+	smg, err := Sign(Version1(), in, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err = Verify(SingleVersionValidator(Version2()), smg, kr)
+	if err == nil {
+		t.Fatal("Unexpected nil error")
+	}
+}
+
 func testVerify(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
