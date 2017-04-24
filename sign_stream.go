@@ -62,6 +62,7 @@ func (s *signAttachedStream) Write(p []byte) (int, error) {
 		return 0, err
 	}
 
+	// TODO: Change to >.
 	for s.buffer.Len() >= signatureBlockSize {
 		if err := s.signBlock(false); err != nil {
 			return 0, err
