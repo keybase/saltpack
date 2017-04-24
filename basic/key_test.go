@@ -56,7 +56,7 @@ func TestBasicSign(t *testing.T) {
 		t.Fatal(err)
 	}
 	msg := randomMsg(t, 1024)
-	sig, err := saltpack.SignArmor62(msg, k1, "")
+	sig, err := saltpack.SignArmor62(saltpack.Version1(), msg, k1, "")
 	if err != nil {
 		t.Fatal(err)
 	}

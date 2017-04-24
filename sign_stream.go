@@ -120,7 +120,7 @@ type signDetachedStream struct {
 	hasher    hash.Hash
 }
 
-func newSignDetachedStream(w io.Writer, signer SigningSecretKey) (*signDetachedStream, error) {
+func newSignDetachedStream(version Version, w io.Writer, signer SigningSecretKey) (*signDetachedStream, error) {
 	if signer == nil {
 		return nil, ErrInvalidParameter{message: "no signing key provided"}
 	}

@@ -153,7 +153,7 @@ func (s *testSignStream) computeSig(block *signatureBlock) ([]byte, error) {
 	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, block))
 }
 
-func testTweakSign(plaintext []byte, signer SigningSecretKey, opts testSignOptions) ([]byte, error) {
+func testTweakSign(version Version, plaintext []byte, signer SigningSecretKey, opts testSignOptions) ([]byte, error) {
 	var buf bytes.Buffer
 	s, err := newTestSignStream(&buf, signer, opts)
 	if err != nil {
@@ -168,7 +168,7 @@ func testTweakSign(plaintext []byte, signer SigningSecretKey, opts testSignOptio
 	return buf.Bytes(), nil
 }
 
-func testTweakSignDetached(plaintext []byte, signer SigningSecretKey, opts testSignOptions) ([]byte, error) {
+func testTweakSignDetached(version Version, plaintext []byte, signer SigningSecretKey, opts testSignOptions) ([]byte, error) {
 	if signer == nil {
 		return nil, ErrInvalidParameter{message: "no signing key provided"}
 	}

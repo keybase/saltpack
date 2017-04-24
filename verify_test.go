@@ -12,7 +12,7 @@ import (
 func TestVerify(t *testing.T) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	smsg, err := Sign(in, key)
+	smsg, err := Sign(Version1(), in, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +33,7 @@ func TestVerify(t *testing.T) {
 func TestVerifyConcurrent(t *testing.T) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	smsg, err := Sign(in, key)
+	smsg, err := Sign(Version1(), in, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestVerifyConcurrent(t *testing.T) {
 func TestVerifyEmptyKeyring(t *testing.T) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	smsg, err := Sign(in, key)
+	smsg, err := Sign(Version1(), in, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestVerifyEmptyKeyring(t *testing.T) {
 func TestVerifyDetachedEmptyKeyring(t *testing.T) {
 	key := newSigPrivKey(t)
 	msg := randomMsg(t, 128)
-	sig, err := SignDetached(msg, key)
+	sig, err := SignDetached(Version1(), msg, key)
 	if err != nil {
 		t.Fatal(err)
 	}

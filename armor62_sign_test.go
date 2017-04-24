@@ -11,7 +11,7 @@ import (
 func TestSignArmor62(t *testing.T) {
 	msg := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	smsg, err := SignArmor62(msg, key, ourBrand)
+	smsg, err := SignArmor62(Version1(), msg, key, ourBrand)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func TestSignArmor62(t *testing.T) {
 func TestSignDetachedArmor62(t *testing.T) {
 	msg := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	sig, err := SignDetachedArmor62(msg, key, ourBrand)
+	sig, err := SignDetachedArmor62(Version1(), msg, key, ourBrand)
 	if err != nil {
 		t.Fatal(err)
 	}

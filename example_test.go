@@ -128,7 +128,7 @@ func ExampleSignArmor62() {
 	}
 
 	var signed string
-	signed, err = saltpack.SignArmor62(msg, signer, "")
+	signed, err = saltpack.SignArmor62(saltpack.CurrentVersion(), msg, signer, "")
 	if err != nil {
 		return
 	}
@@ -174,7 +174,7 @@ func ExampleNewSignArmor62Stream() {
 	// In this case, the output stream is just a buffer.
 	var input io.WriteCloser
 	var output bytes.Buffer
-	input, err = saltpack.NewSignArmor62Stream(&output, signer, "")
+	input, err = saltpack.NewSignArmor62Stream(saltpack.CurrentVersion(), &output, signer, "")
 	if err != nil {
 		return
 	}
