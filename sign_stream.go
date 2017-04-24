@@ -12,8 +12,8 @@ import (
 )
 
 type signAttachedStream struct {
-	headerHash headerHash
 	version    Version
+	headerHash headerHash
 	encoder    encoder
 	buffer     bytes.Buffer
 	seqno      packetSeqno
@@ -41,8 +41,8 @@ func newSignAttachedStream(version Version, w io.Writer, signer SigningSecretKey
 
 	// Create the attached stream object.
 	stream := &signAttachedStream{
-		headerHash: headerHash,
 		version:    version,
+		headerHash: headerHash,
 		encoder:    newEncoder(w),
 		secretKey:  signer,
 	}
