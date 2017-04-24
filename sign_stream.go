@@ -94,8 +94,45 @@ func makeSignatureBlock(version Version, chunk, sig []byte, isFinal bool) interf
 	return sb
 }
 
+func checkSignBlockRead(version Version, isFinal bool, blockSize, chunkLen, bufLen int) {
+	die := func() error {
+		return fmt.Errorf("invalid signBlock read state: version=%s, isFinal=%t, chunkLen=%d, bufLen=%d", chunkLen, bufLen)
+	}
+
+	// We shouldn't read more than a full block's worth.
+	if chunkLen > blockSize {
+		die()
+	}
+
+	// If we read less than a full block's worth, then we
+	// shouldn't have anything left in the buffer.
+	if chunkLen < blockSize && bufLen > 0 {
+		die()
+	}
+
+	switch version {
+	case Version1():
+		// isFinal must be equivalent to chunkLen being 0
+		// (which, by the above, implies that bufLen == 0).
+		if isFinal != (chunkLen == 0) {
+			die()
+		}
+
+	case Version2():
+		// If isFinal, then chunkLen can be any number,
+		// buf bufLen must be 0.
+		if isFinal != (bufLen == 0) {
+			die()
+		}
+
+	default:
+		panic(ErrBadVersion{version})
+	}
+}
+
 func (s *signAttachedStream) signBlock(isFinal bool) error {
 	chunk := s.buffer.Next(signatureBlockSize)
+	checkSignBlockRead(s.version, isFinal, signatureBlockSize, len(chunk), s.buffer.Len())
 
 	sig, err := s.computeSig(chunk, s.seqno)
 	if err != nil {
