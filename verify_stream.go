@@ -22,7 +22,7 @@ func newVerifyStream(versionValidator VersionValidator, r io.Reader, msgType Mes
 		stream: newMsgpackStream(r),
 		seqno:  0,
 	}
-	err := s.readHeader(msgType)
+	err := s.readHeader(versionValidator, msgType)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (v *verifyStream) read(p []byte) (int, error) {
 	return n, nil
 }
 
-func (v *verifyStream) readHeader(msgType MessageType) error {
+func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType MessageType) error {
 	var headerBytes []byte
 	_, err := v.stream.Read(&headerBytes)
 	if err != nil {
@@ -80,7 +80,7 @@ func (v *verifyStream) readHeader(msgType MessageType) error {
 		return err
 	}
 	v.header = &header
-	if err := header.validate(msgType); err != nil {
+	if err := header.validate(versionValidator, msgType); err != nil {
 		return err
 	}
 	v.state = stateBody

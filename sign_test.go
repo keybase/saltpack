@@ -94,6 +94,7 @@ func testSignConcurrent(t *testing.T, version Version) {
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			out, err := Sign(version, msg, key)
 			if err != nil {
 				t.Error(err)
@@ -101,7 +102,6 @@ func testSignConcurrent(t *testing.T, version Version) {
 			if len(out) == 0 {
 				t.Error("Sign returned no error and no output")
 			}
-			wg.Done()
 		}()
 	}
 	wg.Wait()

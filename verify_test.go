@@ -80,11 +80,13 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			skey, msg, err := Verify(SingleVersionValidator(version), smsg, kr)
 			if err != nil {
 				t.Logf("input:      %x", in)
 				t.Logf("signed msg: %x", smsg)
 				t.Error(err)
+				return
 			}
 			if !PublicKeyEqual(skey, key.GetPublicKey()) {
 				t.Errorf("sender key %x, expected %x", skey.ToKID(), key.GetPublicKey().ToKID())
@@ -92,7 +94,6 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 			if !bytes.Equal(msg, in) {
 				t.Errorf("verified msg '%x', expected '%x'", msg, in)
 			}
-			wg.Done()
 		}()
 	}
 	wg.Wait()

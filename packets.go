@@ -114,15 +114,16 @@ func newSignatureHeader(sender SigningPublicKey, msgType MessageType) (*Signatur
 	return header, nil
 }
 
-func (h *SignatureHeader) validate(msgType MessageType) error {
+func (h *SignatureHeader) validate(versionValidator VersionValidator, msgType MessageType) error {
+	if err := versionValidator(h.Version); err != nil {
+		return err
+	}
+
 	if h.Type != msgType {
 		return ErrWrongMessageType{
 			wanted:   msgType,
 			received: h.Type,
 		}
-	}
-	if h.Version.Major != CurrentVersion().Major {
-		return ErrBadVersion{h.Version}
 	}
 
 	if msgType != MessageTypeAttachedSignature && msgType != MessageTypeDetachedSignature {
