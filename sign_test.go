@@ -362,6 +362,10 @@ func testSignNilKey(t *testing.T, version Version) {
 	}
 }
 
+type errReader struct{}
+
+func (e errReader) Read(p []byte) (int, error) { return 0, errors.New("read error") }
+
 func testSignBadRandReader(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
 	msg := randomMsg(t, 128)
@@ -550,6 +554,74 @@ func testSignDetachedCorruptHeader(t *testing.T, version Version) {
 	}
 }
 
+func TestSignSinglePacketV1(t *testing.T) {
+	message := make([]byte, signatureBlockSize)
+	key := newSigPrivKey(t)
+	smsg, err := Sign(Version1(), message, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mps := newMsgpackStream(bytes.NewReader(smsg))
+
+	var headerBytes []byte
+	_, err = mps.Read(&headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var block signatureBlock
+
+	// Payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Empty footer payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Nothing else.
+	_, err = mps.Read(&block)
+	if err != io.EOF {
+		t.Fatalf("err=%v != io.EOF", err)
+	}
+}
+
+func TestSignSinglePacketV2(t *testing.T) {
+	message := make([]byte, signatureBlockSize)
+	key := newSigPrivKey(t)
+	smsg, err := Sign(Version2(), message, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mps := newMsgpackStream(bytes.NewReader(smsg))
+
+	var headerBytes []byte
+	_, err = mps.Read(&headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var block signatureBlock
+
+	// Payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Nothing else.
+	_, err = mps.Read(&block)
+	if err != io.EOF {
+		t.Fatalf("err=%v != io.EOF", err)
+	}
+}
+
 func testSignDetachedTruncated(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
 	msg := randomMsg(t, 128)
@@ -567,10 +639,6 @@ func testSignDetachedTruncated(t *testing.T, version Version) {
 		t.Fatal("expected EOF error from truncated sig")
 	}
 }
-
-type errReader struct{}
-
-func (e errReader) Read(p []byte) (int, error) { return 0, errors.New("read error") }
 
 func TestSign(t *testing.T) {
 	tests := []func(*testing.T, Version){
