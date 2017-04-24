@@ -9,10 +9,10 @@ import (
 	"testing"
 )
 
-func TestVerify(t *testing.T) {
+func testVerify(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	smsg, err := Sign(Version1(), in, key)
+	smsg, err := Sign(version, in, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,10 +30,10 @@ func TestVerify(t *testing.T) {
 	}
 }
 
-func TestVerifyConcurrent(t *testing.T) {
+func testVerifyConcurrent(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	smsg, err := Sign(Version1(), in, key)
+	smsg, err := Sign(version, in, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,10 +60,10 @@ func TestVerifyConcurrent(t *testing.T) {
 	wg.Wait()
 }
 
-func TestVerifyEmptyKeyring(t *testing.T) {
+func testVerifyEmptyKeyring(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	smsg, err := Sign(Version1(), in, key)
+	smsg, err := Sign(version, in, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,10 +77,10 @@ func TestVerifyEmptyKeyring(t *testing.T) {
 	}
 }
 
-func TestVerifyDetachedEmptyKeyring(t *testing.T) {
+func testVerifyDetachedEmptyKeyring(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
 	msg := randomMsg(t, 128)
-	sig, err := SignDetached(Version1(), msg, key)
+	sig, err := SignDetached(version, msg, key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,3 +97,13 @@ func TestVerifyDetachedEmptyKeyring(t *testing.T) {
 type emptySigKeyring struct{}
 
 func (k emptySigKeyring) LookupSigningPublicKey(kid []byte) SigningPublicKey { return nil }
+
+func TestVerify(t *testing.T) {
+	tests := []func(*testing.T, Version){
+		testVerify,
+		testVerifyConcurrent,
+		testVerifyEmptyKeyring,
+		testVerifyDetachedEmptyKeyring,
+	}
+	runTestsOverVersions(t, "test", tests)
+}
