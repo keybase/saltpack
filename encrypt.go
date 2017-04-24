@@ -56,7 +56,7 @@ func (es *encryptStream) Write(plaintext []byte) (int, error) {
 	return ret, nil
 }
 
-func makeEncryptionBlock(version Version, ciphertext []byte, isFinal bool, authenticators []payloadAuthenticator) interface{} {
+func makeEncryptionBlock(version Version, ciphertext []byte, authenticators []payloadAuthenticator, isFinal bool) interface{} {
 	ebV1 := encryptionBlockV1{
 		PayloadCiphertext:  ciphertext,
 		HashAuthenticators: authenticators,
@@ -135,7 +135,7 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 		authenticators = append(authenticators, authenticator)
 	}
 
-	eBlock := makeEncryptionBlock(es.header.Version, ciphertext, isFinal, authenticators)
+	eBlock := makeEncryptionBlock(es.header.Version, ciphertext, authenticators, isFinal)
 	if err := es.encoder.Encode(eBlock); err != nil {
 		return err
 	}

@@ -108,7 +108,7 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 		authenticators = append(authenticators, authenticator)
 	}
 
-	eBlock := makeEncryptionBlock(pes.header.Version, ciphertext, isFinal, authenticators)
+	eBlock := makeEncryptionBlock(pes.header.Version, ciphertext, authenticators, isFinal)
 
 	if pes.options.corruptEncryptionBlock != nil {
 		pes.options.corruptEncryptionBlock(&eBlock, pes.numBlocks)
