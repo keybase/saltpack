@@ -5,6 +5,7 @@ package saltpack
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 )
 
@@ -17,13 +18,14 @@ type testSignOptions struct {
 }
 
 type testSignStream struct {
+	version    Version
 	headerHash headerHash
 	encoder    encoder
 	buffer     bytes.Buffer
 	seqno      packetSeqno
 	secretKey  SigningSecretKey
 	options    testSignOptions
-	savedBlock *signatureBlock
+	savedBlock interface{}
 }
 
 func newTestSignStream(version Version, w io.Writer, signer SigningSecretKey, opts testSignOptions) (*testSignStream, error) {
@@ -52,6 +54,7 @@ func newTestSignStream(version Version, w io.Writer, signer SigningSecretKey, op
 	headerHash := hashHeader(headerBytes)
 
 	stream := &testSignStream{
+		version:    version,
 		headerHash: headerHash,
 		encoder:    newEncoder(w),
 		secretKey:  signer,
@@ -73,8 +76,9 @@ func (s *testSignStream) Write(p []byte) (int, error) {
 		return 0, err
 	}
 
+	// TODO: Change to >.
 	for s.buffer.Len() >= signatureBlockSize {
-		if err := s.signBlock(); err != nil {
+		if err := s.signBlock(false); err != nil {
 			return 0, err
 		}
 	}
@@ -83,44 +87,48 @@ func (s *testSignStream) Write(p []byte) (int, error) {
 }
 
 func (s *testSignStream) Close() error {
-	for s.buffer.Len() > 0 {
-		if err := s.signBlock(); err != nil {
+	if s.buffer.Len() > 0 {
+		if err := s.signBlock(false); err != nil {
 			return err
 		}
+	}
+
+	if s.buffer.Len() > 0 {
+		panic(fmt.Sprintf("s.buffer.Len()=%d > 0", s.buffer.Len()))
 	}
 
 	if s.options.skipFooter {
 		return nil
 	}
 
-	return s.signBlock()
+	return s.signBlock(true)
 }
 
-func (s *testSignStream) signBlock() error {
+func (s *testSignStream) signBlock(isFinal bool) error {
 	chunk := s.buffer.Next(signatureBlockSize)
-	return s.signBytes(chunk)
-}
+	checkSignBlockRead(s.version, isFinal, signatureBlockSize, len(chunk), s.buffer.Len())
 
-func (s *testSignStream) signBytes(b []byte) error {
-	block := signatureBlock{
-		PayloadChunk: b,
-	}
-	sig, err := s.computeSig(b, s.seqno)
+	sig, err := s.computeSig(chunk, s.seqno)
 	if err != nil {
 		return err
 	}
-	block.Signature = sig
+
+	if err := checkSignatureState(s.version, chunk, isFinal); err != nil {
+		panic(err)
+	}
+
+	sBlock := makeSignatureBlock(s.version, chunk, sig, isFinal)
 
 	if s.options.swapBlock {
 		if s.seqno == 0 {
-			s.savedBlock = &block
+			s.savedBlock = sBlock
 			s.seqno++
 			return nil
 		}
 	}
 
 	if s.options.skipBlock == nil || !s.options.skipBlock(s.seqno) {
-		if err := s.encoder.Encode(block); err != nil {
+		if err := s.encoder.Encode(sBlock); err != nil {
 			return err
 		}
 		s.seqno++
@@ -128,7 +136,7 @@ func (s *testSignStream) signBytes(b []byte) error {
 
 	if s.options.swapBlock {
 		if s.savedBlock != nil {
-			if err := s.encoder.Encode(*s.savedBlock); err != nil {
+			if err := s.encoder.Encode(s.savedBlock); err != nil {
 				return err
 			}
 			s.savedBlock = nil
