@@ -12,6 +12,7 @@ import (
 
 type signAttachedStream struct {
 	headerHash headerHash
+	version    Version
 	encoder    encoder
 	buffer     bytes.Buffer
 	block      []byte
@@ -41,6 +42,7 @@ func newSignAttachedStream(version Version, w io.Writer, signer SigningSecretKey
 	// Create the attached stream object.
 	stream := &signAttachedStream{
 		headerHash: headerHash,
+		version:    version,
 		encoder:    newEncoder(w),
 		block:      make([]byte, signatureBlockSize),
 		secretKey:  signer,
@@ -62,7 +64,7 @@ func (s *signAttachedStream) Write(p []byte) (int, error) {
 	}
 
 	for s.buffer.Len() >= signatureBlockSize {
-		if err := s.signBlock(); err != nil {
+		if err := s.signBlock(false); err != nil {
 			return 0, err
 		}
 	}
@@ -72,32 +74,37 @@ func (s *signAttachedStream) Write(p []byte) (int, error) {
 
 func (s *signAttachedStream) Close() error {
 	for s.buffer.Len() > 0 {
-		if err := s.signBlock(); err != nil {
+		if err := s.signBlock(false); err != nil {
 			return err
 		}
 	}
 	return s.writeFooter()
 }
 
-func (s *signAttachedStream) signBlock() error {
+func makeSignatureBlock(version Version, chunk, sig []byte, isFinal bool) interface{} {
+	sb := signatureBlock{
+		PayloadChunk: chunk,
+		Signature:    sig,
+	}
+	return sb
+}
+
+func (s *signAttachedStream) signBlock(isFinal bool) error {
 	n, err := s.buffer.Read(s.block[:])
 	if err != nil {
 		return err
 	}
-	return s.signBytes(s.block[:n])
+	return s.signBytes(s.block[:n], isFinal)
 }
 
-func (s *signAttachedStream) signBytes(b []byte) error {
-	block := signatureBlock{
-		PayloadChunk: b,
-	}
-	sig, err := s.computeSig(&block, s.seqno)
+func (s *signAttachedStream) signBytes(b []byte, isFinal bool) error {
+	sig, err := s.computeSig(b, s.seqno)
 	if err != nil {
 		return err
 	}
-	block.Signature = sig
 
-	if err := s.encoder.Encode(block); err != nil {
+	sBlock := makeSignatureBlock(s.version, b, sig, isFinal)
+	if err := s.encoder.Encode(sBlock); err != nil {
 		return err
 	}
 
@@ -106,11 +113,11 @@ func (s *signAttachedStream) signBytes(b []byte) error {
 }
 
 func (s *signAttachedStream) writeFooter() error {
-	return s.signBytes([]byte{})
+	return s.signBytes([]byte{}, true)
 }
 
-func (s *signAttachedStream) computeSig(block *signatureBlock, seqno packetSeqno) ([]byte, error) {
-	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, block, seqno))
+func (s *signAttachedStream) computeSig(payloadChunk []byte, seqno packetSeqno) ([]byte, error) {
+	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, payloadChunk, seqno))
 }
 
 type signDetachedStream struct {

@@ -149,7 +149,7 @@ func (s *testSignStream) writeFooter() error {
 }
 
 func (s *testSignStream) computeSig(block *signatureBlock, seqno packetSeqno) ([]byte, error) {
-	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, block, seqno))
+	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, block.PayloadChunk, seqno))
 }
 
 func testTweakSign(version Version, plaintext []byte, signer SigningSecretKey, opts testSignOptions) ([]byte, error) {

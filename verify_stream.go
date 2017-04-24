@@ -111,7 +111,7 @@ func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
 }
 
 func (v *verifyStream) processBlock(block *signatureBlock, seqno packetSeqno) ([]byte, error) {
-	if err := v.publicKey.Verify(attachedSignatureInput(v.headerHash, block, seqno), block.Signature); err != nil {
+	if err := v.publicKey.Verify(attachedSignatureInput(v.headerHash, block.PayloadChunk, seqno), block.Signature); err != nil {
 		return nil, err
 	}
 	return block.PayloadChunk, nil
