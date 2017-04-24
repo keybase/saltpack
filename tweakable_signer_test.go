@@ -32,7 +32,7 @@ func newTestSignStream(version Version, w io.Writer, signer SigningSecretKey, op
 		return nil, ErrInvalidParameter{message: "no signing key provided"}
 	}
 
-	header, err := newSignatureHeader(signer.GetPublicKey(), MessageTypeAttachedSignature)
+	header, err := newSignatureHeader(version, signer.GetPublicKey(), MessageTypeAttachedSignature)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func testTweakSignDetached(version Version, plaintext []byte, signer SigningSecr
 	if signer == nil {
 		return nil, ErrInvalidParameter{message: "no signing key provided"}
 	}
-	header, err := newSignatureHeader(signer.GetPublicKey(), MessageTypeDetachedSignature)
+	header, err := newSignatureHeader(version, signer.GetPublicKey(), MessageTypeDetachedSignature)
 	if err != nil {
 		return nil, err
 	}

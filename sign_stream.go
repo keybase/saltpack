@@ -19,12 +19,12 @@ type signAttachedStream struct {
 	secretKey  SigningSecretKey
 }
 
-func newSignAttachedStream(w io.Writer, signer SigningSecretKey) (*signAttachedStream, error) {
+func newSignAttachedStream(version Version, w io.Writer, signer SigningSecretKey) (*signAttachedStream, error) {
 	if signer == nil {
 		return nil, ErrInvalidParameter{message: "no signing key provided"}
 	}
 
-	header, err := newSignatureHeader(signer.GetPublicKey(), MessageTypeAttachedSignature)
+	header, err := newSignatureHeader(version, signer.GetPublicKey(), MessageTypeAttachedSignature)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func newSignDetachedStream(version Version, w io.Writer, signer SigningSecretKey
 		return nil, ErrInvalidParameter{message: "no signing key provided"}
 	}
 
-	header, err := newSignatureHeader(signer.GetPublicKey(), MessageTypeDetachedSignature)
+	header, err := newSignatureHeader(version, signer.GetPublicKey(), MessageTypeDetachedSignature)
 	if err != nil {
 		return nil, err
 	}

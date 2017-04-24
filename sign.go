@@ -12,7 +12,7 @@ import (
 // It will write out signed data to the io.Writer passed in as
 // signedtext.  NewSignStream only generates attached signatures.
 func NewSignStream(version Version, signedtext io.Writer, signer SigningSecretKey) (stream io.WriteCloser, err error) {
-	return newSignAttachedStream(signedtext, signer)
+	return newSignAttachedStream(version, signedtext, signer)
 }
 
 // Sign creates an attached signature message of plaintext from signer.
