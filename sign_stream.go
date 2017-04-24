@@ -139,6 +139,10 @@ func (s *signAttachedStream) signBlock(isFinal bool) error {
 		return err
 	}
 
+	if err := checkSignatureState(s.version, chunk, isFinal); err != nil {
+		panic(err)
+	}
+
 	sBlock := makeSignatureBlock(s.version, chunk, sig, isFinal)
 	if err := s.encoder.Encode(sBlock); err != nil {
 		return err

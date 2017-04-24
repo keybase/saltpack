@@ -271,3 +271,19 @@ func SingleVersionValidator(desiredVersion Version) VersionValidator {
 		return ErrBadVersion{version}
 	}
 }
+
+// checkSignatureState sanity-checks some signature parameters. When
+// called by the signer, a non-nil error should cause a panic, but
+// when called by the verifier, it should be treated as a regular
+// error.
+func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
+	makeErr := func() error {
+		return fmt.Errorf("invalid signature state: version=%s, len(chunk)=%d, isFinal=%t", version, len(chunk), isFinal)
+	}
+
+	if (len(chunk) == 0) != isFinal {
+		return makeErr()
+	}
+
+	return nil
+}
