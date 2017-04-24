@@ -27,7 +27,7 @@ type testSignStream struct {
 	savedBlock *signatureBlock
 }
 
-func newTestSignStream(w io.Writer, signer SigningSecretKey, opts testSignOptions) (*testSignStream, error) {
+func newTestSignStream(version Version, w io.Writer, signer SigningSecretKey, opts testSignOptions) (*testSignStream, error) {
 	if signer == nil {
 		return nil, ErrInvalidParameter{message: "no signing key provided"}
 	}
@@ -155,7 +155,7 @@ func (s *testSignStream) computeSig(block *signatureBlock) ([]byte, error) {
 
 func testTweakSign(version Version, plaintext []byte, signer SigningSecretKey, opts testSignOptions) ([]byte, error) {
 	var buf bytes.Buffer
-	s, err := newTestSignStream(&buf, signer, opts)
+	s, err := newTestSignStream(version, &buf, signer, opts)
 	if err != nil {
 		return nil, err
 	}
