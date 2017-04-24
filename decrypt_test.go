@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestVersionValidator(t *testing.T) {
+func TestDecryptVersionValidator(t *testing.T) {
 	plaintext := []byte{0x01}
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
