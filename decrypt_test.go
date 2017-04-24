@@ -27,7 +27,7 @@ func TestDecryptVersionValidator(t *testing.T) {
 	}
 }
 
-func testNewMinorVersion(t *testing.T, version Version) {
+func testDecryptNewMinorVersion(t *testing.T, version Version) {
 	plaintext := []byte{0x01}
 
 	newVersion := version
@@ -95,8 +95,8 @@ func testDecryptErrorAtEOF(t *testing.T, version Version) {
 
 func TestDecrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
-		testNewMinorVersion,
+		testDecryptNewMinorVersion,
 		testDecryptErrorAtEOF,
 	}
-	runTestsOverVersions(t, "test", tests)
+	runTestsOverVersions(t, "testDecrypt", tests)
 }

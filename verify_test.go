@@ -9,21 +9,6 @@ import (
 	"testing"
 )
 
-func TestVerifyVersionValidator(t *testing.T) {
-	in := []byte{0x01}
-	key := newSigPrivKey(t)
-	smg, err := Sign(Version1(), in, key)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, _, err = Verify(SingleVersionValidator(Version2()), smg, kr)
-	expectedErr := ErrBadVersion{Version1()}
-	if err != expectedErr {
-		t.Fatalf("expected %v, got %v", expectedErr, err)
-	}
-}
-
 func testVerify(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
@@ -42,6 +27,44 @@ func testVerify(t *testing.T, version Version) {
 	}
 	if !bytes.Equal(msg, in) {
 		t.Errorf("verified msg '%x', expected '%x'", msg, in)
+	}
+}
+
+func TestVerifyVersionValidator(t *testing.T) {
+	in := []byte{0x01}
+	key := newSigPrivKey(t)
+	smg, err := Sign(Version1(), in, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err = Verify(SingleVersionValidator(Version2()), smg, kr)
+	expectedErr := ErrBadVersion{Version1()}
+	if err != expectedErr {
+		t.Fatalf("expected %v, got %v", expectedErr, err)
+	}
+}
+
+func testVerifyNewMinorVersion(t *testing.T, version Version) {
+	in := []byte{0x01}
+
+	newVersion := version
+	newVersion.Minor++
+
+	tso := testSignOptions{
+		corruptHeader: func(sh *SignatureHeader) {
+			sh.Version = newVersion
+		},
+	}
+	key := newSigPrivKey(t)
+	smg, err := testTweakSign(version, in, key, tso)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, _, err = Verify(SingleVersionValidator(newVersion), smg, kr)
+	if err != nil {
+		t.Fatalf("Unepected error %v", err)
 	}
 }
 
@@ -116,6 +139,7 @@ func (k emptySigKeyring) LookupSigningPublicKey(kid []byte) SigningPublicKey { r
 func TestVerify(t *testing.T) {
 	tests := []func(*testing.T, Version){
 		testVerify,
+		testVerifyNewMinorVersion,
 		testVerifyConcurrent,
 		testVerifyEmptyKeyring,
 		testVerifyDetachedEmptyKeyring,
