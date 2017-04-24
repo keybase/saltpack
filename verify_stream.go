@@ -4,11 +4,14 @@
 package saltpack
 
 import (
+	"fmt"
 	"io"
 )
 
 type verifyStream struct {
+	version    Version
 	stream     *msgpackStream
+	err        error
 	state      readState
 	buffer     []byte
 	header     *SignatureHeader
@@ -30,10 +33,6 @@ func newVerifyStream(versionValidator VersionValidator, r io.Reader, msgType Mes
 }
 
 func (v *verifyStream) Read(p []byte) (n int, err error) {
-	if v.state == stateEndOfStream {
-		return 0, io.EOF
-	}
-
 	for n == 0 && err == nil {
 		n, err = v.read(p)
 	}
@@ -43,22 +42,55 @@ func (v *verifyStream) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
-func (v *verifyStream) read(p []byte) (int, error) {
-	// if data in the buffer, then start by copying it into output slice
+func (v *verifyStream) read(p []byte) (n int, err error) {
+	// Handle the case of a previous error. Just return the error again.
+	if v.err != nil {
+		return 0, v.err
+	}
+
+	// Handle the case first of a previous read that couldn't put
+	// all of its data into the outgoing buffer.
 	if len(v.buffer) > 0 {
 		n := copy(p, v.buffer)
 		v.buffer = v.buffer[n:]
 		return n, nil
 	}
 
-	n, last, err := v.readBlock(p)
-	if err != nil {
-		return n, err
+	// We have two states we can be in, but we can definitely fall
+	// through during one read, so be careful.
+
+	if v.state == stateBody {
+		var last bool
+		n, last, v.err = v.readBlock(p)
+		if v.err != nil {
+			return 0, v.err
+		}
+
+		if last {
+			v.state = stateEndOfStream
+			// If we've reached the end of the stream, but
+			// have data left (which only happens in V2),
+			// return so that the next call(s) will hit
+			// the case at the top, and then we'll hit the
+			// case below.
+			if len(v.buffer) > 0 {
+				if v.version.Major < 2 {
+					panic(fmt.Sprintf("version=%s, last=true, len(v.buffer)=%d > 0", v.version, len(v.buffer)))
+				}
+
+				return n, nil
+			}
+		}
 	}
-	if last {
-		v.state = stateEndOfStream
-		if err := assertEndOfStream(v.stream); err != nil {
-			return n, err
+
+	if v.state == stateEndOfStream {
+		v.err = assertEndOfStream(v.stream)
+		// If V2, we can hit EOF with n > 0.
+		if v.err == io.EOF {
+			return n, v.err
+		}
+		if v.err != nil {
+			return n, v.err
 		}
 	}
 
@@ -83,6 +115,7 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 	if err := header.validate(versionValidator, msgType); err != nil {
 		return err
 	}
+	v.version = header.Version
 	v.state = stateBody
 	return nil
 }
