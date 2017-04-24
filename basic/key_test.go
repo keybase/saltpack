@@ -49,14 +49,14 @@ func TestBasicBox(t *testing.T) {
 	}
 }
 
-func TestBasicSign(t *testing.T) {
+func testBasicSign(t *testing.T, version saltpack.Version) {
 	kr := NewKeyring()
 	k1, err := kr.GenerateSigningKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 	msg := randomMsg(t, 1024)
-	sig, err := saltpack.SignArmor62(saltpack.Version1(), msg, k1, "")
+	sig, err := saltpack.SignArmor62(version, msg, k1, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,5 +69,14 @@ func TestBasicSign(t *testing.T) {
 	}
 	if !saltpack.PublicKeyEqual(k1.GetPublicKey(), pk) {
 		t.Fatal("public signing key wasn't right")
+	}
+}
+
+func TestBasicSign(t *testing.T) {
+	for _, version := range saltpack.KnownVersions() {
+		version := version // capture range variable.
+		t.Run(version.String(), func(t *testing.T) {
+			testBasicSign(t, version)
+		})
 	}
 }
