@@ -5,7 +5,7 @@ package saltpack
 
 import "io"
 
-func curry(f func(version Version, signedtext io.Writer, signer SigningSecretKey, brand string) (io.WriteCloser, error), brand string) func(Version, io.Writer, SigningSecretKey) (io.WriteCloser, error) {
+func applyBrand(f func(Version, io.Writer, SigningSecretKey, string) (io.WriteCloser, error), brand string) func(Version, io.Writer, SigningSecretKey) (io.WriteCloser, error) {
 	return func(version Version, signedtext io.Writer, signer SigningSecretKey) (io.WriteCloser, error) {
 		return f(version, signedtext, signer, brand)
 	}
@@ -33,7 +33,7 @@ func NewSignArmor62Stream(version Version, signedtext io.Writer, signer SigningS
 
 // SignArmor62 creates an attached armored signature message of plaintext from signer.
 func SignArmor62(version Version, plaintext []byte, signer SigningSecretKey, brand string) (string, error) {
-	buf, err := signToStream(version, plaintext, signer, curry(NewSignArmor62Stream, brand))
+	buf, err := signToStream(version, plaintext, signer, applyBrand(NewSignArmor62Stream, brand))
 	if err != nil {
 		return "", err
 	}
@@ -65,7 +65,7 @@ func NewSignDetachedArmor62Stream(version Version, detachedsig io.Writer, signer
 
 // SignDetachedArmor62 returns a detached armored signature of plaintext from signer.
 func SignDetachedArmor62(version Version, plaintext []byte, signer SigningSecretKey, brand string) (string, error) {
-	buf, err := signToStream(version, plaintext, signer, curry(NewSignDetachedArmor62Stream, brand))
+	buf, err := signToStream(version, plaintext, signer, applyBrand(NewSignDetachedArmor62Stream, brand))
 	if err != nil {
 		return "", err
 	}
