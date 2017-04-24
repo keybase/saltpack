@@ -96,7 +96,7 @@ func testBasicSign(t *testing.T, version saltpack.Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pk, msg2, _, err := saltpack.Dearmor62Verify(sig, kr)
+	pk, msg2, _, err := saltpack.Dearmor62Verify(saltpack.SingleVersionValidator(version), sig, kr)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -367,34 +367,6 @@ func (ds *decryptStream) processEncryptionBlock(ciphertext []byte, authenticator
 	return plaintext, nil
 }
 
-// VersionValidator is a function that takes a version and returns nil
-// if it's a valid version, and an error otherwise.
-type VersionValidator func(version Version) error
-
-// CheckKnownMajorVersion returns nil if the given version has a known
-// major version. You probably want to use this with NewDecryptStream,
-// unless you want to restrict to specific versions only.
-func CheckKnownMajorVersion(version Version) error {
-	for _, knownVersion := range KnownVersions() {
-		if version.Major == knownVersion.Major {
-			return nil
-		}
-	}
-	return ErrBadVersion{version}
-}
-
-// SingleVersionValidator returns a VersionValidator that returns nil
-// if its given version is equal to desiredVersion.
-func SingleVersionValidator(desiredVersion Version) VersionValidator {
-	return func(version Version) error {
-		if version == desiredVersion {
-			return nil
-		}
-
-		return ErrBadVersion{version}
-	}
-}
-
 // NewDecryptStream starts a streaming decryption. It synchronously ingests
 // and parses the given Reader's encryption header. It consults the passed
 // keyring for the decryption keys needed to decrypt the message. On failure,

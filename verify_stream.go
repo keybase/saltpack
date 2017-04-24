@@ -17,7 +17,7 @@ type verifyStream struct {
 	seqno      packetSeqno
 }
 
-func newVerifyStream(r io.Reader, msgType MessageType) (*verifyStream, error) {
+func newVerifyStream(versionValidator VersionValidator, r io.Reader, msgType MessageType) (*verifyStream, error) {
 	s := &verifyStream{
 		stream: newMsgpackStream(r),
 		seqno:  0,

@@ -116,7 +116,7 @@ func testSignAndVerify(t *testing.T, version Version, message []byte) {
 	if len(smsg) == 0 {
 		t.Fatal("Sign returned no error and no output")
 	}
-	skey, vmsg, err := Verify(smsg, kr)
+	skey, vmsg, err := Verify(SingleVersionValidator(version), smsg, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func testSignEmptyStream(t *testing.T, version Version) {
 		t.Fatal("empty signed message")
 	}
 
-	skey, vmsg, err := Verify(smsg, kr)
+	skey, vmsg, err := Verify(SingleVersionValidator(version), smsg, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func testSignTruncation(t *testing.T, version Version) {
 		t.Fatal("Sign returned no error and no output")
 	}
 	trunced := smsg[:len(smsg)-51]
-	skey, vmsg, err := Verify(trunced, kr)
+	skey, vmsg, err := Verify(SingleVersionValidator(version), trunced, kr)
 	if skey != nil {
 		t.Errorf("Verify returned a key for a truncated message")
 	}
@@ -203,7 +203,7 @@ func testSignSkipBlock(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	skey, vmsg, err := Verify(smsg, kr)
+	skey, vmsg, err := Verify(SingleVersionValidator(version), smsg, kr)
 	if skey != nil {
 		t.Errorf("Verify returned a key for a message with a missing block")
 	}
@@ -222,7 +222,7 @@ func testSignSkipFooter(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	skey, vmsg, err := Verify(smsg, kr)
+	skey, vmsg, err := Verify(SingleVersionValidator(version), smsg, kr)
 	if skey != nil {
 		t.Errorf("Verify returned a key for a message without a footer")
 	}
@@ -241,7 +241,7 @@ func testSignSwapBlock(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	skey, vmsg, err := Verify(smsg, kr)
+	skey, vmsg, err := Verify(SingleVersionValidator(version), smsg, kr)
 	if skey != nil {
 		t.Errorf("Verify returned a key for a message without a footer")
 	}
@@ -264,7 +264,7 @@ func testSignDetached(t *testing.T, version Version) {
 		t.Fatal("empty sig and no error from SignDetached")
 	}
 
-	skey, err := VerifyDetached(msg, sig, kr)
+	skey, err := VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -285,7 +285,7 @@ func testSignDetachedVerifyAttached(t *testing.T, version Version) {
 	}
 
 	// try verifying detached signature using Verify instead of VerifyDetached
-	skey, vmsg, err := Verify(sig, kr)
+	skey, vmsg, err := Verify(SingleVersionValidator(version), sig, kr)
 	if err == nil {
 		t.Fatal("Verify succeeded, expected it to fail")
 	}
@@ -308,7 +308,7 @@ func testSignAttachedVerifyDetached(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 
-	skey, err := VerifyDetached(msg, smsg, kr)
+	skey, err := VerifyDetached(SingleVersionValidator(version), msg, smsg, kr)
 	if err == nil {
 		t.Fatal("VerifyDetached succeeded, expected it to fail")
 	}
@@ -328,7 +328,7 @@ func testSignBadKey(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = Verify(smsg, kr)
+	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
 	if err != ErrBadSignature {
 		t.Errorf("error: %v, expected ErrBadSignature", err)
 	}
@@ -337,7 +337,7 @@ func testSignBadKey(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = VerifyDetached(msg, sig, kr)
+	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
 	if err != ErrBadSignature {
 		t.Errorf("error: %v, expected ErrBadSignature", err)
 	}
@@ -421,7 +421,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 	if len(smsg) == 0 {
 		t.Fatal("Sign returned no error and no output")
 	}
-	skey, vmsg, err := Verify(smsg, kr)
+	skey, vmsg, err := Verify(SingleVersionValidator(version), smsg, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -440,7 +440,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = Verify(smsg, kr)
+	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
 	if _, ok := err.(ErrBadVersion); !ok {
 		t.Errorf("error: %v (%T), expected ErrBadVersion", err, err)
 	}
@@ -453,7 +453,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = Verify(smsg, kr)
+	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
 	if _, ok := err.(ErrWrongMessageType); !ok {
 		t.Errorf("error: %v (%T), expected ErrWrongMessageType", err, err)
 	}
@@ -466,7 +466,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = Verify(smsg, kr)
+	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
 	if _, ok := err.(ErrWrongMessageType); !ok {
 		t.Errorf("error: %v (%T), expected ErrWrongMessageType", err, err)
 	}
@@ -482,7 +482,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = Verify(smsg, kr)
+	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
 	if err == nil {
 		t.Fatal(err)
 	}
@@ -493,7 +493,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	truncated := smsg[0:10]
-	_, _, err = Verify(truncated, kr)
+	_, _, err = Verify(SingleVersionValidator(version), truncated, kr)
 	if err == nil {
 		t.Fatal(err)
 	}
@@ -510,7 +510,7 @@ func testSignDetachedCorruptHeader(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	skey, err := VerifyDetached(msg, sig, kr)
+	skey, err := VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -526,7 +526,7 @@ func testSignDetachedCorruptHeader(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = VerifyDetached(msg, sig, kr)
+	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
 	if _, ok := err.(ErrWrongMessageType); !ok {
 		t.Errorf("error: %v (%T), expected ErrWrongMessageType", err, err)
 	}
@@ -539,7 +539,7 @@ func testSignDetachedCorruptHeader(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = VerifyDetached(msg, sig, kr)
+	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
 	if _, ok := err.(ErrWrongMessageType); !ok {
 		t.Errorf("error: %v (%T), expected ErrWrongMessageType", err, err)
 	}
@@ -557,7 +557,7 @@ func testSignDetachedTruncated(t *testing.T, version Version) {
 	// truncate the sig by one byte
 	shortSig := sig[0 : len(sig)-1]
 
-	_, err = VerifyDetached(msg, shortSig, kr)
+	_, err = VerifyDetached(SingleVersionValidator(version), msg, shortSig, kr)
 	if err == nil {
 		t.Fatal("expected EOF error from truncated sig")
 	}

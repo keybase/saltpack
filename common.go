@@ -243,3 +243,31 @@ func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, cip
 func hashHeader(headerBytes []byte) headerHash {
 	return sha512.Sum512(headerBytes)
 }
+
+// VersionValidator is a function that takes a version and returns nil
+// if it's a valid version, and an error otherwise.
+type VersionValidator func(version Version) error
+
+// CheckKnownMajorVersion returns nil if the given version has a known
+// major version. You probably want to use this with NewDecryptStream,
+// unless you want to restrict to specific versions only.
+func CheckKnownMajorVersion(version Version) error {
+	for _, knownVersion := range KnownVersions() {
+		if version.Major == knownVersion.Major {
+			return nil
+		}
+	}
+	return ErrBadVersion{version}
+}
+
+// SingleVersionValidator returns a VersionValidator that returns nil
+// if its given version is equal to desiredVersion.
+func SingleVersionValidator(desiredVersion Version) VersionValidator {
+	return func(version Version) error {
+		if version == desiredVersion {
+			return nil
+		}
+
+		return ErrBadVersion{version}
+	}
+}

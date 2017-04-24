@@ -136,7 +136,7 @@ func ExampleSignArmor62() {
 	// The verified message should match the input mesasge.
 	var verifiedMsg []byte
 	var signingPublicKey saltpack.SigningPublicKey
-	signingPublicKey, verifiedMsg, _, err = saltpack.Dearmor62Verify(signed, keyring)
+	signingPublicKey, verifiedMsg, _, err = saltpack.Dearmor62Verify(saltpack.CheckKnownMajorVersion, signed, keyring)
 	if err != nil {
 		return
 	}
@@ -188,7 +188,7 @@ func ExampleNewSignArmor62Stream() {
 	// verified data out of verified stream.
 	var verifiedStream io.Reader
 	var signingPublicKey saltpack.SigningPublicKey
-	signingPublicKey, verifiedStream, _, err = saltpack.NewDearmor62VerifyStream(&output, keyring)
+	signingPublicKey, verifiedStream, _, err = saltpack.NewDearmor62VerifyStream(saltpack.CheckKnownMajorVersion, &output, keyring)
 	if err != nil {
 		return
 	}

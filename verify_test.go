@@ -16,7 +16,7 @@ func testVerify(t *testing.T, version Version) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	skey, msg, err := Verify(smsg, kr)
+	skey, msg, err := Verify(SingleVersionValidator(version), smsg, kr)
 	if err != nil {
 		t.Logf("input:      %x", in)
 		t.Logf("signed msg: %x", smsg)
@@ -42,7 +42,7 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
-			skey, msg, err := Verify(smsg, kr)
+			skey, msg, err := Verify(SingleVersionValidator(version), smsg, kr)
 			if err != nil {
 				t.Logf("input:      %x", in)
 				t.Logf("signed msg: %x", smsg)
@@ -68,7 +68,7 @@ func testVerifyEmptyKeyring(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 
-	_, _, err = Verify(smsg, emptySigKeyring{})
+	_, _, err = Verify(SingleVersionValidator(version), smsg, emptySigKeyring{})
 	if err == nil {
 		t.Fatal("Verify worked with empty keyring")
 	}
@@ -85,7 +85,7 @@ func testVerifyDetachedEmptyKeyring(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 
-	_, err = VerifyDetached(msg, sig, emptySigKeyring{})
+	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, emptySigKeyring{})
 	if err == nil {
 		t.Fatal("VerifyDetached worked with empty keyring")
 	}

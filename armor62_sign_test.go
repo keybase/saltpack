@@ -19,7 +19,7 @@ func testSignArmor62(t *testing.T, version Version) {
 		t.Fatal("SignArmor62 returned no error and no output")
 	}
 
-	skey, vmsg, brand, err := Dearmor62Verify(smsg, kr)
+	skey, vmsg, brand, err := Dearmor62Verify(SingleVersionValidator(version), smsg, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func testSignDetachedArmor62(t *testing.T, version Version) {
 		t.Fatal("empty sig and no error from SignDetachedArmor62")
 	}
 
-	skey, brand, err := Dearmor62VerifyDetached(msg, sig, kr)
+	skey, brand, err := Dearmor62VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
 	if err != nil {
 		t.Fatal(err)
 	}
