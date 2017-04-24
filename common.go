@@ -177,6 +177,10 @@ func sum512Truncate256(in []byte) [32]byte {
 	return sliceToByte32(sum512[:32])
 }
 
+// checkCiphertextState sanity-checks some ciphertext parameters. When
+// called by the encryptor, a non-nil error should cause a panic, but
+// when called by the decryptor, it should be treated as a regular
+// error.
 func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) error {
 	makeErr := func() error {
 		return fmt.Errorf("invalid ciphertext state: version=%s, len(ciphertext)=%d, isFinal=%t", version, len(ciphertext), isFinal)
