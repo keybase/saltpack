@@ -186,22 +186,18 @@ func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) erro
 		return fmt.Errorf("invalid ciphertext state: version=%s, len(ciphertext)=%d, isFinal=%t", version, len(ciphertext), isFinal)
 	}
 
+	if len(ciphertext) < secretbox.Overhead {
+		return makeErr()
+	}
+
 	switch version.Major {
 	case 1:
-		if len(ciphertext) < secretbox.Overhead {
-			return makeErr()
-		}
-
 		if (len(ciphertext) == secretbox.Overhead) != isFinal {
 			return makeErr()
 		}
 
 		return nil
 	case 2:
-		if len(ciphertext) < secretbox.Overhead {
-			return makeErr()
-		}
-
 		// With v2, it's valid to have a final packet with
 		// non-empty plaintext, so the below is the only
 		// remaining invalid state.
