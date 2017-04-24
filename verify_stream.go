@@ -93,10 +93,10 @@ func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
 	if err != nil {
 		return 0, false, err
 	}
-	block.seqno = v.seqno
+	seqno := v.seqno
 	v.seqno++
 
-	data, err := v.processBlock(&block)
+	data, err := v.processBlock(&block, seqno)
 	if err != nil {
 		return 0, false, err
 	}
@@ -110,8 +110,8 @@ func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
 	return n, false, err
 }
 
-func (v *verifyStream) processBlock(block *signatureBlock) ([]byte, error) {
-	if err := v.publicKey.Verify(attachedSignatureInput(v.headerHash, block), block.Signature); err != nil {
+func (v *verifyStream) processBlock(block *signatureBlock, seqno packetSeqno) ([]byte, error) {
+	if err := v.publicKey.Verify(attachedSignatureInput(v.headerHash, block, seqno), block.Signature); err != nil {
 		return nil, err
 	}
 	return block.PayloadChunk, nil

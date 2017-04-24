@@ -138,5 +138,4 @@ type signatureBlock struct {
 	_struct      bool   `codec:",toarray"`
 	Signature    []byte `codec:"signature"`
 	PayloadChunk []byte `codec:"payload_chunk"`
-	seqno        packetSeqno
 }

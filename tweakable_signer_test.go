@@ -109,9 +109,8 @@ func (s *testSignStream) signBlock() error {
 func (s *testSignStream) signBytes(b []byte) error {
 	block := signatureBlock{
 		PayloadChunk: b,
-		seqno:        s.seqno,
 	}
-	sig, err := s.computeSig(&block)
+	sig, err := s.computeSig(&block, s.seqno)
 	if err != nil {
 		return err
 	}
@@ -149,8 +148,8 @@ func (s *testSignStream) writeFooter() error {
 	return s.signBytes([]byte{})
 }
 
-func (s *testSignStream) computeSig(block *signatureBlock) ([]byte, error) {
-	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, block))
+func (s *testSignStream) computeSig(block *signatureBlock, seqno packetSeqno) ([]byte, error) {
+	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, block, seqno))
 }
 
 func testTweakSign(version Version, plaintext []byte, signer SigningSecretKey, opts testSignOptions) ([]byte, error) {

@@ -90,9 +90,8 @@ func (s *signAttachedStream) signBlock() error {
 func (s *signAttachedStream) signBytes(b []byte) error {
 	block := signatureBlock{
 		PayloadChunk: b,
-		seqno:        s.seqno,
 	}
-	sig, err := s.computeSig(&block)
+	sig, err := s.computeSig(&block, s.seqno)
 	if err != nil {
 		return err
 	}
@@ -110,8 +109,8 @@ func (s *signAttachedStream) writeFooter() error {
 	return s.signBytes([]byte{})
 }
 
-func (s *signAttachedStream) computeSig(block *signatureBlock) ([]byte, error) {
-	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, block))
+func (s *signAttachedStream) computeSig(block *signatureBlock, seqno packetSeqno) ([]byte, error) {
+	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, block, seqno))
 }
 
 type signDetachedStream struct {
