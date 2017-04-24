@@ -411,6 +411,9 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
 	msg := randomMsg(t, 128)
 
+	badVersion := version
+	badVersion.Major++
+
 	var opts testSignOptions
 
 	// first try with no corruption
@@ -434,15 +437,17 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 
 	// change the version
 	opts.corruptHeader = func(sh *SignatureHeader) {
-		sh.Version = Version{Major: CurrentVersion().Major + 1, Minor: 0}
+		sh.Version = badVersion
 	}
 	smsg, err = testTweakSign(version, msg, key, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
 	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
-	if _, ok := err.(ErrBadVersion); !ok {
-		t.Errorf("error: %v (%T), expected ErrBadVersion", err, err)
+	if ebv, ok := err.(ErrBadVersion); !ok {
+		t.Fatalf("Got wrong error; wanted 'Bad Version' but got %v", err)
+	} else if ebv.received != badVersion {
+		t.Fatalf("got wrong version # in error message: %v", ebv.received)
 	}
 
 	// change the message type from attached to detached

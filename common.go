@@ -264,6 +264,7 @@ func CheckKnownMajorVersion(version Version) error {
 // if its given version is equal to desiredVersion.
 func SingleVersionValidator(desiredVersion Version) VersionValidator {
 	return func(version Version) error {
+		fmt.Printf("version=%v, desired=%v\n", version, desiredVersion)
 		if version == desiredVersion {
 			return nil
 		}
