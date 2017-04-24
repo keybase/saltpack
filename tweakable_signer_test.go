@@ -20,7 +20,6 @@ type testSignStream struct {
 	headerHash headerHash
 	encoder    encoder
 	buffer     bytes.Buffer
-	block      []byte
 	seqno      packetSeqno
 	secretKey  SigningSecretKey
 	options    testSignOptions
@@ -55,7 +54,6 @@ func newTestSignStream(version Version, w io.Writer, signer SigningSecretKey, op
 	stream := &testSignStream{
 		headerHash: headerHash,
 		encoder:    newEncoder(w),
-		block:      make([]byte, signatureBlockSize),
 		secretKey:  signer,
 		options:    opts,
 	}
@@ -99,11 +97,8 @@ func (s *testSignStream) Close() error {
 }
 
 func (s *testSignStream) signBlock() error {
-	n, err := s.buffer.Read(s.block[:])
-	if err != nil {
-		return err
-	}
-	return s.signBytes(s.block[:n])
+	chunk := s.buffer.Next(signatureBlockSize)
+	return s.signBytes(chunk)
 }
 
 func (s *testSignStream) signBytes(b []byte) error {
