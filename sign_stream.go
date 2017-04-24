@@ -6,6 +6,7 @@ package saltpack
 import (
 	"bytes"
 	"crypto/sha512"
+	"fmt"
 	"hash"
 	"io"
 )
@@ -15,7 +16,6 @@ type signAttachedStream struct {
 	version    Version
 	encoder    encoder
 	buffer     bytes.Buffer
-	block      []byte
 	seqno      packetSeqno
 	secretKey  SigningSecretKey
 }
@@ -44,7 +44,6 @@ func newSignAttachedStream(version Version, w io.Writer, signer SigningSecretKey
 		headerHash: headerHash,
 		version:    version,
 		encoder:    newEncoder(w),
-		block:      make([]byte, signatureBlockSize),
 		secretKey:  signer,
 	}
 
@@ -73,12 +72,17 @@ func (s *signAttachedStream) Write(p []byte) (int, error) {
 }
 
 func (s *signAttachedStream) Close() error {
-	for s.buffer.Len() > 0 {
+	if s.buffer.Len() > 0 {
 		if err := s.signBlock(false); err != nil {
 			return err
 		}
 	}
-	return s.writeFooter()
+
+	if s.buffer.Len() > 0 {
+		panic(fmt.Sprintf("s.buffer.Len()=%d > 0", s.buffer.Len()))
+	}
+
+	return s.signBlock(true)
 }
 
 func makeSignatureBlock(version Version, chunk, sig []byte, isFinal bool) interface{} {
@@ -90,30 +94,20 @@ func makeSignatureBlock(version Version, chunk, sig []byte, isFinal bool) interf
 }
 
 func (s *signAttachedStream) signBlock(isFinal bool) error {
-	n, err := s.buffer.Read(s.block[:])
-	if err != nil {
-		return err
-	}
-	return s.signBytes(s.block[:n], isFinal)
-}
+	chunk := s.buffer.Next(signatureBlockSize)
 
-func (s *signAttachedStream) signBytes(b []byte, isFinal bool) error {
-	sig, err := s.computeSig(b, s.seqno)
+	sig, err := s.computeSig(chunk, s.seqno)
 	if err != nil {
 		return err
 	}
 
-	sBlock := makeSignatureBlock(s.version, b, sig, isFinal)
+	sBlock := makeSignatureBlock(s.version, chunk, sig, isFinal)
 	if err := s.encoder.Encode(sBlock); err != nil {
 		return err
 	}
 
 	s.seqno++
 	return nil
-}
-
-func (s *signAttachedStream) writeFooter() error {
-	return s.signBytes([]byte{}, true)
 }
 
 func (s *signAttachedStream) computeSig(payloadChunk []byte, seqno packetSeqno) ([]byte, error) {
