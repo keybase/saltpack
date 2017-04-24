@@ -18,8 +18,9 @@ func TestVerifyVersionValidator(t *testing.T) {
 	}
 
 	_, _, err = Verify(SingleVersionValidator(Version2()), smg, kr)
-	if err == nil {
-		t.Fatal("Unexpected nil error")
+	expectedErr := ErrBadVersion{Version1()}
+	if err != expectedErr {
+		t.Fatalf("expected %v, got %v", expectedErr, err)
 	}
 }
 

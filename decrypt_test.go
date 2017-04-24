@@ -21,8 +21,9 @@ func TestDecryptVersionValidator(t *testing.T) {
 	}
 
 	_, _, err = Open(SingleVersionValidator(Version2()), ciphertext, kr)
-	if err == nil {
-		t.Fatal("Unexpected nil error")
+	expectedErr := ErrBadVersion{Version1()}
+	if err != expectedErr {
+		t.Fatalf("expected %v, got %v", expectedErr, err)
 	}
 }
 
