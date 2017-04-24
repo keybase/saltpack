@@ -14,9 +14,13 @@ import (
 )
 
 type encryptStream struct {
-	output     io.Writer
-	encoder    encoder
-	header     *EncryptionHeader
+	output  io.Writer
+	encoder encoder
+
+	// We only really need the version from the header, but some
+	// tests need more information (like the receivers).
+	header *EncryptionHeader
+
 	payloadKey SymmetricKey
 	buffer     bytes.Buffer
 	headerHash headerHash
