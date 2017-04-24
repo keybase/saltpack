@@ -93,7 +93,7 @@ func (s *testSignStream) Close() error {
 		return nil
 	}
 
-	return s.writeFooter()
+	return s.signBlock()
 }
 
 func (s *testSignStream) signBlock() error {
@@ -137,10 +137,6 @@ func (s *testSignStream) signBytes(b []byte) error {
 	}
 
 	return nil
-}
-
-func (s *testSignStream) writeFooter() error {
-	return s.signBytes([]byte{})
 }
 
 func (s *testSignStream) computeSig(payloadChunk []byte, seqno packetSeqno) ([]byte, error) {
