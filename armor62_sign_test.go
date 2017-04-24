@@ -8,10 +8,10 @@ import (
 	"testing"
 )
 
-func TestSignArmor62(t *testing.T) {
+func testSignArmor62(t *testing.T, version Version) {
 	msg := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	smsg, err := SignArmor62(Version1(), msg, key, ourBrand)
+	smsg, err := SignArmor62(version, msg, key, ourBrand)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,10 +32,10 @@ func TestSignArmor62(t *testing.T) {
 	}
 }
 
-func TestSignDetachedArmor62(t *testing.T) {
+func testSignDetachedArmor62(t *testing.T, version Version) {
 	msg := randomMsg(t, 128)
 	key := newSigPrivKey(t)
-	sig, err := SignDetachedArmor62(Version1(), msg, key, ourBrand)
+	sig, err := SignDetachedArmor62(version, msg, key, ourBrand)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,4 +51,12 @@ func TestSignDetachedArmor62(t *testing.T) {
 	if !PublicKeyEqual(skey, key.GetPublicKey()) {
 		t.Errorf("signer key %x, expected %x", skey.ToKID(), key.GetPublicKey().ToKID())
 	}
+}
+
+func TestArmor62Sign(t *testing.T) {
+	tests := []func(*testing.T, Version){
+		testSignArmor62,
+		testSignDetachedArmor62,
+	}
+	runTestsOverVersions(t, "test", tests)
 }
