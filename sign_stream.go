@@ -150,7 +150,7 @@ func checkSignBlockRead(version Version, isFinal bool, blockSize, chunkLen, bufL
 	case Version2():
 		// If isFinal, then chunkLen can be any number,
 		// buf bufLen must be 0.
-		if isFinal != (bufLen == 0) {
+		if isFinal && (bufLen != 0) {
 			die()
 		}
 
