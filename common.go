@@ -199,11 +199,11 @@ func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) erro
 		return nil
 
 	case 2:
-		// With v2, it's valid to have a final packet with
+		// With V2, it's valid to have a final packet with
 		// non-empty plaintext, so the below is the only
 		// remaining invalid state.
 		//
-		// TODO: ideally, we'd disallow empty packets even
+		// TODO: Ideally, we'd disallow empty packets even
 		// with isFinal set, but we still want to allow
 		// encrypting an empty message. Plumb through an
 		// isFirst flag and change "!isFinal" to "!isFirst ||
