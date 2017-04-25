@@ -197,6 +197,7 @@ func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) erro
 		}
 
 		return nil
+
 	case 2:
 		// With v2, it's valid to have a final packet with
 		// non-empty plaintext, so the below is the only
@@ -212,6 +213,7 @@ func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) erro
 		}
 
 		return nil
+
 	default:
 		panic(ErrBadVersion{version})
 	}
