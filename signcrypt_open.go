@@ -270,9 +270,15 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byt
 
 	plaintextHash := sha512.Sum512(chunkPlaintext)
 
+	// TODO: Decomp this out with similar code in signcrypt_seal.go.
 	signatureInput := []byte(signatureEncryptedString)
 	signatureInput = append(signatureInput, sos.headerHash...)
 	signatureInput = append(signatureInput, nonce[:]...)
+	var isFinalByte byte
+	if isFinal {
+		isFinalByte = 1
+	}
+	signatureInput = append(signatureInput, isFinalByte)
 	signatureInput = append(signatureInput, plaintextHash[:]...)
 
 	// Handle anonymous sender mode by skipping signature verification. By
