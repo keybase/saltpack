@@ -68,17 +68,17 @@ func nonceForChunkSecretBox(i encryptionBlockNumber) Nonce {
 	return n
 }
 
-// Construct the nonce for the ith block of payload. Differs in one letter from
-// above. There's almost certainly no harm in using the same nonces here as
-// above, since the encryption keys are ephemeral and the signatures already
-// have their own context, but at the same time it's a good practice.
+// Construct the nonce for the ith block of payload. There's almost
+// certainly no harm in using the same nonces here as above, since the
+// encryption keys are ephemeral and the signatures already have their
+// own context, but at the same time it's a good practice.
 func nonceForChunkSigncryption(i encryptionBlockNumber, isFinal bool) Nonce {
 	var n Nonce
-	copyEqualSizeStr(n[0:15], "saltpack_ploads")
-	binary.BigEndian.PutUint64(n[15:], uint64(i))
+	copyEqualSizeStr(n[0:15], "saltpackploadsc")
 	if isFinal {
-		n[23] = 1
+		n[15] = 1
 	}
+	binary.BigEndian.PutUint64(n[16:], uint64(i))
 	return n
 }
 
