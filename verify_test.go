@@ -86,6 +86,7 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 				t.Logf("input:      %x", in)
 				t.Logf("signed msg: %x", smsg)
 				t.Error(err)
+				// Don't fall through, as the tests below will panic.
 				return
 			}
 			if !PublicKeyEqual(skey, key.GetPublicKey()) {
