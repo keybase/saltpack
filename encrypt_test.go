@@ -1526,6 +1526,71 @@ func TestEncryptSubsequenceV1(t *testing.T) {
 	}
 }
 
+func TestEncryptSubsequenceV2(t *testing.T) {
+	sender := newBoxKey(t)
+	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
+
+	plaintext := make([]byte, 2*encryptionBlockSize)
+	ciphertext, err := Seal(Version2(), plaintext, sender, receivers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mps := newMsgpackStream(bytes.NewReader(ciphertext))
+
+	// These truncated ciphertexts will have the first payload
+	// packet and the second payload packet, respectively.
+	truncatedCiphertext1 := bytes.NewBuffer(nil)
+	truncatedCiphertext2 := bytes.NewBuffer(nil)
+	encoder1 := newEncoder(truncatedCiphertext1)
+	encoder2 := newEncoder(truncatedCiphertext2)
+
+	encode := func(e encoder, i interface{}) {
+		err = e.Encode(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var headerBytes []byte
+	_, err = mps.Read(&headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder1, headerBytes)
+	encode(encoder2, headerBytes)
+
+	var block encryptionBlockV2
+
+	// Payload packet 1.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	block.IsFinal = true
+	encode(encoder1, block)
+
+	// Payload packet 2.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	block.IsFinal = true
+	encode(encoder2, block)
+
+	for i, truncatedCiphertext := range []*bytes.Buffer{truncatedCiphertext1, truncatedCiphertext2} {
+		validator := SingleVersionValidator(Version2())
+		_, _, err = Open(validator, truncatedCiphertext.Bytes(), kr)
+		expectedErr := ErrBadTag(1)
+		if err != expectedErr {
+			t.Errorf("err=%v != %v for truncatedCiphertext%d", err, expectedErr, i+1)
+		}
+	}
+}
+
 func TestEncrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
 		testNewEncryptStreamShuffledReaders,
