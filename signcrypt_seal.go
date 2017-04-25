@@ -55,7 +55,6 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 	// NOTE: b is a slice into sss.buffer's buffer, so make sure
 	// not to stash it anywhere.
 	b := sss.buffer.Next(encryptionBlockSize)
-	// TODO: Change to isFinal && (sss.buffer.Len() != 0).
 	if isFinal && (sss.buffer.Len() != 0) {
 		panic(fmt.Sprintf("isFinal=true and (sss.buffer.Len()=%d != 0)", sss.buffer.Len()))
 	}
