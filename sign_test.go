@@ -607,7 +607,7 @@ func TestSignSinglePacketV2(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var block signatureBlockV1
+	var block signatureBlockV2
 
 	// Payload packet.
 	_, err = mps.Read(&block)

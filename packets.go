@@ -133,9 +133,16 @@ func (h *SignatureHeader) validate(versionValidator VersionValidator, msgType Me
 	return nil
 }
 
-// signatureBlock contains a block of signed data.
+// signatureBlockV1 contains a block of signed data.
 type signatureBlockV1 struct {
 	_struct      bool   `codec:",toarray"`
 	Signature    []byte `codec:"signature"`
 	PayloadChunk []byte `codec:"payload_chunk"`
+}
+
+// signatureBlockV2 is signatureBlockV1, but with a flag signifying
+// whether or not this is the final packet.
+type signatureBlockV2 struct {
+	signatureBlockV1
+	IsFinal bool `codec:"final"`
 }
