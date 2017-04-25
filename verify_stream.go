@@ -17,13 +17,11 @@ type verifyStream struct {
 	header     *SignatureHeader
 	headerHash headerHash
 	publicKey  SigningPublicKey
-	seqno      packetSeqno
 }
 
 func newVerifyStream(versionValidator VersionValidator, r io.Reader, msgType MessageType) (*verifyStream, error) {
 	s := &verifyStream{
 		stream: newMsgpackStream(r),
-		seqno:  0,
 	}
 	err := s.readHeader(versionValidator, msgType)
 	if err != nil {
@@ -120,32 +118,36 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 	return nil
 }
 
-func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
+func readSignatureBlock(version Version, mps *msgpackStream) (payloadChunk, signature []byte, isFinal bool, seqno packetSeqno, err error) {
 	var block signatureBlock
-	_, err := v.stream.Read(&block)
+	seqno, err = mps.Read(&block)
 	if err != nil {
-		return 0, false, err
+		return nil, nil, false, 0, err
 	}
-	seqno := v.seqno
-	v.seqno++
+	// The header packet picks up the zero seqno, so subtract 1 to
+	// compensate for that.
+	seqno--
 
-	data, err := v.processBlock(&block, seqno)
-	if err != nil {
-		return 0, false, err
-	}
-	if data == nil || len(data) == 0 {
-		return 0, true, err
-	}
-
-	n := copy(p, data)
-	v.buffer = data[n:]
-
-	return n, false, err
+	return block.PayloadChunk, block.Signature, len(block.PayloadChunk) == 0, seqno, nil
 }
 
-func (v *verifyStream) processBlock(block *signatureBlock, seqno packetSeqno) ([]byte, error) {
-	if err := v.publicKey.Verify(attachedSignatureInput(v.headerHash, block.PayloadChunk, seqno), block.Signature); err != nil {
-		return nil, err
+func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
+	payloadChunk, signature, isFinal, seqno, err := readSignatureBlock(v.version, v.stream)
+	if err != nil {
+		return 0, false, err
 	}
-	return block.PayloadChunk, nil
+
+	err = v.processBlock(payloadChunk, signature, isFinal, seqno)
+	if err != nil {
+		return 0, false, err
+	}
+
+	n := copy(p, payloadChunk)
+	v.buffer = payloadChunk[n:]
+
+	return n, isFinal, err
+}
+
+func (v *verifyStream) processBlock(payloadChunk, signature []byte, isFinal bool, seqno packetSeqno) error {
+	return v.publicKey.Verify(attachedSignatureInput(v.headerHash, payloadChunk, seqno), signature)
 }
