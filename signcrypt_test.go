@@ -368,8 +368,8 @@ func TestSigncryptionStreamWithError(t *testing.T) {
 	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
-	// Break the final packet. (TODO: Go one back and twiddle the isFinal bit)
-	sealed[len(sealed)-2] ^= 1
+	// Break the final packet.
+	sealed[len(sealed)-1] ^= 1
 
 	_, reader, err := NewSigncryptOpenStream(bytes.NewBuffer(sealed), keyring, nil)
 
