@@ -82,12 +82,17 @@ func attachedSignatureInput(version Version, headerHash headerHash, payloadChunk
 	hasher := sha512.New()
 	hasher.Write(headerHash[:])
 	binary.Write(hasher, binary.BigEndian, seqno)
-	if version.Major == 2 {
+	switch version.Major {
+	case 1:
+	// Nothing to do.
+	case 2:
 		var isFinalByte byte
 		if isFinal {
 			isFinalByte = 1
 		}
 		hasher.Write([]byte{isFinalByte})
+	default:
+		panic(ErrBadVersion{version})
 	}
 	hasher.Write(payloadChunk)
 
