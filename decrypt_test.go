@@ -85,8 +85,8 @@ func testDecryptErrorAtEOF(t *testing.T, version Version) {
 		t.Fatalf("err=%v != errAtEOF=%v", err, errAtEOF)
 	}
 
-	// Since the bytes are still verified, the decrypted message
-	// should still compare equal to the original input.
+	// Since the bytes are still authenticated, the decrypted
+	// message should still compare equal to the original input.
 	if !bytes.Equal(msg, plaintext) {
 		t.Errorf("decrypted msg '%x', expected '%x'", msg, plaintext)
 	}
