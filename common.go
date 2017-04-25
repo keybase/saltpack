@@ -78,10 +78,17 @@ func assertEndOfStream(stream *msgpackStream) error {
 
 type headerHash [sha512.Size]byte
 
-func attachedSignatureInput(headerHash headerHash, payloadChunk []byte, seqno packetSeqno) []byte {
+func attachedSignatureInput(version Version, headerHash headerHash, payloadChunk []byte, seqno packetSeqno, isFinal bool) []byte {
 	hasher := sha512.New()
 	hasher.Write(headerHash[:])
 	binary.Write(hasher, binary.BigEndian, seqno)
+	if version.Major == 2 {
+		var isFinalByte byte
+		if isFinal {
+			isFinalByte = 1
+		}
+		hasher.Write([]byte{isFinalByte})
+	}
 	hasher.Write(payloadChunk)
 
 	var buf bytes.Buffer

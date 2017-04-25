@@ -163,7 +163,7 @@ func (s *signAttachedStream) signBlock(isFinal bool) error {
 	chunk := s.buffer.Next(signatureBlockSize)
 	checkSignBlockRead(s.version, isFinal, signatureBlockSize, len(chunk), s.buffer.Len())
 
-	sig, err := s.computeSig(chunk, s.seqno)
+	sig, err := s.computeSig(chunk, s.seqno, isFinal)
 	if err != nil {
 		return err
 	}
@@ -181,8 +181,8 @@ func (s *signAttachedStream) signBlock(isFinal bool) error {
 	return nil
 }
 
-func (s *signAttachedStream) computeSig(payloadChunk []byte, seqno packetSeqno) ([]byte, error) {
-	return s.secretKey.Sign(attachedSignatureInput(s.headerHash, payloadChunk, seqno))
+func (s *signAttachedStream) computeSig(payloadChunk []byte, seqno packetSeqno, isFinal bool) ([]byte, error) {
+	return s.secretKey.Sign(attachedSignatureInput(s.version, s.headerHash, payloadChunk, seqno, isFinal))
 }
 
 type signDetachedStream struct {

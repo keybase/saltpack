@@ -167,5 +167,5 @@ func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
 }
 
 func (v *verifyStream) processBlock(signature, payloadChunk []byte, isFinal bool, seqno packetSeqno) error {
-	return v.publicKey.Verify(attachedSignatureInput(v.headerHash, payloadChunk, seqno), signature)
+	return v.publicKey.Verify(attachedSignatureInput(v.version, v.headerHash, payloadChunk, seqno, isFinal), signature)
 }
