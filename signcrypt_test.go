@@ -176,7 +176,8 @@ func getPayloadPacketLen(plaintextLen int) int {
 		bytesOverhead = 5
 	}
 	listOverhead := 1 // fixarray
-	return plaintextLen + ed25519.SignatureSize + poly1305.TagSize + bytesOverhead + listOverhead
+	boolOverhead := 1
+	return plaintextLen + ed25519.SignatureSize + poly1305.TagSize + bytesOverhead + listOverhead + boolOverhead
 }
 
 func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
@@ -393,8 +394,8 @@ func TestSigncryptionStreamWithError(t *testing.T) {
 	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
-	// Break the final packet.
-	sealed[len(sealed)-1] ^= 1
+	// Break the final packet. (TODO: Go one back and twiddle the isFinal bit)
+	sealed[len(sealed)-2] ^= 1
 
 	_, reader, err := NewSigncryptOpenStream(bytes.NewBuffer(sealed), keyring, nil)
 
