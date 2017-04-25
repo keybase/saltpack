@@ -134,7 +134,7 @@ func (h *SignatureHeader) validate(versionValidator VersionValidator, msgType Me
 }
 
 // signatureBlock contains a block of signed data.
-type signatureBlock struct {
+type signatureBlockV1 struct {
 	_struct      bool   `codec:",toarray"`
 	Signature    []byte `codec:"signature"`
 	PayloadChunk []byte `codec:"payload_chunk"`

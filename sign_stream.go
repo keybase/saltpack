@@ -87,9 +87,9 @@ func (s *signAttachedStream) Close() error {
 }
 
 func makeSignatureBlock(version Version, chunk, sig []byte, isFinal bool) interface{} {
-	sb := signatureBlock{
-		PayloadChunk: chunk,
+	sb := signatureBlockV1{
 		Signature:    sig,
+		PayloadChunk: chunk,
 	}
 	return sb
 }

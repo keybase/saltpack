@@ -119,7 +119,7 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 }
 
 func readSignatureBlock(version Version, mps *msgpackStream) (payloadChunk, signature []byte, isFinal bool, seqno packetSeqno, err error) {
-	var block signatureBlock
+	var block signatureBlockV1
 	seqno, err = mps.Read(&block)
 	if err != nil {
 		return nil, nil, false, 0, err
