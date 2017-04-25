@@ -88,8 +88,13 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 			// the case at the top, and then we'll hit the
 			// case below.
 			if len(ds.buf) > 0 {
-				if ds.version.Major < 2 {
+				switch ds.version.Major {
+				case 1:
 					panic(fmt.Sprintf("version=%s, last=true, len(ds.buf)=%d > 0", ds.version, len(ds.buf)))
+				case 2:
+					// Do nothing.
+				default:
+					panic(ErrBadVersion{ds.version})
 				}
 
 				return n, nil
