@@ -245,6 +245,7 @@ func TestSigncryptionSinglePacket(t *testing.T) {
 	}
 }
 
+// TODO: Add similar test for anonymous mode.
 func TestSigncryptionSubsequence(t *testing.T) {
 	msg := make([]byte, 2*encryptionBlockSize)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
@@ -300,7 +301,7 @@ func TestSigncryptionSubsequence(t *testing.T) {
 	encode(encoder2, block)
 
 	_, _, err = SigncryptOpen(truncatedCiphertext1.Bytes(), keyring, nil)
-	require.Equal(t, ErrBadCiphertext(2), err)
+	require.Equal(t, ErrBadCiphertext(1), err)
 
 	_, _, err = SigncryptOpen(truncatedCiphertext2.Bytes(), keyring, nil)
 	require.Equal(t, ErrBadCiphertext(1), err)

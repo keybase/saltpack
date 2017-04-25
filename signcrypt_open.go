@@ -119,7 +119,7 @@ func (sos *signcryptOpenStream) readBlock(b []byte) (n int, lastBlock bool, err 
 		return 0, false, err
 	}
 	var plaintext []byte
-	plaintext, err = sos.processSigncryptionBlock(sb.PayloadCiphertext, seqno)
+	plaintext, err = sos.processSigncryptionBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
 	if err != nil {
 		return 0, false, err
 	}
@@ -250,7 +250,7 @@ func (sos *signcryptOpenStream) processSigncryptionHeader(hdr *SigncryptionHeade
 	return nil
 }
 
-func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byte, seqno packetSeqno) ([]byte, error) {
+func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byte, isFinal bool, seqno packetSeqno) ([]byte, error) {
 
 	blockNum := encryptionBlockNumber(seqno - 1)
 
@@ -258,7 +258,7 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byt
 		return nil, err
 	}
 
-	nonce := nonceForChunkSigncryption(blockNum)
+	nonce := nonceForChunkSigncryption(blockNum, isFinal)
 
 	attachedSig, isValid := secretbox.Open([]byte{}, payloadCiphertext, (*[24]byte)(&nonce), (*[32]byte)(sos.payloadKey))
 	if !isValid || len(attachedSig) < ed25519.SignatureSize {
