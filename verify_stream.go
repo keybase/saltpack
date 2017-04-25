@@ -87,8 +87,9 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 		if v.err == io.EOF {
 			return n, v.err
 		}
+		// TODO: Return n here.
 		if v.err != nil {
-			return n, v.err
+			return 0, v.err
 		}
 	}
 
@@ -149,7 +150,9 @@ func readSignatureBlock(version Version, mps *msgpackStream) (signature, payload
 	}
 }
 
-func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
+// readBlock reads the next signature block and copies verified data
+// into p. If readBlock returns a non-nil error, then n will be 0.
+func (v *verifyStream) readBlock(p []byte) (n int, lastBlock bool, err error) {
 	signature, payloadChunk, isFinal, seqno, err := readSignatureBlock(v.version, v.stream)
 	if err != nil {
 		return 0, false, err
@@ -160,10 +163,9 @@ func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
 		return 0, false, err
 	}
 
-	n := copy(p, payloadChunk)
+	n = copy(p, payloadChunk)
 	v.buffer = payloadChunk[n:]
-
-	return n, isFinal, err
+	return n, isFinal, nil
 }
 
 func (v *verifyStream) processBlock(signature, payloadChunk []byte, isFinal bool, seqno packetSeqno) error {
