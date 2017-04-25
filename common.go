@@ -290,7 +290,7 @@ func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
 		return nil
 
 	case 2:
-		// With v2, it's valid to have a final packet with
+		// With V2, it's valid to have a final packet with
 		// non-empty chunk, so the below is the only remaining
 		// invalid state.
 		//
