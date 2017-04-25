@@ -90,6 +90,10 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 
 	ciphertext := secretbox.Seal([]byte{}, attachedSig, (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 
+	if err := checkCiphertextState(sss.header.Version, ciphertext, isFinal); err != nil {
+		panic(err)
+	}
+
 	block := []interface{}{ciphertext}
 
 	if err := sss.encoder.Encode(block); err != nil {
