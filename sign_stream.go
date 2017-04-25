@@ -124,8 +124,8 @@ func makeSignatureBlock(version Version, sig, chunk []byte, isFinal bool) interf
 }
 
 func checkSignBlockRead(version Version, isFinal bool, blockSize, chunkLen, bufLen int) {
-	die := func() error {
-		return fmt.Errorf("invalid signBlock read state: version=%s, isFinal=%t, chunkLen=%d, bufLen=%d", chunkLen, bufLen)
+	die := func() {
+		panic(fmt.Errorf("invalid signBlock read state: version=%s, isFinal=%t, chunkLen=%d, bufLen=%d", version, isFinal, chunkLen, bufLen))
 	}
 
 	// We shouldn't read more than a full block's worth.
