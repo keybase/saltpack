@@ -23,7 +23,7 @@ type signcryptSealStream struct {
 	senderAnonymous bool
 	keyring         Keyring
 	buffer          bytes.Buffer
-	headerHash      []byte
+	headerHash      headerHash
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
 
@@ -74,7 +74,7 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 		detachedSig = make([]byte, ed25519.SignatureSize)
 	} else {
 		signatureInput := []byte(signatureEncryptedString)
-		signatureInput = append(signatureInput, sss.headerHash...)
+		signatureInput = append(signatureInput, sss.headerHash[:]...)
 		signatureInput = append(signatureInput, nonce[:]...)
 		var isFinalByte byte
 		if isFinal {
@@ -264,8 +264,7 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 	if err != nil {
 		return err
 	}
-	headerHash := sha512.Sum512(headerBytes)
-	sss.headerHash = headerHash[:]
+	sss.headerHash = sha512.Sum512(headerBytes)
 	err = sss.encoder.Encode(headerBytes)
 	if err != nil {
 		return err
