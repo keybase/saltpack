@@ -43,7 +43,7 @@ func (sss *signcryptSealStream) Write(plaintext []byte) (int, error) {
 		return 0, sss.err
 	}
 	for sss.buffer.Len() >= encryptionBlockSize {
-		sss.err = sss.signcryptBlock()
+		sss.err = sss.signcryptBlock(false)
 		if sss.err != nil {
 			return 0, sss.err
 		}
@@ -51,7 +51,7 @@ func (sss *signcryptSealStream) Write(plaintext []byte) (int, error) {
 	return ret, nil
 }
 
-func (sss *signcryptSealStream) signcryptBlock() error {
+func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 	b := sss.buffer.Next(encryptionBlockSize)
 
 	if err := sss.numBlocks.check(); err != nil {
@@ -260,7 +260,7 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 
 func (sss *signcryptSealStream) Close() error {
 	if sss.buffer.Len() > 0 {
-		err := sss.signcryptBlock()
+		err := sss.signcryptBlock(false)
 		if err != nil {
 			return err
 		}
@@ -270,7 +270,7 @@ func (sss *signcryptSealStream) Close() error {
 		panic(fmt.Sprintf("sss.buffer.Len()=%d > 0", sss.buffer.Len()))
 	}
 
-	return sss.signcryptBlock()
+	return sss.signcryptBlock(true)
 }
 
 // NewSigncryptSealStream creates a stream that consumes plaintext data. It
