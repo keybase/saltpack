@@ -79,6 +79,8 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 		signatureInput = append(signatureInput, nonce[:]...)
 		signatureInput = append(signatureInput, plaintextHash[:]...)
 
+		// TODO: Put flag in signature input.
+
 		var err error
 		detachedSig, err = sss.signingKey.Sign(signatureInput)
 		if err != nil {
