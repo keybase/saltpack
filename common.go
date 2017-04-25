@@ -223,12 +223,17 @@ func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, cip
 	payloadDigest := sha512.New()
 	payloadDigest.Write(headerHash[:])
 	payloadDigest.Write(nonce[:])
-	if version.Major == 2 {
+	switch version.Major {
+	case 1:
+	// Nothing to do.
+	case 2:
 		var isFinalByte byte
 		if isFinal {
 			isFinalByte = 1
 		}
 		payloadDigest.Write([]byte{isFinalByte})
+	default:
+		panic(ErrBadVersion{version})
 	}
 	payloadDigest.Write(ciphertext)
 	h := payloadDigest.Sum(nil)
