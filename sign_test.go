@@ -694,7 +694,7 @@ func TestSignSubsequenceV1(t *testing.T) {
 	for i, truncatedSMsg := range []*bytes.Buffer{truncatedSMsg1, truncatedSMsg2, truncatedSMsg3} {
 		_, _, err = Verify(SingleVersionValidator(Version1()), truncatedSMsg.Bytes(), kr)
 		if err != ErrBadSignature {
-			t.Fatalf("err=%v != ErrBadSignature for truncatedSMsg%d", err, i+1)
+			t.Errorf("err=%v != ErrBadSignature for truncatedSMsg%d", err, i+1)
 		}
 	}
 }
@@ -755,7 +755,7 @@ func TestSignSubsequenceV2(t *testing.T) {
 	for i, truncatedSMsg := range []*bytes.Buffer{truncatedSMsg1, truncatedSMsg2} {
 		_, _, err = Verify(SingleVersionValidator(Version2()), truncatedSMsg.Bytes(), kr)
 		if err != ErrBadSignature {
-			t.Fatalf("err=%v != ErrBadSignature for truncatedSMsg%d", err, i+1)
+			t.Errorf("err=%v != ErrBadSignature for truncatedSMsg%d", err, i+1)
 		}
 	}
 }
