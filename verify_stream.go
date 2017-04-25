@@ -83,13 +83,12 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 
 	if v.state == stateEndOfStream {
 		v.err = assertEndOfStream(v.stream)
-		// If V2, we can hit EOF with n > 0.
-		if v.err == io.EOF {
-			return n, v.err
-		}
-		// TODO: Return n here.
+		// If V2, we can fall through here with n > 0. Even if
+		// we have an error, we still want to return n, since
+		// those bytes are verified (by readBlock's
+		// post-condition).
 		if v.err != nil {
-			return 0, v.err
+			return n, v.err
 		}
 	}
 
