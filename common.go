@@ -208,8 +208,6 @@ func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) erro
 			return makeErr()
 		}
 
-		return nil
-
 	case 2:
 		// With V2, it's valid to have a final packet with
 		// non-empty plaintext, so the below is the only
@@ -224,11 +222,11 @@ func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) erro
 			return makeErr()
 		}
 
-		return nil
-
 	default:
 		panic(ErrBadVersion{version})
 	}
+
+	return nil
 }
 
 func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, ciphertext []byte, isFinal bool) payloadHash {
@@ -299,8 +297,6 @@ func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
 			return makeErr()
 		}
 
-		return nil
-
 	case 2:
 		// With V2, it's valid to have a final packet with
 		// non-empty chunk, so the below is the only remaining
@@ -314,8 +310,6 @@ func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
 		if (len(chunk) == 0) && !isFinal {
 			return makeErr()
 		}
-
-		return nil
 
 	default:
 		panic(ErrBadVersion{version})
