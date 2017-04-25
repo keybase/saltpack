@@ -96,6 +96,7 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 
 	block := signcryptionBlock{
 		PayloadCiphertext: ciphertext,
+		IsFinal:           isFinal,
 	}
 
 	if err := sss.encoder.Encode(block); err != nil {
