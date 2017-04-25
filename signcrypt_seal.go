@@ -22,7 +22,6 @@ type signcryptSealStream struct {
 	senderAnonymous bool
 	keyring         Keyring
 	buffer          bytes.Buffer
-	inblock         []byte
 	headerHash      []byte
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
@@ -52,16 +51,7 @@ func (sss *signcryptSealStream) Write(plaintext []byte) (int, error) {
 }
 
 func (sss *signcryptSealStream) signcryptBlock() error {
-	var n int
-	var err error
-	n, err = sss.buffer.Read(sss.inblock[:])
-	if err != nil {
-		return err
-	}
-	return sss.signcryptBytes(sss.inblock[0:n])
-}
-
-func (sss *signcryptSealStream) signcryptBytes(b []byte) error {
+	b := sss.buffer.Next(encryptionBlockSize)
 
 	if err := sss.numBlocks.check(); err != nil {
 		return err
@@ -274,7 +264,7 @@ func (sss *signcryptSealStream) Close() error {
 			return err
 		}
 	}
-	return sss.signcryptBytes([]byte{})
+	return sss.signcryptBlock()
 }
 
 // NewSigncryptSealStream creates a stream that consumes plaintext data. It
@@ -288,7 +278,6 @@ func NewSigncryptSealStream(ciphertext io.Writer, keyring Keyring, sender Signin
 	sss := &signcryptSealStream{
 		output:     ciphertext,
 		encoder:    newEncoder(ciphertext),
-		inblock:    make([]byte, encryptionBlockSize),
 		signingKey: sender,
 		keyring:    keyring,
 	}
