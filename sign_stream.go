@@ -87,11 +87,21 @@ func (s *signAttachedStream) Close() error {
 }
 
 func makeSignatureBlock(version Version, sig, chunk []byte, isFinal bool) interface{} {
-	sb := signatureBlockV1{
+	sbV1 := signatureBlockV1{
 		Signature:    sig,
 		PayloadChunk: chunk,
 	}
-	return sb
+	switch version {
+	case Version1():
+		return sbV1
+	case Version2():
+		return signatureBlockV2{
+			signatureBlockV1: sbV1,
+			IsFinal:          isFinal,
+		}
+	default:
+		panic(ErrBadVersion{version})
+	}
 }
 
 func checkSignBlockRead(version Version, isFinal bool, blockSize, chunkLen, bufLen int) {

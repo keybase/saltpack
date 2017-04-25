@@ -119,16 +119,34 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 }
 
 func readSignatureBlock(version Version, mps *msgpackStream) (signature, payloadChunk []byte, isFinal bool, seqno packetSeqno, err error) {
-	var block signatureBlockV1
-	seqno, err = mps.Read(&block)
-	if err != nil {
-		return nil, nil, false, 0, err
-	}
-	// The header packet picks up the zero seqno, so subtract 1 to
-	// compensate for that.
-	seqno--
+	defer func() {
+		if err == nil {
+			// The header packet picks up the zero seqno,
+			// so subtract 1 to compensate for that.
+			seqno--
+		}
+	}()
 
-	return block.Signature, block.PayloadChunk, len(block.PayloadChunk) == 0, seqno, nil
+	switch version.Major {
+	case 1:
+		var sbV1 signatureBlockV1
+		seqno, err = mps.Read(&sbV1)
+		if err != nil {
+			return nil, nil, false, 0, err
+		}
+
+		return sbV1.Signature, sbV1.PayloadChunk, len(sbV1.PayloadChunk) == 0, seqno, nil
+	case 2:
+		var sbV2 signatureBlockV2
+		seqno, err = mps.Read(&sbV2)
+		if err != nil {
+			return nil, nil, false, 0, err
+		}
+
+		return sbV2.Signature, sbV2.PayloadChunk, sbV2.IsFinal, seqno, nil
+	default:
+		panic(ErrBadVersion{version})
+	}
 }
 
 func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
