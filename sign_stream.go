@@ -86,7 +86,7 @@ func (s *signAttachedStream) Close() error {
 	return s.signBlock(true)
 }
 
-func makeSignatureBlock(version Version, chunk, sig []byte, isFinal bool) interface{} {
+func makeSignatureBlock(version Version, sig, chunk []byte, isFinal bool) interface{} {
 	sb := signatureBlockV1{
 		Signature:    sig,
 		PayloadChunk: chunk,
@@ -143,7 +143,7 @@ func (s *signAttachedStream) signBlock(isFinal bool) error {
 		panic(err)
 	}
 
-	sBlock := makeSignatureBlock(s.version, chunk, sig, isFinal)
+	sBlock := makeSignatureBlock(s.version, sig, chunk, isFinal)
 	if err := s.encoder.Encode(sBlock); err != nil {
 		return err
 	}

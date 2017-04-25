@@ -118,7 +118,7 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 	return nil
 }
 
-func readSignatureBlock(version Version, mps *msgpackStream) (payloadChunk, signature []byte, isFinal bool, seqno packetSeqno, err error) {
+func readSignatureBlock(version Version, mps *msgpackStream) (signature, payloadChunk []byte, isFinal bool, seqno packetSeqno, err error) {
 	var block signatureBlockV1
 	seqno, err = mps.Read(&block)
 	if err != nil {
@@ -128,16 +128,16 @@ func readSignatureBlock(version Version, mps *msgpackStream) (payloadChunk, sign
 	// compensate for that.
 	seqno--
 
-	return block.PayloadChunk, block.Signature, len(block.PayloadChunk) == 0, seqno, nil
+	return block.Signature, block.PayloadChunk, len(block.PayloadChunk) == 0, seqno, nil
 }
 
 func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
-	payloadChunk, signature, isFinal, seqno, err := readSignatureBlock(v.version, v.stream)
+	signature, payloadChunk, isFinal, seqno, err := readSignatureBlock(v.version, v.stream)
 	if err != nil {
 		return 0, false, err
 	}
 
-	err = v.processBlock(payloadChunk, signature, isFinal, seqno)
+	err = v.processBlock(signature, payloadChunk, isFinal, seqno)
 	if err != nil {
 		return 0, false, err
 	}
@@ -148,6 +148,6 @@ func (v *verifyStream) readBlock(p []byte) (int, bool, error) {
 	return n, isFinal, err
 }
 
-func (v *verifyStream) processBlock(payloadChunk, signature []byte, isFinal bool, seqno packetSeqno) error {
+func (v *verifyStream) processBlock(signature, payloadChunk []byte, isFinal bool, seqno packetSeqno) error {
 	return v.publicKey.Verify(attachedSignatureInput(v.headerHash, payloadChunk, seqno), signature)
 }

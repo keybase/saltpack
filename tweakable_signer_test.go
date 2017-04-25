@@ -117,7 +117,7 @@ func (s *testSignStream) signBlock(isFinal bool) error {
 		panic(err)
 	}
 
-	sBlock := makeSignatureBlock(s.version, chunk, sig, isFinal)
+	sBlock := makeSignatureBlock(s.version, sig, chunk, isFinal)
 
 	if s.options.swapBlock {
 		if s.seqno == 0 {
