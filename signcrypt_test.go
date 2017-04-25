@@ -210,6 +210,46 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
+func TestSigncryptionSinglePacket(t *testing.T) {
+	msg := make([]byte, encryptionBlockSize)
+	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
+
+	senderSigningPrivKey := makeSigningKey(t, keyring)
+
+	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	require.NoError(t, err)
+
+	mps := newMsgpackStream(bytes.NewReader(sealed))
+
+	var headerBytes []byte
+	_, err = mps.Read(&headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var block signcryptionBlock
+
+	// Payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Empty footer payload packet.
+	//
+	// TODO: Remove this.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Nothing else.
+	_, err = mps.Read(&block)
+	if err != io.EOF {
+		t.Fatalf("err=%v != io.EOF", err)
+	}
+}
+
 func TestSigncryptionPacketSwappingBetweenMessages(t *testing.T) {
 	msg := make([]byte, encryptionBlockSize*2)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
