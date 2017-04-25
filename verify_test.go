@@ -47,21 +47,6 @@ func testVerify(t *testing.T, version Version) {
 	}
 }
 
-func TestVerifyVersionValidator(t *testing.T) {
-	in := []byte{0x01}
-	key := newSigPrivKey(t)
-	smg, err := Sign(Version1(), in, key)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, _, err = Verify(SingleVersionValidator(Version2()), smg, kr)
-	expectedErr := ErrBadVersion{Version1()}
-	if err != expectedErr {
-		t.Fatalf("expected %v, got %v", expectedErr, err)
-	}
-}
-
 func testVerifyNewMinorVersion(t *testing.T, version Version) {
 	in := []byte{0x01}
 
@@ -153,19 +138,6 @@ func testVerifyDetachedEmptyKeyring(t *testing.T, version Version) {
 	if err != ErrNoSenderKey {
 		t.Errorf("error: %v, expected ErrNoSenderKey", err)
 	}
-}
-
-type errAtEOFReader struct {
-	io.Reader
-	errAtEOF error
-}
-
-func (r errAtEOFReader) Read(p []byte) (n int, err error) {
-	n, err = r.Reader.Read(p)
-	if err == io.EOF {
-		err = r.errAtEOF
-	}
-	return n, err
 }
 
 func testVerifyErrorAtEOF(t *testing.T, version Version) {
