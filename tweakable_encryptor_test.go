@@ -239,7 +239,13 @@ func (pes *testEncryptStream) Close() error {
 		return pes.encryptBlock(true)
 
 	case Version2():
-		err := pes.encryptBlock(true)
+		isFinal := true
+
+		if pes.options.skipFooter {
+			isFinal = false
+		}
+
+		err := pes.encryptBlock(isFinal)
 		if err != nil {
 			return err
 		}
