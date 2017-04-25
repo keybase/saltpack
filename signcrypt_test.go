@@ -210,6 +210,8 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
+// TODO: Use require in the below.
+
 func TestSigncryptionSinglePacket(t *testing.T) {
 	msg := make([]byte, encryptionBlockSize)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
