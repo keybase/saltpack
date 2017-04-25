@@ -111,6 +111,8 @@ func checkEncryptBlockRead(version Version, isFinal bool, blockSize, plaintextLe
 }
 
 func (es *encryptStream) encryptBlock(isFinal bool) error {
+	// NOTE: plaintext is a slice into es.buffer's buffer, so make
+	// sure not to stash it anywhere.
 	plaintext := es.buffer.Next(encryptionBlockSize)
 	checkEncryptBlockRead(es.header.Version, isFinal, encryptionBlockSize, len(plaintext), es.buffer.Len())
 
