@@ -281,8 +281,29 @@ func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
 		return fmt.Errorf("invalid signature state: version=%s, len(chunk)=%d, isFinal=%t", version, len(chunk), isFinal)
 	}
 
-	if (len(chunk) == 0) != isFinal {
-		return makeErr()
+	switch version.Major {
+	case 1:
+		if (len(chunk) == 0) != isFinal {
+			return makeErr()
+		}
+
+		return nil
+
+	case 2:
+		// With v2, it's valid to have a final packet with
+		// non-empty chunk, so the below is the only remaining
+		// invalid state.
+		//
+		// TODO: Ideally, we'd disallow empty packets even
+		// with isFinal set, but we still want to allow
+		// signing an empty message. Plumb through an isFirst
+		// flag and change "!isFinal" to "!isFirst ||
+		// !isFinal".
+
+		return nil
+
+	default:
+		panic(ErrBadVersion{version})
 	}
 
 	return nil

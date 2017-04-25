@@ -76,8 +76,10 @@ func (s *testSignStream) Write(p []byte) (int, error) {
 		return 0, err
 	}
 
-	// TODO: Change to >.
-	for s.buffer.Len() >= signatureBlockSize {
+	// If s.buffer.Len() == signatureBlockSize, we don't want to
+	// write it out just yet, since for V2 we need to be sure this
+	// isn't the last block.
+	for s.buffer.Len() > signatureBlockSize {
 		if err := s.signBlock(false); err != nil {
 			return 0, err
 		}

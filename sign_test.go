@@ -618,7 +618,7 @@ func TestSignSinglePacketV2(t *testing.T) {
 	// Nothing else.
 	_, err = mps.Read(&block)
 	if err != io.EOF {
-		t.Fatalf("err=%v != io.EOF", err)
+		t.Fatalf("err=%v != io.EOF %v", err)
 	}
 }
 

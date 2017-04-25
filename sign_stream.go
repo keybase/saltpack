@@ -62,8 +62,10 @@ func (s *signAttachedStream) Write(p []byte) (int, error) {
 		return 0, err
 	}
 
-	// TODO: Change to >.
-	for s.buffer.Len() >= signatureBlockSize {
+	// If s.buffer.Len() == signatureBlockSize, we don't want to
+	// write it out just yet, since for V2 we need to be sure this
+	// isn't the last block.
+	for s.buffer.Len() > signatureBlockSize {
 		if err := s.signBlock(false); err != nil {
 			return 0, err
 		}
@@ -73,17 +75,34 @@ func (s *signAttachedStream) Write(p []byte) (int, error) {
 }
 
 func (s *signAttachedStream) Close() error {
-	if s.buffer.Len() > 0 {
-		if err := s.signBlock(false); err != nil {
+	switch s.version {
+	case Version1():
+		if s.buffer.Len() > 0 {
+			if err := s.signBlock(false); err != nil {
+				return err
+			}
+		}
+
+		if s.buffer.Len() > 0 {
+			panic(fmt.Sprintf("s.buffer.Len()=%d > 0", s.buffer.Len()))
+		}
+
+		return s.signBlock(true)
+
+	case Version2():
+		if err := s.signBlock(true); err != nil {
 			return err
 		}
-	}
 
-	if s.buffer.Len() > 0 {
-		panic(fmt.Sprintf("s.buffer.Len()=%d > 0", s.buffer.Len()))
-	}
+		if s.buffer.Len() > 0 {
+			panic(fmt.Sprintf("s.buffer.Len()=%d > 0", s.buffer.Len()))
+		}
 
-	return s.signBlock(true)
+		return nil
+
+	default:
+		panic(ErrBadVersion{s.version})
+	}
 }
 
 func makeSignatureBlock(version Version, sig, chunk []byte, isFinal bool) interface{} {
