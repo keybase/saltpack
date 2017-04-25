@@ -5,6 +5,9 @@ package saltpack
 
 import (
 	"bytes"
+	"errors"
+	"io"
+	"io/ioutil"
 	"sync"
 	"testing"
 )
@@ -114,6 +117,10 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 	wg.Wait()
 }
 
+type emptySigKeyring struct{}
+
+func (k emptySigKeyring) LookupSigningPublicKey(kid []byte) SigningPublicKey { return nil }
+
 func testVerifyEmptyKeyring(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
@@ -148,9 +155,44 @@ func testVerifyDetachedEmptyKeyring(t *testing.T, version Version) {
 	}
 }
 
-type emptySigKeyring struct{}
+type errAtEOFReader struct {
+	io.Reader
+	errAtEOF error
+}
 
-func (k emptySigKeyring) LookupSigningPublicKey(kid []byte) SigningPublicKey { return nil }
+func (r errAtEOFReader) Read(p []byte) (n int, err error) {
+	n, err = r.Reader.Read(p)
+	if err == io.EOF {
+		err = r.errAtEOF
+	}
+	return n, err
+}
+
+func testVerifyErrorAtEOF(t *testing.T, version Version) {
+	in := randomMsg(t, 128)
+	key := newSigPrivKey(t)
+	smsg, err := Sign(version, in, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var reader io.Reader = bytes.NewReader(smsg)
+	errAtEOF := errors.New("err at EOF")
+	reader = errAtEOFReader{reader, errAtEOF}
+	_, stream, err := NewVerifyStream(SingleVersionValidator(version), reader, kr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg, err := ioutil.ReadAll(stream)
+	if err != errAtEOF {
+		t.Fatalf("err=%v != errAtEOF=%v", err, errAtEOF)
+	}
+
+	if !bytes.Equal(msg, in) {
+		t.Errorf("verified msg '%x', expected '%x'", msg, in)
+	}
+}
 
 func TestVerify(t *testing.T) {
 	tests := []func(*testing.T, Version){
@@ -159,6 +201,7 @@ func TestVerify(t *testing.T) {
 		testVerifyConcurrent,
 		testVerifyEmptyKeyring,
 		testVerifyDetachedEmptyKeyring,
+		testVerifyErrorAtEOF,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
