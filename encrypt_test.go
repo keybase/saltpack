@@ -1439,6 +1439,93 @@ func TestEncryptSinglePacketV2(t *testing.T) {
 	}
 }
 
+func TestEncryptSubsequenceV1(t *testing.T) {
+	sender := newBoxKey(t)
+	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
+
+	plaintext := make([]byte, 2*encryptionBlockSize)
+	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mps := newMsgpackStream(bytes.NewReader(ciphertext))
+
+	// These truncated ciphertexts will have the first payload
+	// packet, the second payload packet, and neither payload
+	// packet, respectively.
+	truncatedCiphertext1 := bytes.NewBuffer(nil)
+	truncatedCiphertext2 := bytes.NewBuffer(nil)
+	truncatedCiphertext3 := bytes.NewBuffer(nil)
+	encoder1 := newEncoder(truncatedCiphertext1)
+	encoder2 := newEncoder(truncatedCiphertext2)
+	encoder3 := newEncoder(truncatedCiphertext3)
+
+	encode := func(e encoder, i interface{}) {
+		err = e.Encode(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var headerBytes []byte
+	_, err = mps.Read(&headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder1, headerBytes)
+	encode(encoder2, headerBytes)
+	encode(encoder3, headerBytes)
+
+	var block encryptionBlockV1
+
+	// Payload packet 1.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder1, block)
+
+	// Payload packet 2.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder2, block)
+
+	// Empty footer payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder1, block)
+	encode(encoder2, block)
+	encode(encoder3, block)
+
+	validator := SingleVersionValidator(Version1())
+	_, _, err = Open(validator, truncatedCiphertext1.Bytes(), kr)
+	expectedErr := ErrBadTag(2)
+	if err != expectedErr {
+		t.Errorf("err=%v != %v for truncatedCiphertext1", err, expectedErr)
+	}
+
+	_, _, err = Open(validator, truncatedCiphertext2.Bytes(), kr)
+	expectedErr = ErrBadTag(1)
+	if err != expectedErr {
+		t.Errorf("err=%v != %v for truncatedCiphertext2", err, expectedErr)
+	}
+
+	_, _, err = Open(validator, truncatedCiphertext3.Bytes(), kr)
+	expectedErr = ErrBadTag(1)
+	if err != expectedErr {
+		t.Errorf("err=%v != %v for truncatedCiphertext3", err, expectedErr)
+	}
+}
+
 func TestEncrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
 		testNewEncryptStreamShuffledReaders,
