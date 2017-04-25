@@ -189,6 +189,8 @@ func testVerifyErrorAtEOF(t *testing.T, version Version) {
 		t.Fatalf("err=%v != errAtEOF=%v", err, errAtEOF)
 	}
 
+	// Since the bytes are still verified, the verified message
+	// should still compare equal to the original input.
 	if !bytes.Equal(msg, in) {
 		t.Errorf("verified msg '%x', expected '%x'", msg, in)
 	}
