@@ -60,7 +60,7 @@ func nonceForMACKeyBoxV2(headerHash headerHash, ephemeral bool, recip uint64) No
 	return n
 }
 
-// Construct the nonce for the ith block of payload.
+// Construct the nonce for the ith block of signing payload.
 func nonceForChunkSecretBox(i encryptionBlockNumber) Nonce {
 	var n Nonce
 	copyEqualSizeStr(n[0:16], "saltpack_ploadsb")
@@ -68,17 +68,17 @@ func nonceForChunkSecretBox(i encryptionBlockNumber) Nonce {
 	return n
 }
 
-// Construct the nonce for the ith block of payload. There's almost
-// certainly no harm in using the same nonces here as above, since the
-// encryption keys are ephemeral and the signatures already have their
-// own context, but at the same time it's a good practice.
-func nonceForChunkSigncryption(i encryptionBlockNumber, isFinal bool) Nonce {
+// Construct the nonce for the ith block of signcryption payload.
+func nonceForChunkSigncryption(headerHash headerHash, isFinal bool, i encryptionBlockNumber) Nonce {
 	var n Nonce
-	copyEqualSizeStr(n[0:15], "saltpackploadsc")
+	off := len(n) - 8
+	copyEqualSize(n[:off], headerHash[:off])
+	// Set LSB of last byte based on isFinal.
+	n[off-1] &^= 1
 	if isFinal {
-		n[15] = 1
+		n[off-1] |= 1
 	}
-	binary.BigEndian.PutUint64(n[16:], uint64(i))
+	binary.BigEndian.PutUint64(n[off:], uint64(i))
 	return n
 }
 

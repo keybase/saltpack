@@ -22,7 +22,7 @@ type signcryptOpenStream struct {
 	signingPublicKey SigningPublicKey
 	senderAnonymous  bool
 	buf              []byte
-	headerHash       []byte
+	headerHash       headerHash
 	keyring          SigncryptKeyring
 	resolver         SymmetricKeyResolver
 }
@@ -94,8 +94,7 @@ func (sos *signcryptOpenStream) readHeader(rawReader io.Reader) error {
 		return ErrFailedToReadHeaderBytes
 	}
 	// Compute the header hash.
-	headerHash := sha512.Sum512(headerBytes)
-	sos.headerHash = headerHash[:]
+	sos.headerHash = sha512.Sum512(headerBytes)
 	// Parse the header bytes.
 	var header SigncryptionHeader
 	err = decodeFromBytes(&header, headerBytes)
@@ -258,7 +257,7 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byt
 		return nil, err
 	}
 
-	nonce := nonceForChunkSigncryption(blockNum, isFinal)
+	nonce := nonceForChunkSigncryption(sos.headerHash, isFinal, blockNum)
 
 	attachedSig, isValid := secretbox.Open([]byte{}, payloadCiphertext, (*[24]byte)(&nonce), (*[32]byte)(sos.payloadKey))
 	if !isValid || len(attachedSig) < ed25519.SignatureSize {
@@ -272,7 +271,7 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byt
 
 	// TODO: Decomp this out with similar code in signcrypt_seal.go.
 	signatureInput := []byte(signatureEncryptedString)
-	signatureInput = append(signatureInput, sos.headerHash...)
+	signatureInput = append(signatureInput, sos.headerHash[:]...)
 	signatureInput = append(signatureInput, nonce[:]...)
 	var isFinalByte byte
 	if isFinal {

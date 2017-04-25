@@ -63,7 +63,7 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 		return err
 	}
 
-	nonce := nonceForChunkSigncryption(sss.numBlocks, isFinal)
+	nonce := nonceForChunkSigncryption(sss.headerHash, isFinal, sss.numBlocks)
 
 	plaintextHash := sha512.Sum512(b)
 
