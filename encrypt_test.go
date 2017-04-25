@@ -1428,6 +1428,10 @@ func TestEncryptSinglePacketV2(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if !block.IsFinal {
+		t.Fatal("IsFinal unexpectedly not set")
+	}
+
 	// Nothing else.
 	_, err = mps.Read(&block)
 	if err != io.EOF {
