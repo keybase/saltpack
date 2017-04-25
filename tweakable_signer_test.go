@@ -89,21 +89,44 @@ func (s *testSignStream) Write(p []byte) (int, error) {
 }
 
 func (s *testSignStream) Close() error {
-	if s.buffer.Len() > 0 {
-		if err := s.signBlock(false); err != nil {
+	switch s.version {
+	case Version1():
+		if s.buffer.Len() > 0 {
+			if err := s.signBlock(false); err != nil {
+				return err
+			}
+		}
+
+		if s.buffer.Len() > 0 {
+			panic(fmt.Sprintf("s.buffer.Len()=%d > 0", s.buffer.Len()))
+		}
+
+		if s.options.skipFooter {
+			return nil
+		}
+
+		return s.signBlock(true)
+
+	case Version2():
+		isFinal := true
+
+		if s.options.skipFooter {
+			isFinal = false
+		}
+
+		if err := s.signBlock(isFinal); err != nil {
 			return err
 		}
-	}
 
-	if s.buffer.Len() > 0 {
-		panic(fmt.Sprintf("s.buffer.Len()=%d > 0", s.buffer.Len()))
-	}
+		if s.buffer.Len() > 0 {
+			panic(fmt.Sprintf("s.buffer.Len()=%d > 0", s.buffer.Len()))
+		}
 
-	if s.options.skipFooter {
 		return nil
-	}
 
-	return s.signBlock(true)
+	default:
+		panic(ErrBadVersion{s.version})
+	}
 }
 
 func (s *testSignStream) signBlock(isFinal bool) error {
