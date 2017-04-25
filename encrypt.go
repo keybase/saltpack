@@ -75,8 +75,8 @@ func makeEncryptionBlock(version Version, ciphertext []byte, authenticators []pa
 }
 
 func checkEncryptBlockRead(version Version, isFinal bool, blockSize, plaintextLen, bufLen int) {
-	die := func() error {
-		return fmt.Errorf("invalid encryptBlock read state: version=%s, isFinal=%t, plaintextLen=%d, bufLen=%d", plaintextLen, bufLen)
+	die := func() {
+		panic(fmt.Errorf("invalid encryptBlock read state: version=%s, isFinal=%t, blockSize=%d, plaintextLen=%d, bufLen=%d", version, isFinal, blockSize, plaintextLen, bufLen))
 	}
 
 	// We shouldn't read more than a full block's worth.
@@ -101,7 +101,7 @@ func checkEncryptBlockRead(version Version, isFinal bool, blockSize, plaintextLe
 	case Version2():
 		// If isFinal, then plaintextLen can be any number,
 		// buf bufLen must be 0.
-		if isFinal != (bufLen == 0) {
+		if isFinal && (bufLen != 0) {
 			die()
 		}
 
