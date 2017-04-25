@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/ed25519"
@@ -258,12 +259,17 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 }
 
 func (sss *signcryptSealStream) Close() error {
-	for sss.buffer.Len() > 0 {
+	if sss.buffer.Len() > 0 {
 		err := sss.signcryptBlock()
 		if err != nil {
 			return err
 		}
 	}
+
+	if sss.buffer.Len() > 0 {
+		panic(fmt.Sprintf("sss.buffer.Len()=%d > 0", sss.buffer.Len()))
+	}
+
 	return sss.signcryptBlock()
 }
 
