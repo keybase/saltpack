@@ -55,6 +55,14 @@ type errAtEOFReader struct {
 	errAtEOF error
 }
 
+func (r errAtEOFReader) Read(p []byte) (n int, err error) {
+	n, err = r.Reader.Read(p)
+	if err == io.EOF {
+		err = r.errAtEOF
+	}
+	return n, err
+}
+
 func testDecryptErrorAtEOF(t *testing.T, version Version) {
 	plaintext := randomMsg(t, 128)
 	sender := newBoxKey(t)
