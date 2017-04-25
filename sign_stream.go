@@ -160,6 +160,8 @@ func checkSignBlockRead(version Version, isFinal bool, blockSize, chunkLen, bufL
 }
 
 func (s *signAttachedStream) signBlock(isFinal bool) error {
+	// NOTE: chunk is a slice into s.buffer's buffer, so make sure
+	// not to stash it anywhere.
 	chunk := s.buffer.Next(signatureBlockSize)
 	checkSignBlockRead(s.version, isFinal, signatureBlockSize, len(chunk), s.buffer.Len())
 
