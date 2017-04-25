@@ -250,6 +250,82 @@ func TestSigncryptionSinglePacket(t *testing.T) {
 	}
 }
 
+func TestSigncryptionSubsequence(t *testing.T) {
+	msg := make([]byte, 2*encryptionBlockSize)
+	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
+
+	senderSigningPrivKey := makeSigningKey(t, keyring)
+
+	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	require.NoError(t, err)
+
+	mps := newMsgpackStream(bytes.NewReader(sealed))
+
+	// These truncated messages will have the first payload
+	// packet, the second payload packet, and neither payload
+	// packet, respectively.
+	truncatedCiphertext1 := bytes.NewBuffer(nil)
+	truncatedCiphertext2 := bytes.NewBuffer(nil)
+	truncatedCiphertext3 := bytes.NewBuffer(nil)
+	encoder1 := newEncoder(truncatedCiphertext1)
+	encoder2 := newEncoder(truncatedCiphertext2)
+	encoder3 := newEncoder(truncatedCiphertext3)
+
+	encode := func(e encoder, i interface{}) {
+		err = e.Encode(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var headerBytes []byte
+	_, err = mps.Read(&headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder1, headerBytes)
+	encode(encoder2, headerBytes)
+	encode(encoder3, headerBytes)
+
+	var block signcryptionBlock
+
+	// Payload packet 1.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder1, block)
+
+	// Payload packet 2.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder2, block)
+
+	// Empty footer payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode(encoder1, block)
+	encode(encoder2, block)
+	encode(encoder3, block)
+
+	_, _, err = SigncryptOpen(truncatedCiphertext1.Bytes(), keyring, nil)
+	require.Equal(t, err, ErrBadCiphertext(2))
+
+	_, _, err = SigncryptOpen(truncatedCiphertext2.Bytes(), keyring, nil)
+	require.Equal(t, err, ErrBadCiphertext(1))
+
+	_, _, err = SigncryptOpen(truncatedCiphertext3.Bytes(), keyring, nil)
+	require.Equal(t, err, ErrBadCiphertext(1))
+}
+
 func TestSigncryptionPacketSwappingBetweenMessages(t *testing.T) {
 	msg := make([]byte, encryptionBlockSize*2)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
