@@ -299,6 +299,9 @@ func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
 		// signing an empty message. Plumb through an isFirst
 		// flag and change "!isFinal" to "!isFirst ||
 		// !isFinal".
+		if (len(chunk) == 0) && !isFinal {
+			return makeErr()
+		}
 
 		return nil
 
