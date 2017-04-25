@@ -626,7 +626,7 @@ func TestSignSinglePacketV2(t *testing.T) {
 	}
 }
 
-func TestSignTruncateWithFooterV1(t *testing.T) {
+func TestSignSubsequenceV1(t *testing.T) {
 	message := make([]byte, 2*signatureBlockSize)
 	key := newSigPrivKey(t)
 	smsg, err := Sign(Version1(), message, key)
@@ -636,20 +636,18 @@ func TestSignTruncateWithFooterV1(t *testing.T) {
 
 	mps := newMsgpackStream(bytes.NewReader(smsg))
 
+	// These truncated messages will have the first payload
+	// packet, the second payload packet, and neither payload
+	// packet, respectively.
 	truncatedSMsg1 := bytes.NewBuffer(nil)
 	truncatedSMsg2 := bytes.NewBuffer(nil)
+	truncatedSMsg3 := bytes.NewBuffer(nil)
 	encoder1 := newEncoder(truncatedSMsg1)
 	encoder2 := newEncoder(truncatedSMsg2)
+	encoder3 := newEncoder(truncatedSMsg3)
 
-	encode1 := func(i interface{}) {
-		err = encoder1.Encode(i)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	encode2 := func(i interface{}) {
-		err = encoder2.Encode(i)
+	encode := func(e encoder, i interface{}) {
+		err = e.Encode(i)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -661,8 +659,9 @@ func TestSignTruncateWithFooterV1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encode1(headerBytes)
-	encode2(headerBytes)
+	encode(encoder1, headerBytes)
+	encode(encoder2, headerBytes)
+	encode(encoder3, headerBytes)
 
 	var block signatureBlockV1
 
@@ -672,7 +671,7 @@ func TestSignTruncateWithFooterV1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encode1(block)
+	encode(encoder1, block)
 
 	// Payload packet 2.
 	_, err = mps.Read(&block)
@@ -680,7 +679,7 @@ func TestSignTruncateWithFooterV1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encode2(block)
+	encode(encoder2, block)
 
 	// Empty footer payload packet.
 	_, err = mps.Read(&block)
@@ -688,17 +687,15 @@ func TestSignTruncateWithFooterV1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encode1(block)
-	encode2(block)
+	encode(encoder1, block)
+	encode(encoder2, block)
+	encode(encoder3, block)
 
-	_, _, err = Verify(SingleVersionValidator(Version1()), truncatedSMsg1.Bytes(), kr)
-	if err != ErrBadSignature {
-		t.Fatalf("err=%v != ErrBadSignature", err)
-	}
-
-	_, _, err = Verify(SingleVersionValidator(Version1()), truncatedSMsg2.Bytes(), kr)
-	if err != ErrBadSignature {
-		t.Fatalf("err=%v != ErrBadSignature", err)
+	for i, truncatedSMsg := range []*bytes.Buffer{truncatedSMsg1, truncatedSMsg2, truncatedSMsg3} {
+		_, _, err = Verify(SingleVersionValidator(Version1()), truncatedSMsg.Bytes(), kr)
+		if err != ErrBadSignature {
+			t.Fatalf("err=%v != ErrBadSignature for truncatedSMsg%d", err, i+1)
+		}
 	}
 }
 
