@@ -135,31 +135,31 @@ func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 	return nil
 }
 
-func readEncryptionBlock(version Version, mps *msgpackStream) (ciphertext []byte, isFinal bool, seqno packetSeqno, authenticators []payloadAuthenticator, err error) {
+func readEncryptionBlock(version Version, mps *msgpackStream) (ciphertext []byte, authenticators []payloadAuthenticator, isFinal bool, seqno packetSeqno, err error) {
 	switch version.Major {
 	case 1:
 		var ebV1 encryptionBlockV1
 		seqno, err = mps.Read(&ebV1)
 		if err != nil {
-			return nil, false, 0, nil, err
+			return nil, nil, false, 0, err
 		}
 
-		return ebV1.PayloadCiphertext, len(ebV1.PayloadCiphertext) == secretbox.Overhead, seqno, ebV1.HashAuthenticators, nil
+		return ebV1.PayloadCiphertext, ebV1.HashAuthenticators, len(ebV1.PayloadCiphertext) == secretbox.Overhead, seqno, nil
 	case 2:
 		var ebV2 encryptionBlockV2
 		seqno, err := mps.Read(&ebV2)
 		if err != nil {
-			return nil, false, 0, nil, err
+			return nil, nil, false, 0, err
 		}
 
-		return ebV2.PayloadCiphertext, ebV2.IsFinal, seqno, ebV2.HashAuthenticators, nil
+		return ebV2.PayloadCiphertext, ebV2.HashAuthenticators, ebV2.IsFinal, seqno, nil
 	default:
 		panic(ErrBadVersion{version})
 	}
 }
 
 func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) {
-	ciphertext, isFinal, seqno, authenticators, err := readEncryptionBlock(ds.version, ds.mps)
+	ciphertext, authenticators, isFinal, seqno, err := readEncryptionBlock(ds.version, ds.mps)
 	if err != nil {
 		return 0, false, err
 	}
@@ -169,7 +169,7 @@ func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) 
 		return 0, false, err
 	}
 
-	plaintext, err := ds.processEncryptionBlock(ciphertext, isFinal, seqno, authenticators)
+	plaintext, err := ds.processEncryptionBlock(ciphertext, authenticators, isFinal, seqno)
 	if err != nil {
 		return 0, false, err
 	}
@@ -330,7 +330,7 @@ func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, p
 	}
 }
 
-func (ds *decryptStream) processEncryptionBlock(ciphertext []byte, isFinal bool, seqno packetSeqno, authenticators []payloadAuthenticator) ([]byte, error) {
+func (ds *decryptStream) processEncryptionBlock(ciphertext []byte, authenticators []payloadAuthenticator, isFinal bool, seqno packetSeqno) ([]byte, error) {
 
 	blockNum := encryptionBlockNumber(seqno - 1)
 
