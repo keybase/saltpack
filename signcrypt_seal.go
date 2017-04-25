@@ -15,9 +15,9 @@ import (
 )
 
 type signcryptSealStream struct {
+	version         Version
 	output          io.Writer
 	encoder         encoder
-	header          *SigncryptionHeader
 	encryptionKey   SymmetricKey
 	signingKey      SigningSecretKey
 	senderAnonymous bool
@@ -90,7 +90,7 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 
 	ciphertext := secretbox.Seal([]byte{}, attachedSig, (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 
-	if err := checkCiphertextState(sss.header.Version, ciphertext, isFinal); err != nil {
+	if err := checkCiphertextState(sss.version, ciphertext, isFinal); err != nil {
 		panic(err)
 	}
 
@@ -220,13 +220,12 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 		return err
 	}
 
-	eh := &SigncryptionHeader{
+	eh := SigncryptionHeader{
 		FormatName: FormatName,
-		Version:    Version2(),
+		Version:    sss.version,
 		Type:       MessageTypeSigncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 	}
-	sss.header = eh
 	if err := randomFill(sss.encryptionKey[:]); err != nil {
 		return err
 	}
@@ -254,7 +253,7 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 	}
 
 	// Encode the header to bytes, hash it, then double encode it.
-	headerBytes, err := encodeToBytes(sss.header)
+	headerBytes, err := encodeToBytes(eh)
 	if err != nil {
 		return err
 	}
@@ -293,6 +292,7 @@ func (sss *signcryptSealStream) Close() error {
 // also returns an error if initialization failed.
 func NewSigncryptSealStream(ciphertext io.Writer, keyring Keyring, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) (io.WriteCloser, error) {
 	sss := &signcryptSealStream{
+		version:    Version2(),
 		output:     ciphertext,
 		encoder:    newEncoder(ciphertext),
 		signingKey: sender,

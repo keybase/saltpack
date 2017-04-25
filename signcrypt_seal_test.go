@@ -66,12 +66,23 @@ func TestNewSigncryptSealStreamShuffledReaders(t *testing.T) {
 	keyring := makeEmptyKeyring(t)
 
 	var ciphertext bytes.Buffer
-	strm, err := NewSigncryptSealStream(&ciphertext, keyring, nil, nil, receiverSymmetricKeys)
+	_, err := NewSigncryptSealStream(&ciphertext, keyring, nil, nil, receiverSymmetricKeys)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	shuffledOrder := getEncryptReceiverKeysOrder(strm.(*signcryptSealStream).header.Receivers)
+	var headerBytes []byte
+	err = decodeFromBytes(&headerBytes, ciphertext.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var header SigncryptionHeader
+	err = decodeFromBytes(&header, headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	shuffledOrder := getEncryptReceiverKeysOrder(header.Receivers)
 	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
 		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
 	}
