@@ -52,7 +52,13 @@ func (sss *signcryptSealStream) Write(plaintext []byte) (int, error) {
 }
 
 func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
+	// NOTE: b is a slice into sss.buffer's buffer, so make sure
+	// not to stash it anywhere.
 	b := sss.buffer.Next(encryptionBlockSize)
+	// TODO: Change to isFinal && (sss.buffer.Len() != 0).
+	if isFinal != (len(b) == 0) {
+		panic(fmt.Sprintf("isFinal=%t != (len(b)=%d == 0)", len(b)))
+	}
 
 	if err := sss.numBlocks.check(); err != nil {
 		return err
@@ -259,6 +265,7 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 }
 
 func (sss *signcryptSealStream) Close() error {
+	// TODO: Just call sss.signcryptBlock(true).
 	if sss.buffer.Len() > 0 {
 		err := sss.signcryptBlock(false)
 		if err != nil {
