@@ -626,6 +626,82 @@ func TestSignSinglePacketV2(t *testing.T) {
 	}
 }
 
+func TestSignTruncateWithFooterV1(t *testing.T) {
+	message := make([]byte, 2*signatureBlockSize)
+	key := newSigPrivKey(t)
+	smsg, err := Sign(Version1(), message, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mps := newMsgpackStream(bytes.NewReader(smsg))
+
+	truncatedSMsg1 := bytes.NewBuffer(nil)
+	truncatedSMsg2 := bytes.NewBuffer(nil)
+	encoder1 := newEncoder(truncatedSMsg1)
+	encoder2 := newEncoder(truncatedSMsg2)
+
+	encode1 := func(i interface{}) {
+		err = encoder1.Encode(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	encode2 := func(i interface{}) {
+		err = encoder2.Encode(i)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var headerBytes []byte
+	_, err = mps.Read(&headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode1(headerBytes)
+	encode2(headerBytes)
+
+	var block signatureBlockV1
+
+	// Payload packet 1.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode1(block)
+
+	// Payload packet 2.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode2(block)
+
+	// Empty footer payload packet.
+	_, err = mps.Read(&block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	encode1(block)
+	encode2(block)
+
+	_, _, err = Verify(SingleVersionValidator(Version1()), truncatedSMsg1.Bytes(), kr)
+	if err != ErrBadSignature {
+		t.Fatalf("err=%v != ErrBadSignature", err)
+	}
+
+	_, _, err = Verify(SingleVersionValidator(Version1()), truncatedSMsg2.Bytes(), kr)
+	if err != ErrBadSignature {
+		t.Fatalf("err=%v != ErrBadSignature", err)
+	}
+}
+
 func testSignDetachedTruncated(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
 	msg := randomMsg(t, 128)
