@@ -3,7 +3,13 @@
 
 package saltpack
 
-import "testing"
+import (
+	"bytes"
+	"errors"
+	"io"
+	"io/ioutil"
+	"testing"
+)
 
 func TestVersionValidator(t *testing.T) {
 	plaintext := []byte{0x01}
@@ -44,9 +50,44 @@ func testNewMinorVersion(t *testing.T, version Version) {
 	}
 }
 
+type errAtEOFReader struct {
+	io.Reader
+	errAtEOF error
+}
+
+func testDecryptErrorAtEOF(t *testing.T, version Version) {
+	plaintext := randomMsg(t, 128)
+	sender := newBoxKey(t)
+	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
+	ciphertext, err := Seal(version, plaintext, sender, receivers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var reader io.Reader = bytes.NewReader(ciphertext)
+	errAtEOF := errors.New("err at EOF")
+	reader = errAtEOFReader{reader, errAtEOF}
+	_, stream, err := NewDecryptStream(SingleVersionValidator(version), reader, kr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg, err := ioutil.ReadAll(stream)
+	if err != errAtEOF {
+		t.Fatalf("err=%v != errAtEOF=%v", err, errAtEOF)
+	}
+
+	// Since the bytes are still verified, the decrypted message
+	// should still compare equal to the original input.
+	if !bytes.Equal(msg, plaintext) {
+		t.Errorf("decrypted msg '%x', expected '%x'", msg, plaintext)
+	}
+}
+
 func TestDecrypt(t *testing.T) {
 	tests := []func(*testing.T, Version){
 		testNewMinorVersion,
+		testDecryptErrorAtEOF,
 	}
 	runTestsOverVersions(t, "test", tests)
 }
