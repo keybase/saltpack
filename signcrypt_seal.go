@@ -42,6 +42,7 @@ func (sss *signcryptSealStream) Write(plaintext []byte) (int, error) {
 	if ret, sss.err = sss.buffer.Write(plaintext); sss.err != nil {
 		return 0, sss.err
 	}
+	// TODO: Change to >.
 	for sss.buffer.Len() >= encryptionBlockSize {
 		sss.err = sss.signcryptBlock(false)
 		if sss.err != nil {
@@ -56,8 +57,8 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 	// not to stash it anywhere.
 	b := sss.buffer.Next(encryptionBlockSize)
 	// TODO: Change to isFinal && (sss.buffer.Len() != 0).
-	if isFinal != (len(b) == 0) {
-		panic(fmt.Sprintf("isFinal=%t != (len(b)=%d == 0)", len(b)))
+	if isFinal && (sss.buffer.Len() != 0) {
+		panic(fmt.Sprintf("isFinal=true and (sss.buffer.Len()=%d != 0)", sss.buffer.Len()))
 	}
 
 	if err := sss.numBlocks.check(); err != nil {
@@ -271,19 +272,16 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 }
 
 func (sss *signcryptSealStream) Close() error {
-	// TODO: Just call sss.signcryptBlock(true).
-	if sss.buffer.Len() > 0 {
-		err := sss.signcryptBlock(false)
-		if err != nil {
-			return err
-		}
+	err := sss.signcryptBlock(true)
+	if err != nil {
+		return err
 	}
 
 	if sss.buffer.Len() > 0 {
 		panic(fmt.Sprintf("sss.buffer.Len()=%d > 0", sss.buffer.Len()))
 	}
 
-	return sss.signcryptBlock(true)
+	return nil
 }
 
 // NewSigncryptSealStream creates a stream that consumes plaintext data. It

@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
-	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -72,9 +71,7 @@ func (sos *signcryptOpenStream) read(b []byte) (n int, err error) {
 			// the case at the top, and then we'll hit the
 			// case below.
 			if len(sos.buf) > 0 {
-				// TODO: Change to do nothing and
-				// return n, nil for V2.
-				panic(fmt.Sprintf("last=true, len(sos.buf)=%d > 0", len(sos.buf)))
+				return n, nil
 			}
 		}
 	}
@@ -82,8 +79,7 @@ func (sos *signcryptOpenStream) read(b []byte) (n int, err error) {
 	if sos.state == stateEndOfStream {
 		sos.err = assertEndOfStream(sos.mps)
 		if sos.err != nil {
-			// TODO: Return n.
-			return 0, sos.err
+			return n, sos.err
 		}
 	}
 
