@@ -193,20 +193,16 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 	headerLen := getHeaderLen(t, sealed)
 	packetLen := getPayloadPacketLen(encryptionBlockSize)
 	packet2Start := headerLen + packetLen
-	// TODO: Rem empty packet ref.
-	emptyPacketStart := packet2Start + packetLen
 	require.Equal(t, headerLen+2*packetLen, len(sealed), "sealed bytes aren't the length we expected")
 	header := sealed[:headerLen]
 	packet1 := sealed[headerLen:packet2Start]
-	packet2 := sealed[packet2Start:emptyPacketStart]
-	emptyPacket := sealed[emptyPacketStart:]
+	packet2 := sealed[packet2Start:]
 
 	// Assert that swapping packets 1 and 2 fails to decrypt. (Start with a
 	// fresh slice to avoid confusing overwrites.)
 	swapped_sealed := append([]byte{}, header...)
 	swapped_sealed = append(swapped_sealed, packet2...)
 	swapped_sealed = append(swapped_sealed, packet1...)
-	swapped_sealed = append(swapped_sealed, emptyPacket...)
 	_, _, err = SigncryptOpen(swapped_sealed, keyring, nil)
 	require.Equal(t, ErrBadCiphertext(1), err)
 }
