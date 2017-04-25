@@ -99,12 +99,12 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 
 	if ds.state == stateEndOfStream {
 		ds.err = assertEndOfStream(ds.mps)
-		// If V2, we can hit EOF with n > 0.
-		if ds.err == io.EOF {
-			return n, ds.err
-		}
+		// If V2, we can fall through here with n > 0. Even if
+		// we have an error, we still want to return n, since
+		// those bytes are authenticated (by readBlock's
+		// post-condition).
 		if ds.err != nil {
-			return 0, ds.err
+			return n, ds.err
 		}
 	}
 
@@ -158,6 +158,9 @@ func readEncryptionBlock(version Version, mps *msgpackStream) (ciphertext []byte
 	}
 }
 
+// readBlock reads the next encryption block and copies authenticated
+// data into p. If readBlock returns a non-nil error, then n will be
+// 0.
 func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) {
 	ciphertext, authenticators, isFinal, seqno, err := readEncryptionBlock(ds.version, ds.mps)
 	if err != nil {
