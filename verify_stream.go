@@ -72,8 +72,13 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 			// the case at the top, and then we'll hit the
 			// case below.
 			if len(v.buffer) > 0 {
-				if v.version.Major < 2 {
+				switch v.version.Major {
+				case 1:
 					panic(fmt.Sprintf("version=%s, last=true, len(v.buffer)=%d > 0", v.version, len(v.buffer)))
+				case 2:
+					// Do nothing.
+				default:
+					panic(ErrBadVersion{v.version})
 				}
 
 				return n, nil
