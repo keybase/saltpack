@@ -615,10 +615,14 @@ func TestSignSinglePacketV2(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if !block.IsFinal {
+		t.Fatal("block.IsFinal unexpectedly not set")
+	}
+
 	// Nothing else.
 	_, err = mps.Read(&block)
 	if err != io.EOF {
-		t.Fatalf("err=%v != io.EOF %v", err)
+		t.Fatalf("err=%v != io.EOF", err)
 	}
 }
 
