@@ -193,9 +193,9 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 	headerLen := getHeaderLen(t, sealed)
 	packetLen := getPayloadPacketLen(encryptionBlockSize)
 	packet2Start := headerLen + packetLen
-	emptyPacketLen := getPayloadPacketLen(0)
+	// TODO: Rem empty packet ref.
 	emptyPacketStart := packet2Start + packetLen
-	require.Equal(t, headerLen+2*packetLen+emptyPacketLen, len(sealed), "sealed bytes aren't the length we expected")
+	require.Equal(t, headerLen+2*packetLen, len(sealed), "sealed bytes aren't the length we expected")
 	header := sealed[:headerLen]
 	packet1 := sealed[headerLen:packet2Start]
 	packet2 := sealed[packet2Start:emptyPacketStart]
@@ -238,14 +238,6 @@ func TestSigncryptionSinglePacket(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Empty footer payload packet.
-	//
-	// TODO: Remove this.
-	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// Nothing else.
 	_, err = mps.Read(&block)
 	if err != io.EOF {
@@ -264,15 +256,12 @@ func TestSigncryptionSubsequence(t *testing.T) {
 
 	mps := newMsgpackStream(bytes.NewReader(sealed))
 
-	// These truncated messages will have the first payload
-	// packet, the second payload packet, and neither payload
-	// packet, respectively.
+	// These truncated messages will have the first and payload
+	// packets, respectively.
 	truncatedCiphertext1 := bytes.NewBuffer(nil)
 	truncatedCiphertext2 := bytes.NewBuffer(nil)
-	truncatedCiphertext3 := bytes.NewBuffer(nil)
 	encoder1 := newEncoder(truncatedCiphertext1)
 	encoder2 := newEncoder(truncatedCiphertext2)
-	encoder3 := newEncoder(truncatedCiphertext3)
 
 	encode := func(e encoder, i interface{}) {
 		err = e.Encode(i)
@@ -289,7 +278,6 @@ func TestSigncryptionSubsequence(t *testing.T) {
 
 	encode(encoder1, headerBytes)
 	encode(encoder2, headerBytes)
-	encode(encoder3, headerBytes)
 
 	var block signcryptionBlock
 
@@ -299,6 +287,7 @@ func TestSigncryptionSubsequence(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	block.IsFinal = true
 	encode(encoder1, block)
 
 	// Payload packet 2.
@@ -307,26 +296,14 @@ func TestSigncryptionSubsequence(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	block.IsFinal = true
 	encode(encoder2, block)
-
-	// Empty footer payload packet.
-	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	encode(encoder1, block)
-	encode(encoder2, block)
-	encode(encoder3, block)
 
 	_, _, err = SigncryptOpen(truncatedCiphertext1.Bytes(), keyring, nil)
-	require.Equal(t, err, ErrBadCiphertext(2))
+	require.Equal(t, ErrBadCiphertext(2), err)
 
 	_, _, err = SigncryptOpen(truncatedCiphertext2.Bytes(), keyring, nil)
-	require.Equal(t, err, ErrBadCiphertext(1))
-
-	_, _, err = SigncryptOpen(truncatedCiphertext3.Bytes(), keyring, nil)
-	require.Equal(t, err, ErrBadCiphertext(1))
+	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
 func TestSigncryptionPacketSwappingBetweenMessages(t *testing.T) {

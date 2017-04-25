@@ -42,8 +42,7 @@ func (sss *signcryptSealStream) Write(plaintext []byte) (int, error) {
 	if ret, sss.err = sss.buffer.Write(plaintext); sss.err != nil {
 		return 0, sss.err
 	}
-	// TODO: Change to >.
-	for sss.buffer.Len() >= encryptionBlockSize {
+	for sss.buffer.Len() > encryptionBlockSize {
 		sss.err = sss.signcryptBlock(false)
 		if sss.err != nil {
 			return 0, sss.err
