@@ -274,10 +274,6 @@ func (sss *signcryptSealStream) Close() error {
 			return err
 		}
 	}
-	return sss.writeFooter()
-}
-
-func (sss *signcryptSealStream) writeFooter() error {
 	return sss.signcryptBytes([]byte{})
 }
 
