@@ -247,7 +247,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	}
 
 	// Encode the header to bytes, hash it, then double encode it.
-	headerBytes, err := encodeToBytes(es.header)
+	headerBytes, err := encodeToBytes(eh)
 	if err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 	//
 	// TODO: Plumb the pre-computed shared keys above through to
 	// computeMACKeysSender.
-	es.macKeys = computeMACKeysSender(es.header.Version, sender, ephemeralKey, receivers, es.headerHash)
+	es.macKeys = computeMACKeysSender(version, sender, ephemeralKey, receivers, es.headerHash)
 
 	return nil
 }

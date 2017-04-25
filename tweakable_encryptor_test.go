@@ -35,9 +35,9 @@ func (eo testEncryptionOptions) getBlockSize() int {
 }
 
 type testEncryptStream struct {
+	version    Version
 	output     io.Writer
 	encoder    encoder
-	header     *EncryptionHeader
 	payloadKey SymmetricKey
 	buffer     bytes.Buffer
 	options    testEncryptionOptions
@@ -76,7 +76,7 @@ func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
 
 func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 	plaintext := pes.buffer.Next(pes.options.getBlockSize())
-	checkEncryptBlockRead(pes.header.Version, isFinal, pes.options.getBlockSize(), len(plaintext), pes.buffer.Len())
+	checkEncryptBlockRead(pes.version, isFinal, pes.options.getBlockSize(), len(plaintext), pes.buffer.Len())
 
 	if err := pes.numBlocks.check(); err != nil {
 		return err
@@ -90,7 +90,7 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 
 	ciphertext := secretbox.Seal([]byte{}, plaintext, (*[24]byte)(&nonce), (*[32]byte)(&pes.payloadKey))
 
-	if err := checkCiphertextState(pes.header.Version, ciphertext, isFinal); err != nil {
+	if err := checkCiphertextState(pes.version, ciphertext, isFinal); err != nil {
 		// We should always create valid ciphertext states.
 		panic(err)
 	}
@@ -101,14 +101,14 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(pes.header.Version, pes.headerHash, nonce, ciphertext, isFinal)
+	hashToAuthenticate := computePayloadHash(pes.version, pes.headerHash, nonce, ciphertext, isFinal)
 	var authenticators []payloadAuthenticator
 	for _, macKey := range pes.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		authenticators = append(authenticators, authenticator)
 	}
 
-	eBlock := makeEncryptionBlock(pes.header.Version, ciphertext, authenticators, isFinal)
+	eBlock := makeEncryptionBlock(pes.version, ciphertext, authenticators, isFinal)
 
 	if pes.options.corruptEncryptionBlock != nil {
 		pes.options.corruptEncryptionBlock(&eBlock, pes.numBlocks)
@@ -135,14 +135,13 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		sender = ephemeralKey
 	}
 
-	eh := &EncryptionHeader{
+	eh := EncryptionHeader{
 		FormatName: FormatName,
 		Version:    version,
 		Type:       MessageTypeEncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
-	pes.header = eh
 	if err := randomFill(pes.payloadKey[:]); err != nil {
 		return err
 	}
@@ -191,15 +190,12 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		eh.Receivers = append(eh.Receivers, keys)
 	}
 
-	// Corrupt a copy so that the corruption doesn't cause
-	// e.g. computeMACKeys to panic.
-	ehMaybeCorrupt := *eh
 	if pes.options.corruptHeader != nil {
-		pes.options.corruptHeader(&ehMaybeCorrupt)
+		pes.options.corruptHeader(&eh)
 	}
 
 	// Encode the header and the header length, and write them out immediately.
-	headerBytes, err := encodeToBytes(ehMaybeCorrupt)
+	headerBytes, err := encodeToBytes(eh)
 	if err != nil {
 		return err
 	}
@@ -213,13 +209,16 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 	}
 
 	// Use the header hash to compute the MAC keys.
-	pes.macKeys = computeMACKeysSender(pes.header.Version, sender, ephemeralKey, receivers, pes.headerHash)
+	//
+	// TODO: Plumb the pre-computed shared keys above through to
+	// computeMACKeysSender.
+	pes.macKeys = computeMACKeysSender(version, sender, ephemeralKey, receivers, pes.headerHash)
 
 	return nil
 }
 
 func (pes *testEncryptStream) Close() error {
-	switch pes.header.Version {
+	switch pes.version {
 	case Version1():
 		if pes.buffer.Len() > 0 {
 			err := pes.encryptBlock(false)
@@ -257,7 +256,7 @@ func (pes *testEncryptStream) Close() error {
 		return nil
 
 	default:
-		panic(ErrBadVersion{pes.header.Version})
+		panic(ErrBadVersion{pes.version})
 	}
 }
 
@@ -265,6 +264,7 @@ func (pes *testEncryptStream) Close() error {
 // end-users to have to specify options.
 func newTestEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (io.WriteCloser, error) {
 	pes := &testEncryptStream{
+		version: version,
 		output:  ciphertext,
 		encoder: newEncoder(ciphertext),
 		options: options,
