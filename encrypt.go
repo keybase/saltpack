@@ -14,13 +14,9 @@ import (
 )
 
 type encryptStream struct {
-	output  io.Writer
-	encoder encoder
-
-	// We only really need the version from the header, but some
-	// tests need more information (like the receivers).
-	header *EncryptionHeader
-
+	version    Version
+	output     io.Writer
+	encoder    encoder
 	payloadKey SymmetricKey
 	buffer     bytes.Buffer
 	headerHash headerHash
@@ -114,7 +110,7 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 	// NOTE: plaintext is a slice into es.buffer's buffer, so make
 	// sure not to stash it anywhere.
 	plaintext := es.buffer.Next(encryptionBlockSize)
-	checkEncryptBlockRead(es.header.Version, isFinal, encryptionBlockSize, len(plaintext), es.buffer.Len())
+	checkEncryptBlockRead(es.version, isFinal, encryptionBlockSize, len(plaintext), es.buffer.Len())
 
 	if err := es.numBlocks.check(); err != nil {
 		return err
@@ -123,21 +119,21 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 	nonce := nonceForChunkSecretBox(es.numBlocks)
 	ciphertext := secretbox.Seal([]byte{}, plaintext, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	if err := checkCiphertextState(es.header.Version, ciphertext, isFinal); err != nil {
+	if err := checkCiphertextState(es.version, ciphertext, isFinal); err != nil {
 		// We should always create valid ciphertext states.
 		panic(err)
 	}
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.
-	hashToAuthenticate := computePayloadHash(es.header.Version, es.headerHash, nonce, ciphertext, isFinal)
+	hashToAuthenticate := computePayloadHash(es.version, es.headerHash, nonce, ciphertext, isFinal)
 	var authenticators []payloadAuthenticator
 	for _, macKey := range es.macKeys {
 		authenticator := computePayloadAuthenticator(macKey, hashToAuthenticate)
 		authenticators = append(authenticators, authenticator)
 	}
 
-	eBlock := makeEncryptionBlock(es.header.Version, ciphertext, authenticators, isFinal)
+	eBlock := makeEncryptionBlock(es.version, ciphertext, authenticators, isFinal)
 	if err := es.encoder.Encode(eBlock); err != nil {
 		return err
 	}
@@ -216,14 +212,13 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		sender = ephemeralKey
 	}
 
-	eh := &EncryptionHeader{
+	eh := EncryptionHeader{
 		FormatName: FormatName,
 		Version:    version,
 		Type:       MessageTypeEncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
-	es.header = eh
 	if err := randomFill(es.payloadKey[:]); err != nil {
 		return err
 	}
@@ -294,7 +289,7 @@ func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, re
 }
 
 func (es *encryptStream) Close() error {
-	switch es.header.Version {
+	switch es.version {
 	case Version1():
 		if es.buffer.Len() > 0 {
 			err := es.encryptBlock(false)
@@ -323,7 +318,7 @@ func (es *encryptStream) Close() error {
 		return nil
 
 	default:
-		panic(ErrBadVersion{es.header.Version})
+		panic(ErrBadVersion{es.version})
 	}
 }
 
@@ -336,6 +331,7 @@ func (es *encryptStream) Close() error {
 // also returns an error if initialization failed.
 func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey) (io.WriteCloser, error) {
 	es := &encryptStream{
+		version: version,
 		output:  ciphertext,
 		encoder: newEncoder(ciphertext),
 	}

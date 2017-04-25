@@ -322,12 +322,23 @@ func testNewEncryptStreamShuffledReaders(t *testing.T, version Version) {
 		key: RawBoxKey{0x08},
 	}
 	var ciphertext bytes.Buffer
-	strm, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
+	_, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	shuffledOrder := getEncryptReceiverKeysOrder(strm.(*encryptStream).header.Receivers)
+	var headerBytes []byte
+	err = decodeFromBytes(&headerBytes, ciphertext.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var header EncryptionHeader
+	err = decodeFromBytes(&header, headerBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	shuffledOrder := getEncryptReceiverKeysOrder(header.Receivers)
 	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
 		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
 	}
