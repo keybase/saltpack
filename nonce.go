@@ -68,7 +68,12 @@ func nonceForChunkSecretBox(i encryptionBlockNumber) Nonce {
 	return n
 }
 
-// Construct the nonce for the ith block of signcryption payload.
+// Construct the nonce for the ith block of signcryption
+// payload.
+//
+// NOTE: we rely on the nonce containing the passed-in arguments to be
+// able to omit them in computeSigncryptionSignatureInput() and just
+// passing it the nonce, so be careful if we change the arguments.
 func nonceForChunkSigncryption(headerHash headerHash, isFinal bool, i encryptionBlockNumber) Nonce {
 	var n Nonce
 	off := len(n) - 8
