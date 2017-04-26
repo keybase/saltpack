@@ -15,8 +15,41 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
+type signcryptionChunker struct {
+	sos *signcryptOpenStream
+	err error
+}
+
+func (c *signcryptionChunker) getNextChunk() ([]byte, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+
+	var sb signcryptionBlock
+	seqno, err := c.sos.mps.Read(&sb)
+	if err != nil {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+		return nil, err
+	}
+
+	plaintext, err := c.sos.processSigncryptionBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
+	if err != nil {
+		return nil, err
+	}
+
+	if sb.IsFinal {
+		c.err = assertEndOfStream(c.sos.mps)
+	}
+
+	return plaintext, nil
+}
+
 type signcryptOpenStream struct {
-	mps              *msgpackStream
+	mps         *msgpackStream
+	chunkReader *chunkReader
+
 	err              error
 	state            readState
 	payloadKey       *SymmetricKey
@@ -29,13 +62,7 @@ type signcryptOpenStream struct {
 }
 
 func (sos *signcryptOpenStream) Read(b []byte) (n int, err error) {
-	for n == 0 && err == nil {
-		n, err = sos.read(b)
-	}
-	if err == io.EOF && sos.state != stateEndOfStream {
-		err = io.ErrUnexpectedEOF
-	}
-	return n, err
+	return sos.chunkReader.Read(b)
 }
 
 func (sos *signcryptOpenStream) read(b []byte) (n int, err error) {
@@ -305,6 +332,8 @@ func NewSigncryptOpenStream(r io.Reader, keyring SigncryptKeyring, resolver Symm
 		keyring:  keyring,
 		resolver: resolver,
 	}
+
+	sos.chunkReader = newChunkReader(&signcryptionChunker{sos, nil})
 
 	err = sos.readHeader(r)
 	if err != nil {
