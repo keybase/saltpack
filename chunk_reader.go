@@ -33,7 +33,7 @@ func (r *chunkReader) Read(p []byte) (n int, err error) {
 			n += copied
 			r.prevChunk = r.prevChunk[copied:]
 			if len(r.prevChunk) > 0 {
-				return n, nil
+				break
 			}
 		}
 
