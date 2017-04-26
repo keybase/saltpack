@@ -67,6 +67,10 @@ func (e encryptionBlockNumber) check() error {
 	return nil
 }
 
+// assertEndOfStream reads from stream, and converts a nil error into
+// ErrTrailingGarbage. Thus, it always returns a non-nil error. This
+// should be used in a context where io.EOF is expected, and anything
+// else is an error.
 func assertEndOfStream(stream *msgpackStream) error {
 	var i interface{}
 	_, err := stream.Read(&i)
