@@ -257,12 +257,12 @@ func NewSigncryptOpenStream(r io.Reader, keyring SigncryptKeyring, resolver Symm
 		resolver: resolver,
 	}
 
-	sos.chunkReader = newChunkReader(&signcryptionChunker{sos, nil})
-
 	err = sos.readHeader(r)
 	if err != nil {
-		return sos.signingPublicKey, nil, err
+		return nil, nil, err
 	}
+
+	sos.chunkReader = newChunkReader(&signcryptionChunker{sos, nil})
 
 	return sos.signingPublicKey, sos, nil
 }
