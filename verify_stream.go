@@ -62,27 +62,26 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 		n, last, v.err = v.readBlock(p)
 		if v.err != nil {
 			return 0, v.err
+		} else if !last {
+			return n, nil
 		}
 
-		if last {
-			v.state = stateEndOfStream
-			// If we've reached the end of the stream, but
-			// have data left (which only happens in V2),
-			// return so that the next call(s) will hit
-			// the case at the top, and then we'll hit the
-			// case below.
-			if len(v.buffer) > 0 {
-				switch v.version.Major {
-				case 1:
-					panic(fmt.Sprintf("version=%s, last=true, len(v.buffer)=%d > 0", v.version, len(v.buffer)))
-				case 2:
-					// Do nothing.
-				default:
-					panic(ErrBadVersion{v.version})
-				}
-
-				return n, nil
+		v.state = stateEndOfStream
+		// If we've reached the end of the stream, but have
+		// data left (which only happens in V2), return so
+		// that the next call(s) will hit the case at the top,
+		// and then we'll hit the case below.
+		if len(v.buffer) > 0 {
+			switch v.version.Major {
+			case 1:
+				panic(fmt.Sprintf("version=%s, last=true, len(v.buffer)=%d > 0", v.version, len(v.buffer)))
+			case 2:
+				// Do nothing.
+			default:
+				panic(ErrBadVersion{v.version})
 			}
+
+			return n, nil
 		}
 	}
 
@@ -97,7 +96,7 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 		}
 	}
 
-	return n, nil
+	panic(fmt.Sprintf("Should never get here: state=%v", v.state))
 }
 
 func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType MessageType) error {
