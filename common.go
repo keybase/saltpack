@@ -252,6 +252,10 @@ func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, cip
 
 func computeSigncryptionSignatureInput(headerHash headerHash, nonce Nonce, isFinal bool, chunkPlaintext []byte) []byte {
 	signatureInput := []byte(signatureEncryptedString)
+	// This is a bit redundant, as the nonce already contains part
+	// of the header hash and the isFinal flag. However, we
+	// truncate the header hash pretty severely for the nonce, so
+	// it seems a bit safer to be redundant.
 	signatureInput = append(signatureInput, headerHash[:]...)
 	signatureInput = append(signatureInput, nonce[:]...)
 	var isFinalByte byte
