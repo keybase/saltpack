@@ -359,11 +359,11 @@ func TestSigncryptionStreamWithError(t *testing.T) {
 
 	// Try to read the whole thing. This should return an error.
 	_, err = ioutil.ReadAll(reader)
-	require.Equal(t, err, ErrBadCiphertext(1))
+	require.Equal(t, ErrBadCiphertext(1), err)
 
 	// Do it again. Should get the same error.
 	_, err = ioutil.ReadAll(reader)
-	require.Equal(t, err, ErrBadCiphertext(1))
+	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
 func TestSigncryptionInvalidMessagepack(t *testing.T) {
