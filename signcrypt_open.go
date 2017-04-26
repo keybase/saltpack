@@ -18,7 +18,6 @@ type signcryptOpenStream struct {
 	mps *msgpackStream
 	err error
 
-	chunkReader      *chunkReader
 	payloadKey       *SymmetricKey
 	signingPublicKey SigningPublicKey
 	senderAnonymous  bool
