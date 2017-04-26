@@ -247,8 +247,8 @@ func testSigncryptionSubsequence(t *testing.T, anon bool) {
 
 	mps := newMsgpackStream(bytes.NewReader(sealed))
 
-	// These truncated messages will have the first and payload
-	// packets, respectively.
+	// These truncated ciphertexts will have the first payload
+	// packet and the second payload packet, respectively.
 	truncatedCiphertext1 := bytes.NewBuffer(nil)
 	truncatedCiphertext2 := bytes.NewBuffer(nil)
 	encoder1 := newEncoder(truncatedCiphertext1)
