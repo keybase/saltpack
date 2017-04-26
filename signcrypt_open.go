@@ -14,39 +14,10 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 )
 
-type signcryptionChunker struct {
-	mps *msgpackStream
-	sos *signcryptOpenStream
-	err error
-}
-
-func (c *signcryptionChunker) getNextChunk() ([]byte, error) {
-	if c.err != nil {
-		return nil, c.err
-	}
-
-	var sb signcryptionBlock
-	seqno, err := c.mps.Read(&sb)
-	if err != nil {
-		if err == io.EOF {
-			err = io.ErrUnexpectedEOF
-		}
-		return nil, err
-	}
-
-	plaintext, err := c.sos.processSigncryptionBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
-	if err != nil {
-		return nil, err
-	}
-
-	if sb.IsFinal {
-		c.err = assertEndOfStream(c.mps)
-	}
-
-	return plaintext, nil
-}
-
 type signcryptOpenStream struct {
+	mps *msgpackStream
+	err error
+
 	chunkReader      *chunkReader
 	payloadKey       *SymmetricKey
 	signingPublicKey SigningPublicKey
@@ -56,8 +27,30 @@ type signcryptOpenStream struct {
 	resolver         SymmetricKeyResolver
 }
 
-func (sos *signcryptOpenStream) Read(b []byte) (n int, err error) {
-	return sos.chunkReader.Read(b)
+func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
+	if sos.err != nil {
+		return nil, sos.err
+	}
+
+	var sb signcryptionBlock
+	seqno, err := sos.mps.Read(&sb)
+	if err != nil {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+		return nil, err
+	}
+
+	plaintext, err := sos.processSigncryptionBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
+	if err != nil {
+		return nil, err
+	}
+
+	if sb.IsFinal {
+		sos.err = assertEndOfStream(sos.mps)
+	}
+
+	return plaintext, nil
 }
 
 func (sos *signcryptOpenStream) readHeader(mps *msgpackStream) error {
@@ -260,9 +253,10 @@ func NewSigncryptOpenStream(r io.Reader, keyring SigncryptKeyring, resolver Symm
 		return nil, nil, err
 	}
 
-	sos.chunkReader = newChunkReader(&signcryptionChunker{mps, sos, nil})
+	sos.mps = mps
+	chunkReader := newChunkReader(sos)
 
-	return sos.signingPublicKey, sos, nil
+	return sos.signingPublicKey, chunkReader, nil
 }
 
 type SymmetricKeyResolver interface {
