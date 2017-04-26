@@ -65,23 +65,14 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 
 	nonce := nonceForChunkSigncryption(sss.headerHash, isFinal, sss.numBlocks)
 
-	plaintextHash := sha512.Sum512(b)
-
 	// Handle regular signing mode and anonymous mode (where we don't actually
 	// sign anything).
 	var detachedSig []byte
 	if sss.signingKey == nil {
 		detachedSig = make([]byte, ed25519.SignatureSize)
 	} else {
-		signatureInput := []byte(signatureEncryptedString)
-		signatureInput = append(signatureInput, sss.headerHash[:]...)
-		signatureInput = append(signatureInput, nonce[:]...)
-		var isFinalByte byte
-		if isFinal {
-			isFinalByte = 1
-		}
-		signatureInput = append(signatureInput, isFinalByte)
-		signatureInput = append(signatureInput, plaintextHash[:]...)
+		plaintextHash := sha512.Sum512(b)
+		signatureInput := computeSigncryptionSignatureInput(sss.headerHash, nonce, isFinal, plaintextHash)
 
 		var err error
 		detachedSig, err = sss.signingKey.Sign(signatureInput)

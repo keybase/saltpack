@@ -267,22 +267,11 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byt
 	var detachedSig [ed25519.SignatureSize]byte = sliceToByte64(attachedSig[:ed25519.SignatureSize])
 	chunkPlaintext := attachedSig[ed25519.SignatureSize:]
 
-	plaintextHash := sha512.Sum512(chunkPlaintext)
-
-	// TODO: Decomp this out with similar code in signcrypt_seal.go.
-	signatureInput := []byte(signatureEncryptedString)
-	signatureInput = append(signatureInput, sos.headerHash[:]...)
-	signatureInput = append(signatureInput, nonce[:]...)
-	var isFinalByte byte
-	if isFinal {
-		isFinalByte = 1
-	}
-	signatureInput = append(signatureInput, isFinalByte)
-	signatureInput = append(signatureInput, plaintextHash[:]...)
-
 	// Handle anonymous sender mode by skipping signature verification. By
 	// convention the signature bytes are all zeroes, but here we ignore them.
 	if !sos.senderAnonymous {
+		plaintextHash := sha512.Sum512(chunkPlaintext)
+		signatureInput := computeSigncryptionSignatureInput(sos.headerHash, nonce, isFinal, plaintextHash)
 		sigErr := sos.signingPublicKey.Verify(signatureInput, detachedSig[:])
 		if sigErr != nil {
 			return nil, ErrBadSignature
