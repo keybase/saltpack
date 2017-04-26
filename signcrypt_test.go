@@ -233,12 +233,14 @@ func TestSigncryptionSinglePacket(t *testing.T) {
 	require.Equal(t, io.EOF, err)
 }
 
-// TODO: Add similar test for anonymous mode.
-func TestSigncryptionSubsequence(t *testing.T) {
+func testSigncryptionSubsequence(t *testing.T, anon bool) {
 	msg := make([]byte, 2*encryptionBlockSize)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 
-	senderSigningPrivKey := makeSigningKey(t, keyring)
+	var senderSigningPrivKey SigningSecretKey
+	if !anon {
+		senderSigningPrivKey = makeSigningKey(t, keyring)
+	}
 
 	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
@@ -285,6 +287,15 @@ func TestSigncryptionSubsequence(t *testing.T) {
 
 	_, _, err = SigncryptOpen(truncatedCiphertext2.Bytes(), keyring, nil)
 	require.Equal(t, ErrBadCiphertext(1), err)
+}
+
+func TestSigncryptionSubsequence(t *testing.T) {
+	t.Run("anon=false", func(t *testing.T) {
+		testSigncryptionSubsequence(t, false)
+	})
+	t.Run("anon=true", func(t *testing.T) {
+		testSigncryptionSubsequence(t, true)
+	})
 }
 
 func TestSigncryptionPacketSwappingBetweenMessages(t *testing.T) {
