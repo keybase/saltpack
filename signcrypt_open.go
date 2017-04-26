@@ -270,7 +270,7 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byt
 	// Handle anonymous sender mode by skipping signature verification. By
 	// convention the signature bytes are all zeroes, but here we ignore them.
 	if !sos.senderAnonymous {
-		signatureInput := computeSigncryptionSignatureInput(sos.headerHash, nonce, isFinal, chunkPlaintext)
+		signatureInput := computeSigncryptionSignatureInput(nonce, chunkPlaintext)
 		sigErr := sos.signingPublicKey.Verify(signatureInput, detachedSig[:])
 		if sigErr != nil {
 			return nil, ErrBadSignature
