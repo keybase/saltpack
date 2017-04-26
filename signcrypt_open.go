@@ -49,8 +49,6 @@ type signcryptOpenStream struct {
 	mps         *msgpackStream
 	chunkReader *chunkReader
 
-	err              error
-	state            readState
 	payloadKey       *SymmetricKey
 	signingPublicKey SigningPublicKey
 	senderAnonymous  bool
@@ -84,7 +82,6 @@ func (sos *signcryptOpenStream) readHeader(rawReader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	sos.state = stateBody
 	return nil
 }
 
