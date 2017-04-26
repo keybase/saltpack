@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
+	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -61,6 +62,8 @@ func (sos *signcryptOpenStream) read(b []byte) (n int, err error) {
 		n, last, sos.err = sos.readBlock(b)
 		if sos.err != nil {
 			return 0, sos.err
+		} else if !last {
+			return n, nil
 		}
 
 		if last {
@@ -83,7 +86,7 @@ func (sos *signcryptOpenStream) read(b []byte) (n int, err error) {
 		}
 	}
 
-	return n, nil
+	panic(fmt.Sprintf("Should never get here: state=%v", sos.state))
 }
 
 func (sos *signcryptOpenStream) readHeader(rawReader io.Reader) error {
