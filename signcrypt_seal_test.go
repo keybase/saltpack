@@ -6,6 +6,8 @@ package saltpack
 import (
 	"bytes"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func getSigncryptionReceiverOrder(receivers []receiverKeysMaker) []int {
@@ -43,9 +45,7 @@ func TestShuffleSigncryptionReceivers(t *testing.T) {
 	shuffled := shuffleSigncryptionReceivers(receiverBoxKeys, receiverSymmetricKeys)
 
 	shuffledOrder := getSigncryptionReceiverOrder(shuffled)
-	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
-		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
-	}
+	require.True(t, isValidNonTrivialPermutation(receiverCount, shuffledOrder), "shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
 }
 
 func TestNewSigncryptSealStreamShuffledReaders(t *testing.T) {
@@ -67,23 +67,16 @@ func TestNewSigncryptSealStreamShuffledReaders(t *testing.T) {
 
 	var ciphertext bytes.Buffer
 	_, err := NewSigncryptSealStream(&ciphertext, keyring, nil, nil, receiverSymmetricKeys)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var headerBytes []byte
 	err = decodeFromBytes(&headerBytes, ciphertext.Bytes())
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	var header SigncryptionHeader
 	err = decodeFromBytes(&header, headerBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	shuffledOrder := getEncryptReceiverKeysOrder(header.Receivers)
-	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
-		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
-	}
+	require.True(t, isValidNonTrivialPermutation(receiverCount, shuffledOrder), "shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
 }
