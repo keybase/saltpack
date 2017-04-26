@@ -348,10 +348,12 @@ func TestSigncryptionStream(t *testing.T) {
 	for {
 		buffer := make([]byte, 1)
 		n, err := reader.Read(buffer)
-		if n == 0 || err == io.EOF {
+		output = append(output, buffer[:n]...)
+		if err == io.EOF {
 			break
 		}
-		output = append(output, buffer...)
+		require.NoError(t, err)
+		require.True(t, n > 0)
 	}
 	require.Equal(t, msg, output)
 }
