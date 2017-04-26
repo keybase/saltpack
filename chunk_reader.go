@@ -3,7 +3,7 @@
 
 package saltpack
 
-type chunkStreamer interface {
+type chunker interface {
 	// If getNextChunk returns a non-nil error, the returned chunk
 	// must be empty.
 	//
@@ -14,10 +14,14 @@ type chunkStreamer interface {
 }
 
 type chunkReader struct {
-	streamer chunkStreamer
+	chunker chunker
 	// Invariant: If prevErr is non-nil, prevChunk is empty.
 	prevChunk []byte
 	prevErr   error
+}
+
+func newChunkReader(chunker chunker) *chunkReader {
+	return &chunkReader{chunker: chunker}
 }
 
 func (r *chunkReader) Read(p []byte) (n int, err error) {
@@ -32,7 +36,7 @@ func (r *chunkReader) Read(p []byte) (n int, err error) {
 		}
 
 		// TODO: Check conditions on getNextChunk().
-		r.prevChunk, r.prevErr = r.streamer.getNextChunk()
+		r.prevChunk, r.prevErr = r.chunker.getNextChunk()
 	}
 
 	return n, r.prevErr
