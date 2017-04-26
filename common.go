@@ -250,7 +250,7 @@ func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, cip
 	return sliceToByte64(h)
 }
 
-func computeSigncryptionSignatureInput(headerHash headerHash, nonce Nonce, isFinal bool, plaintextHash [sha512.Size]byte) []byte {
+func computeSigncryptionSignatureInput(headerHash headerHash, nonce Nonce, isFinal bool, chunkPlaintext []byte) []byte {
 	signatureInput := []byte(signatureEncryptedString)
 	signatureInput = append(signatureInput, headerHash[:]...)
 	signatureInput = append(signatureInput, nonce[:]...)
@@ -259,6 +259,7 @@ func computeSigncryptionSignatureInput(headerHash headerHash, nonce Nonce, isFin
 		isFinalByte = 1
 	}
 	signatureInput = append(signatureInput, isFinalByte)
+	plaintextHash := sha512.Sum512(chunkPlaintext)
 	signatureInput = append(signatureInput, plaintextHash[:]...)
 	return signatureInput
 }

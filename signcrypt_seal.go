@@ -54,7 +54,7 @@ func (sss *signcryptSealStream) Write(plaintext []byte) (int, error) {
 func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 	// NOTE: b is a slice into sss.buffer's buffer, so make sure
 	// not to stash it anywhere.
-	b := sss.buffer.Next(encryptionBlockSize)
+	plaintext := sss.buffer.Next(encryptionBlockSize)
 	if isFinal && (sss.buffer.Len() != 0) {
 		panic(fmt.Sprintf("isFinal=true and (sss.buffer.Len()=%d != 0)", sss.buffer.Len()))
 	}
@@ -71,8 +71,7 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 	if sss.signingKey == nil {
 		detachedSig = make([]byte, ed25519.SignatureSize)
 	} else {
-		plaintextHash := sha512.Sum512(b)
-		signatureInput := computeSigncryptionSignatureInput(sss.headerHash, nonce, isFinal, plaintextHash)
+		signatureInput := computeSigncryptionSignatureInput(sss.headerHash, nonce, isFinal, plaintext)
 
 		var err error
 		detachedSig, err = sss.signingKey.Sign(signatureInput)
@@ -81,7 +80,7 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 		}
 	}
 
-	attachedSig := append(detachedSig, b...)
+	attachedSig := append(detachedSig, plaintext...)
 
 	ciphertext := secretbox.Seal([]byte{}, attachedSig, (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 
