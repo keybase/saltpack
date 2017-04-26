@@ -5,7 +5,7 @@ package saltpack
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -39,10 +39,22 @@ func chunkString(s string, chunkSize int, finalErr error) *testChunker {
 	return &testChunker{chunks, finalErr}
 }
 
+func testReadAll(t *testing.T, r io.Reader, readSize int) ([]byte, error) {
+	var out []byte
+	buf := make([]byte, readSize)
+	for {
+		n, err := r.Read(buf)
+		out = append(out, buf[:n]...)
+		if err != nil {
+			return out, err
+		}
+	}
+}
+
 func testChunkReader(t *testing.T, s string, chunkSize, readSize int, finalErr error) {
 	chunker := chunkString(s, chunkSize, finalErr)
 	r := newChunkReader(chunker)
-	out, err := ioutil.ReadAll(r)
+	out, err := testReadAll(t, r, readSize)
 	require.Equal(t, finalErr, err)
 	require.Equal(t, s, string(out))
 }
