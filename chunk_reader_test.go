@@ -18,13 +18,13 @@ type testChunker struct {
 	finalErr error
 }
 
-func (s *testChunker) getNextChunk() ([]byte, error) {
-	if len(s.chunks) == 0 {
-		return nil, s.finalErr
+func (c *testChunker) getNextChunk() ([]byte, error) {
+	if len(c.chunks) == 0 {
+		return nil, c.finalErr
 	}
 
-	chunk := s.chunks[0]
-	s.chunks = s.chunks[1:]
+	chunk := c.chunks[0]
+	c.chunks = c.chunks[1:]
 	return chunk, nil
 }
 
@@ -109,4 +109,17 @@ func TestChunkReaderEmptyRead(t *testing.T) {
 	n, err = r.Read(nil)
 	require.Equal(t, io.EOF, err)
 	require.Equal(t, 0, n)
+}
+
+type badChunker struct{}
+
+func (c badChunker) getNextChunk() ([]byte, error) {
+	return []byte{0x1}, io.EOF
+}
+
+func TestBadChunker(t *testing.T) {
+	r := newChunkReader(badChunker{})
+	require.Panics(t, func() {
+		r.Read(nil)
+	})
 }

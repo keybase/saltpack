@@ -3,6 +3,8 @@
 
 package saltpack
 
+import "fmt"
+
 type chunker interface {
 	// If getNextChunk returns a non-nil error, the returned chunk
 	// must be empty.
@@ -35,8 +37,10 @@ func (r *chunkReader) Read(p []byte) (n int, err error) {
 			}
 		}
 
-		// TODO: Check conditions on getNextChunk().
 		r.prevChunk, r.prevErr = r.chunker.getNextChunk()
+		if len(r.prevChunk) > 0 && r.prevErr != nil {
+			panic(fmt.Sprintf("getNextChunk() returned buffer of size %d with err=%v", len(r.prevChunk), r.prevErr))
+		}
 	}
 
 	return n, r.prevErr
