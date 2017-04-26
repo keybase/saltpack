@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
-	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -65,57 +64,6 @@ func (sos *signcryptOpenStream) Read(b []byte) (n int, err error) {
 	return sos.chunkReader.Read(b)
 }
 
-func (sos *signcryptOpenStream) read(b []byte) (n int, err error) {
-
-	// Handle the case of a previous error. Just return the error
-	// again.
-	if sos.err != nil {
-		return 0, sos.err
-	}
-
-	// Handle the case first of a previous read that couldn't put all
-	// of its data into the outgoing buffer.
-	if len(sos.buf) > 0 {
-		n = copy(b, sos.buf)
-		sos.buf = sos.buf[n:]
-		return n, nil
-	}
-
-	// We have two states we can be in, but we can definitely
-	// fall through during one read, so be careful.
-
-	if sos.state == stateBody {
-		var last bool
-		n, last, sos.err = sos.readBlock(b)
-		if sos.err != nil {
-			return 0, sos.err
-		} else if !last {
-			return n, nil
-		}
-
-		if last {
-			sos.state = stateEndOfStream
-			// If we've reached the end of the stream, but
-			// have data left,
-			// return so that the next call(s) will hit
-			// the case at the top, and then we'll hit the
-			// case below.
-			if len(sos.buf) > 0 {
-				return n, nil
-			}
-		}
-	}
-
-	if sos.state == stateEndOfStream {
-		sos.err = assertEndOfStream(sos.mps)
-		if sos.err != nil {
-			return n, sos.err
-		}
-	}
-
-	panic(fmt.Sprintf("Should never get here: state=%v", sos.state))
-}
-
 func (sos *signcryptOpenStream) readHeader(rawReader io.Reader) error {
 	// Read the header bytes.
 	headerBytes := []byte{}
@@ -138,27 +86,6 @@ func (sos *signcryptOpenStream) readHeader(rawReader io.Reader) error {
 	}
 	sos.state = stateBody
 	return nil
-}
-
-func (sos *signcryptOpenStream) readBlock(b []byte) (n int, lastBlock bool, err error) {
-	var sb signcryptionBlock
-	var seqno packetSeqno
-	seqno, err = sos.mps.Read(&sb)
-	if err != nil {
-		return 0, false, err
-	}
-	var plaintext []byte
-	plaintext, err = sos.processSigncryptionBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
-	if err != nil {
-		return 0, false, err
-	}
-
-	// Copy as much as we can into the given outbuffer
-	n = copy(b, plaintext)
-	// Leave the remainder for a subsequent read
-	sos.buf = plaintext[n:]
-
-	return n, sb.IsFinal, err
 }
 
 func (sos *signcryptOpenStream) tryBoxSecretKeys(hdr *SigncryptionHeader, ephemeralPub BoxPublicKey) (*SymmetricKey, error) {
