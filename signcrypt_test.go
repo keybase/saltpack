@@ -89,9 +89,9 @@ func TestSigncryptionBoxKeyHelloWorld(t *testing.T) {
 	senderPub, opened, err := SigncryptOpen(sealed, keyring, nil)
 	require.NoError(t, err)
 
-	require.Equal(t, senderPub, senderSigningPrivKey.GetPublicKey())
+	require.Equal(t, senderSigningPrivKey.GetPublicKey(), senderPub)
 
-	require.Equal(t, opened, msg)
+	require.Equal(t, msg, opened)
 }
 
 func TestSigncryptionResolvedKeyHelloWorld(t *testing.T) {
@@ -108,9 +108,9 @@ func TestSigncryptionResolvedKeyHelloWorld(t *testing.T) {
 	senderPub, opened, err := SigncryptOpen(sealed, keyring, resolver)
 	require.NoError(t, err)
 
-	require.Equal(t, senderPub, senderSigningPrivKey.GetPublicKey())
+	require.Equal(t, senderSigningPrivKey.GetPublicKey(), senderPub)
 
-	require.Equal(t, opened, msg)
+	require.Equal(t, msg, opened)
 }
 
 func TestSigncryptionAnonymousSenderHelloWorld(t *testing.T) {
@@ -124,9 +124,9 @@ func TestSigncryptionAnonymousSenderHelloWorld(t *testing.T) {
 	require.NoError(t, err)
 
 	// A nil sender means anonymous mode.
-	require.Equal(t, senderPub, nil)
+	require.Nil(t, senderPub)
 
-	require.Equal(t, opened, msg)
+	require.Equal(t, msg, opened)
 }
 
 func TestSigncryptionEmptyCiphertext(t *testing.T) {
@@ -134,7 +134,7 @@ func TestSigncryptionEmptyCiphertext(t *testing.T) {
 
 	emptyMessage := []byte("")
 	_, _, err := SigncryptOpen(emptyMessage, keyring, nil)
-	require.Equal(t, err, ErrFailedToReadHeaderBytes)
+	require.Equal(t, ErrFailedToReadHeaderBytes, err)
 }
 
 func getHeaderLen(t *testing.T, sealed []byte) int {
@@ -163,7 +163,7 @@ func TestSigncryptionTruncatedAtPacketBoundary(t *testing.T) {
 	truncated := sealed[0:headerLen]
 
 	_, _, err = SigncryptOpen(truncated, keyring, nil)
-	require.Equal(t, err, io.ErrUnexpectedEOF)
+	require.Equal(t, io.ErrUnexpectedEOF, err)
 }
 
 func getPayloadPacketLen(plaintextLen int) int {
@@ -194,7 +194,7 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 	packet2Start := headerLen + packetLen
 	emptyPacketLen := getPayloadPacketLen(0)
 	emptyPacketStart := packet2Start + packetLen
-	require.Equal(t, len(sealed), headerLen+2*packetLen+emptyPacketLen, "sealed bytes aren't the length we expected")
+	require.Equal(t, headerLen+2*packetLen+emptyPacketLen, len(sealed), "sealed bytes aren't the length we expected")
 	header := sealed[:headerLen]
 	packet1 := sealed[headerLen:packet2Start]
 	packet2 := sealed[packet2Start:emptyPacketStart]
@@ -207,7 +207,7 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 	swapped_sealed = append(swapped_sealed, packet1...)
 	swapped_sealed = append(swapped_sealed, emptyPacket...)
 	_, _, err = SigncryptOpen(swapped_sealed, keyring, nil)
-	require.Equal(t, err, ErrBadCiphertext(1))
+	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
 func TestSigncryptionPacketSwappingBetweenMessages(t *testing.T) {
@@ -241,9 +241,9 @@ func TestSigncryptionPacketSwappingBetweenMessages(t *testing.T) {
 
 	// Both should fail to decrypt.
 	_, _, err = SigncryptOpen(swapped1, keyring, nil)
-	require.Equal(t, err, ErrBadCiphertext(1))
+	require.Equal(t, ErrBadCiphertext(1), err)
 	_, _, err = SigncryptOpen(swapped2, keyring, nil)
-	require.Equal(t, err, ErrBadCiphertext(1))
+	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
 func TestSigncryptionStream(t *testing.T) {
@@ -282,11 +282,11 @@ func TestSigncryptionStreamWithError(t *testing.T) {
 
 	// Try to read the whole thing. This should return an error.
 	_, err = ioutil.ReadAll(reader)
-	require.Equal(t, err, ErrBadCiphertext(2))
+	require.Equal(t, ErrBadCiphertext(2), err)
 
 	// Do it again. Should get the same error.
 	_, err = ioutil.ReadAll(reader)
-	require.Equal(t, err, ErrBadCiphertext(2))
+	require.Equal(t, ErrBadCiphertext(2), err)
 }
 
 func TestSigncryptionInvalidMessagepack(t *testing.T) {
@@ -303,7 +303,7 @@ func TestSigncryptionInvalidMessagepack(t *testing.T) {
 	truncated[1] = 8
 
 	_, _, err = SigncryptOpen(truncated, keyring, nil)
-	require.Equal(t, err, io.ErrUnexpectedEOF)
+	require.Equal(t, io.ErrUnexpectedEOF, err)
 }
 
 func TestSigncryptionBoxKeyHeaderDecryptionError(t *testing.T) {
