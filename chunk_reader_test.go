@@ -70,11 +70,25 @@ func TestChunkReader(t *testing.T) {
 		"",
 		"somewhat long string",
 	}
+	sizes := []int{1, 3, 5, 1024}
+	errs := []error{
+		errors.New("test error"),
+		io.EOF,
+	}
 	for _, input := range inputs {
-		// Capture range variable.
-		input := input
-		t.Run(fmt.Sprintf("input=%q", input), func(t *testing.T) {
-			testChunkReader(t, input, 2, 1, errors.New("test error"))
-		})
+		for _, chunkSize := range sizes {
+			for _, readSize := range sizes {
+				for _, err := range errs {
+					// Capture range variables.
+					input := input
+					chunkSize := chunkSize
+					readSize := readSize
+					finalErr := err
+					t.Run(fmt.Sprintf("input=%q,chunkSize=%d,readSize=%d,finalErr=%v", input, chunkSize, readSize, finalErr), func(t *testing.T) {
+						testChunkReader(t, input, chunkSize, readSize, finalErr)
+					})
+				}
+			}
+		}
 	}
 }
