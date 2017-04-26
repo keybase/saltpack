@@ -91,9 +91,7 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 		// we have an error, we still want to return n, since
 		// those bytes are verified (by readBlock's
 		// post-condition).
-		if v.err != nil {
-			return n, v.err
-		}
+		return n, v.err
 	}
 
 	panic(fmt.Sprintf("Should never get here: state=%v", v.state))

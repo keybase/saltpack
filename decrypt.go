@@ -107,9 +107,7 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 		// we have an error, we still want to return n, since
 		// those bytes are authenticated (by readBlock's
 		// post-condition).
-		if ds.err != nil {
-			return n, ds.err
-		}
+		return n, ds.err
 	}
 
 	panic(fmt.Sprintf("Should never get here: state=%v", ds.state))
