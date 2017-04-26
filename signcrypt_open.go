@@ -15,6 +15,7 @@ import (
 )
 
 type signcryptionChunker struct {
+	mps *msgpackStream
 	sos *signcryptOpenStream
 	err error
 }
@@ -25,7 +26,7 @@ func (c *signcryptionChunker) getNextChunk() ([]byte, error) {
 	}
 
 	var sb signcryptionBlock
-	seqno, err := c.sos.mps.Read(&sb)
+	seqno, err := c.mps.Read(&sb)
 	if err != nil {
 		if err == io.EOF {
 			err = io.ErrUnexpectedEOF
@@ -39,20 +40,17 @@ func (c *signcryptionChunker) getNextChunk() ([]byte, error) {
 	}
 
 	if sb.IsFinal {
-		c.err = assertEndOfStream(c.sos.mps)
+		c.err = assertEndOfStream(c.mps)
 	}
 
 	return plaintext, nil
 }
 
 type signcryptOpenStream struct {
-	mps         *msgpackStream
-	chunkReader *chunkReader
-
+	chunkReader      *chunkReader
 	payloadKey       *SymmetricKey
 	signingPublicKey SigningPublicKey
 	senderAnonymous  bool
-	buf              []byte
 	headerHash       headerHash
 	keyring          SigncryptKeyring
 	resolver         SymmetricKeyResolver
@@ -62,10 +60,10 @@ func (sos *signcryptOpenStream) Read(b []byte) (n int, err error) {
 	return sos.chunkReader.Read(b)
 }
 
-func (sos *signcryptOpenStream) readHeader(rawReader io.Reader) error {
+func (sos *signcryptOpenStream) readHeader(mps *msgpackStream) error {
 	// Read the header bytes.
 	headerBytes := []byte{}
-	seqno, err := sos.mps.Read(&headerBytes)
+	seqno, err := mps.Read(&headerBytes)
 	if err != nil {
 		return ErrFailedToReadHeaderBytes
 	}
@@ -252,17 +250,17 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byt
 //
 func NewSigncryptOpenStream(r io.Reader, keyring SigncryptKeyring, resolver SymmetricKeyResolver) (senderPub SigningPublicKey, plaintext io.Reader, err error) {
 	sos := &signcryptOpenStream{
-		mps:      newMsgpackStream(r),
 		keyring:  keyring,
 		resolver: resolver,
 	}
 
-	err = sos.readHeader(r)
+	mps := newMsgpackStream(r)
+	err = sos.readHeader(mps)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sos.chunkReader = newChunkReader(&signcryptionChunker{sos, nil})
+	sos.chunkReader = newChunkReader(&signcryptionChunker{mps, sos, nil})
 
 	return sos.signingPublicKey, sos, nil
 }
