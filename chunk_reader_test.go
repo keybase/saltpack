@@ -8,6 +8,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,6 +45,9 @@ func testReadAll(t *testing.T, r io.Reader, readSize int) ([]byte, error) {
 	buf := make([]byte, readSize)
 	for {
 		n, err := r.Read(buf)
+		if err == nil {
+			assert.Equal(t, readSize, n)
+		}
 		out = append(out, buf[:n]...)
 		if err != nil {
 			return out, err
