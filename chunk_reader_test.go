@@ -92,3 +92,21 @@ func TestChunkReader(t *testing.T) {
 		}
 	}
 }
+
+func TestChunkReaderEmptyRead(t *testing.T) {
+	s := "hello world"
+	chunker := chunkString(s, 5, io.EOF)
+	r := newChunkReader(chunker)
+
+	n, err := r.Read(nil)
+	require.NoError(t, err)
+	require.Equal(t, 0, n)
+
+	out, err := testReadAll(t, r, 1)
+	require.Equal(t, io.EOF, err)
+	require.Equal(t, s, string(out))
+
+	n, err = r.Read(nil)
+	require.Equal(t, io.EOF, err)
+	require.Equal(t, 0, n)
+}
