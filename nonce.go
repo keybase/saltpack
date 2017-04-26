@@ -60,7 +60,7 @@ func nonceForMACKeyBoxV2(headerHash headerHash, ephemeral bool, recip uint64) No
 	return n
 }
 
-// Construct the nonce for the ith block of signing payload.
+// Construct the nonce for the ith block of encryption payload.
 func nonceForChunkSecretBox(i encryptionBlockNumber) Nonce {
 	var n Nonce
 	copyEqualSizeStr(n[0:16], "saltpack_ploadsb")
