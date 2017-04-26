@@ -250,14 +250,15 @@ func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, cip
 	return sliceToByte64(h)
 }
 
-// computeSigncryptionSignatureInput computes the data to be signed in
-// signcryption mode.
-//
-// NOTE: we rely on the nonce containing both the headerHash and the
-// isFinal flag.
-func computeSigncryptionSignatureInput(nonce Nonce, chunkPlaintext []byte) []byte {
+func computeSigncryptionSignatureInput(headerHash headerHash, nonce Nonce, isFinal bool, chunkPlaintext []byte) []byte {
 	signatureInput := []byte(signatureEncryptedString)
+	signatureInput = append(signatureInput, headerHash[:]...)
 	signatureInput = append(signatureInput, nonce[:]...)
+	var isFinalByte byte
+	if isFinal {
+		isFinalByte = 1
+	}
+	signatureInput = append(signatureInput, isFinalByte)
 	plaintextHash := sha512.Sum512(chunkPlaintext)
 	signatureInput = append(signatureInput, plaintextHash[:]...)
 	return signatureInput

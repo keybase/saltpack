@@ -71,7 +71,7 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 	if sss.signingKey == nil {
 		detachedSig = make([]byte, ed25519.SignatureSize)
 	} else {
-		signatureInput := computeSigncryptionSignatureInput(nonce, plaintext)
+		signatureInput := computeSigncryptionSignatureInput(sss.headerHash, nonce, isFinal, plaintext)
 
 		var err error
 		detachedSig, err = sss.signingKey.Sign(signatureInput)
