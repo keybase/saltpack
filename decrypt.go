@@ -78,27 +78,26 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 		n, last, ds.err = ds.readBlock(b)
 		if ds.err != nil {
 			return 0, ds.err
+		} else if !last {
+			return n, nil
 		}
 
-		if last {
-			ds.state = stateEndOfStream
-			// If we've reached the end of the stream, but
-			// have data left (which only happens in V2),
-			// return so that the next call(s) will hit
-			// the case at the top, and then we'll hit the
-			// case below.
-			if len(ds.buf) > 0 {
-				switch ds.version.Major {
-				case 1:
-					panic(fmt.Sprintf("version=%s, last=true, len(ds.buf)=%d > 0", ds.version, len(ds.buf)))
-				case 2:
-					// Do nothing.
-				default:
-					panic(ErrBadVersion{ds.version})
-				}
-
-				return n, nil
+		ds.state = stateEndOfStream
+		// If we've reached the end of the stream, but have
+		// data left (which only happens in V2), return so
+		// that the next call(s) will hit the case at the top,
+		// and then we'll hit the case below.
+		if len(ds.buf) > 0 {
+			switch ds.version.Major {
+			case 1:
+				panic(fmt.Sprintf("version=%s, last=true, len(ds.buf)=%d > 0", ds.version, len(ds.buf)))
+			case 2:
+				// Do nothing.
+			default:
+				panic(ErrBadVersion{ds.version})
 			}
+
+			return n, nil
 		}
 	}
 
@@ -113,7 +112,7 @@ func (ds *decryptStream) read(b []byte) (n int, err error) {
 		}
 	}
 
-	return n, nil
+	panic(fmt.Sprintf("Should never get here: state=%v", ds.state))
 }
 
 func (ds *decryptStream) readHeader(rawReader io.Reader) error {
