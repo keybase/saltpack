@@ -207,8 +207,6 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
-// TODO: Use require in the below.
-
 func TestSigncryptionSinglePacket(t *testing.T) {
 	msg := make([]byte, encryptionBlockSize)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
@@ -222,23 +220,17 @@ func TestSigncryptionSinglePacket(t *testing.T) {
 
 	var headerBytes []byte
 	_, err = mps.Read(&headerBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var block signcryptionBlock
 
 	// Payload packet.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// Nothing else.
 	_, err = mps.Read(&block)
-	if err != io.EOF {
-		t.Fatalf("err=%v != io.EOF", err)
-	}
+	require.Equal(t, io.EOF, err)
 }
 
 // TODO: Add similar test for anonymous mode.
@@ -262,16 +254,12 @@ func TestSigncryptionSubsequence(t *testing.T) {
 
 	encode := func(e encoder, i interface{}) {
 		err = e.Encode(i)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}
 
 	var headerBytes []byte
 	_, err = mps.Read(&headerBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	encode(encoder1, headerBytes)
 	encode(encoder2, headerBytes)
@@ -280,18 +268,14 @@ func TestSigncryptionSubsequence(t *testing.T) {
 
 	// Payload packet 1.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	block.IsFinal = true
 	encode(encoder1, block)
 
 	// Payload packet 2.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	block.IsFinal = true
 	encode(encoder2, block)
