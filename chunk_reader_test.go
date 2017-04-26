@@ -5,6 +5,7 @@ package saltpack
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"testing"
 
@@ -64,5 +65,16 @@ func testChunkReader(t *testing.T, s string, chunkSize, readSize int, finalErr e
 }
 
 func TestChunkReader(t *testing.T) {
-	testChunkReader(t, "hello world", 2, 1, errors.New("test error"))
+	inputs := []string{
+		"hello world",
+		"",
+		"somewhat long string",
+	}
+	for _, input := range inputs {
+		// Capture range variable.
+		input := input
+		t.Run(fmt.Sprintf("input=%q", input), func(t *testing.T) {
+			testChunkReader(t, input, 2, 1, errors.New("test error"))
+		})
+	}
 }
