@@ -176,7 +176,7 @@ func getPayloadPacketLen(plaintextLen int) int {
 		bytesOverhead = 5
 	}
 	listOverhead := 1 // fixarray
-	boolOverhead := 1
+	boolOverhead := 1 // for IsFinal flag
 	return plaintextLen + ed25519.SignatureSize + poly1305.TagSize + bytesOverhead + listOverhead + boolOverhead
 }
 
