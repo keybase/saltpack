@@ -119,7 +119,7 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 	nonce := nonceForChunkSecretBox(es.numBlocks)
 	ciphertext := secretbox.Seal([]byte{}, plaintext, (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
 
-	assertEncodedChunkState(es.version, ciphertext, secretbox.Overhead, packetSeqno(es.numBlocks), isFinal)
+	assertEncodedChunkState(es.version, ciphertext, secretbox.Overhead, uint64(es.numBlocks), isFinal)
 
 	// Compute the digest to authenticate, and authenticate it for each
 	// recipient.

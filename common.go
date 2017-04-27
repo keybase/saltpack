@@ -287,13 +287,12 @@ func checkChunkState(version Version, chunkLen int, blockIndex uint64, isFinal b
 }
 
 // assertEncodedChunkState sanity-checks some encoded chunk parameters.
-func assertEncodedChunkState(version Version, encodedChunk []byte, encodingOverhead int, seqno packetSeqno, isFinal bool) {
+func assertEncodedChunkState(version Version, encodedChunk []byte, encodingOverhead int, blockIndex uint64, isFinal bool) {
 	if len(encodedChunk) < encodingOverhead {
 		panic("encodedChunk is too small")
 	}
 
-	// The first encoded block has seqno 0.
-	err := checkChunkState(version, len(encodedChunk)-encodingOverhead, uint64(seqno), isFinal)
+	err := checkChunkState(version, len(encodedChunk)-encodingOverhead, blockIndex, isFinal)
 	if err != nil {
 		panic(err)
 	}
@@ -303,5 +302,7 @@ func assertEncodedChunkState(version Version, encodedChunk []byte, encodingOverh
 // parameters. A returned error means there's something wrong with the
 // decoded stream.
 func checkDecodedChunkState(version Version, chunk []byte, seqno packetSeqno, isFinal bool) error {
+	// The first decoded block has seqno 1, since the header bytes
+	// are decoded first.
 	return checkChunkState(version, len(chunk), uint64(seqno-1), isFinal)
 }
