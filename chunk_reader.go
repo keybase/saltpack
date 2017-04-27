@@ -13,32 +13,6 @@ type chunker interface {
 	getNextChunk() ([]byte, error)
 }
 
-// getNextChunk should look like:
-//
-// func (c myChunker) getNextChunk() ([]byte, error) {
-//	var block myBlock
-//	seqno, err := c.mps.Read(&block) // c.mps is a *msgpackStream.
-//	if err != nil {
-//		// An EOF here is unexpected.
-//		if err == io.EOF {
-//			err = io.ErrUnexpectedEOF
-//		}
-//		return nil, err
-//	}
-//
-//	// If processBlock returns a non-nil error, plaintext should be empty.
-//	plaintext, err := c.processBlock(block..., seqno)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	// There should be nothing else after a final block.
-//	if block.IsFinal {
-//		err = assertEndOfStream(c.mps)
-//	}
-//	return plaintext, err
-// }
-
 // chunkReader is an io.Reader adaptor for chunker.
 type chunkReader struct {
 	chunker   chunker

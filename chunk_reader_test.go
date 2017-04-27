@@ -4,14 +4,91 @@
 package saltpack
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type exampleBlock struct {
+	PayloadCiphertext []byte
+	Seqno             packetSeqno
+	IsFinal           bool
+}
+
+type exampleChunker struct {
+	mps *msgpackStream
+}
+
+func (c exampleChunker) processBlock(block exampleBlock, seqno packetSeqno) ([]byte, error) {
+	// A real implementation would e.g. check a signature, decrypt
+	// ciphertext, etc.
+	if seqno != block.Seqno {
+		return nil, fmt.Errorf("expected seqno %d, got %d", seqno, block.Seqno)
+	}
+
+	plaintext := block.PayloadCiphertext
+	return plaintext, nil
+}
+
+func (c exampleChunker) getNextChunk() ([]byte, error) {
+	var block exampleBlock
+	seqno, err := c.mps.Read(&block)
+	if err != nil {
+		// An EOF here is unexpected.
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+		return nil, err
+	}
+
+	// If processBlock returns a non-nil error, plaintext should be empty.
+	plaintext, err := c.processBlock(block, seqno)
+	if err != nil {
+		return nil, err
+	}
+
+	// There should be nothing else after a final block.
+	if block.IsFinal {
+		err = assertEndOfStream(c.mps)
+	}
+	return plaintext, err
+}
+
+func exampleEncode(plaintext []byte) []byte {
+	buf := bytes.NewBuffer(nil)
+	encoder := newEncoder(buf)
+	for i := 0; i < len(plaintext); i++ {
+		block := exampleBlock{
+			PayloadCiphertext: plaintext[i : i+1],
+			Seqno:             packetSeqno(i),
+			IsFinal:           i == len(plaintext)-1,
+		}
+		encoder.Encode(block)
+	}
+	return buf.Bytes()
+}
+
+func ExampleStream() {
+	plaintext := "example plaintext"
+
+	encoded := exampleEncode([]byte(plaintext))
+	mps := newMsgpackStream(bytes.NewReader(encoded))
+	r := newChunkReader(exampleChunker{mps})
+
+	decoded, err := ioutil.ReadAll(r)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(decoded))
+	// Output: example plaintext
+}
 
 type testChunker struct {
 	t                *testing.T
