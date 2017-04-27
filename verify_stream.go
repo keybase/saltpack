@@ -4,13 +4,14 @@
 package saltpack
 
 import (
+	"errors"
 	"fmt"
 	"io"
 )
 
 type verifyStream struct {
 	version    Version
-	stream     *msgpackStream
+	mps        *msgpackStream
 	err        error
 	state      readState
 	buffer     []byte
@@ -21,7 +22,7 @@ type verifyStream struct {
 
 func newVerifyStream(versionValidator VersionValidator, r io.Reader, msgType MessageType) (*verifyStream, error) {
 	s := &verifyStream{
-		stream: newMsgpackStream(r),
+		mps: newMsgpackStream(r),
 	}
 	err := s.readHeader(versionValidator, msgType)
 	if err != nil {
@@ -86,7 +87,7 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 	}
 
 	if v.state == stateEndOfStream {
-		v.err = assertEndOfStream(v.stream)
+		v.err = assertEndOfStream(v.mps)
 		// If V2, we can fall through here with n > 0. Even if
 		// we have an error, we still want to return n, since
 		// those bytes are verified (by readBlock's
@@ -97,9 +98,35 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 	panic(fmt.Sprintf("Should never get here: state=%v", v.state))
 }
 
+func (v *verifyStream) getNextChunk() ([]byte, error) {
+	signature, chunk, isFinal, seqno, err := readSignatureBlock(v.version, v.mps)
+	if err != nil {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+		return nil, err
+	}
+
+	err = v.processBlock(signature, chunk, isFinal, seqno)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Ideally, we'd have a test exercising this case.
+	if len(chunk) == 0 && (seqno != 0 || !isFinal) {
+		return nil, errors.New("unexpected empty block")
+	}
+
+	if isFinal {
+		return chunk, assertEndOfStream(v.mps)
+	}
+
+	return chunk, nil
+}
+
 func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType MessageType) error {
 	var headerBytes []byte
-	_, err := v.stream.Read(&headerBytes)
+	_, err := v.mps.Read(&headerBytes)
 	if err != nil {
 		return err
 	}
@@ -154,7 +181,7 @@ func readSignatureBlock(version Version, mps *msgpackStream) (signature, payload
 // readBlock reads the next signature block and copies verified data
 // into p. If readBlock returns a non-nil error, then n will be 0.
 func (v *verifyStream) readBlock(p []byte) (n int, lastBlock bool, err error) {
-	signature, payloadChunk, isFinal, seqno, err := readSignatureBlock(v.version, v.stream)
+	signature, payloadChunk, isFinal, seqno, err := readSignatureBlock(v.version, v.mps)
 	if err != nil {
 		return 0, false, err
 	}
