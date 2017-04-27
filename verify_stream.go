@@ -39,7 +39,7 @@ func (v *verifyStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	err = checkChunkState(v.header.Version, chunk, uint64(seqno-1), isFinal)
+	err = checkChunkState(v.header.Version, chunk, seqno, isFinal)
 	if err != nil {
 		return nil, err
 	}
