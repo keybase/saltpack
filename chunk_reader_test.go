@@ -28,14 +28,18 @@ type exampleChunker struct {
 }
 
 func (c exampleChunker) processBlock(block exampleBlock, seqno packetSeqno) ([]byte, error) {
-	// A real implementation would e.g. check a signature, decrypt
-	// ciphertext, etc.
+	// A real implementation would check signatures, check MACs,
+	// decrypt ciphertext, etc.
 	if seqno != block.Seqno {
 		return nil, fmt.Errorf("expected seqno %d, got %d", seqno, block.Seqno)
 	}
 
-	plaintext := block.PayloadCiphertext
-	return plaintext, nil
+	// The "encryption" here is just bitwise negation.
+	chunk := make([]byte, len(block.PayloadCiphertext))
+	for i, b := range block.PayloadCiphertext {
+		chunk[i] = ^b
+	}
+	return chunk, nil
 }
 
 func (c exampleChunker) getNextChunk() ([]byte, error) {
@@ -49,17 +53,18 @@ func (c exampleChunker) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	// If processBlock returns a non-nil error, plaintext should be empty.
-	plaintext, err := c.processBlock(block, seqno)
+	// If processBlock returns a non-nil error, chunk should be empty.
+	chunk, err := c.processBlock(block, seqno)
 	if err != nil {
 		return nil, err
 	}
 
 	// There should be nothing else after a final block.
 	if block.IsFinal {
-		err = assertEndOfStream(c.mps)
+		return chunk, assertEndOfStream(c.mps)
 	}
-	return plaintext, err
+
+	return chunk, nil
 }
 
 func exampleEncode(plaintext []byte) []byte {
@@ -67,7 +72,8 @@ func exampleEncode(plaintext []byte) []byte {
 	encoder := newEncoder(buf)
 	for i := 0; i < len(plaintext); i++ {
 		block := exampleBlock{
-			PayloadCiphertext: plaintext[i : i+1],
+			// The "encryption" here is just bitwise negation.
+			PayloadCiphertext: []byte{^plaintext[i]},
 			Seqno:             packetSeqno(i),
 			IsFinal:           i == len(plaintext)-1,
 		}
