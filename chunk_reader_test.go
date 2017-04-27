@@ -29,6 +29,16 @@ type exampleChunker struct {
 	mps *msgpackStream
 }
 
+func newExampleChunker(mps *msgpackStream) exampleChunker {
+	var headerBytes []byte
+	_, err := mps.Read(&headerBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	return exampleChunker{mps}
+}
+
 func (c exampleChunker) processBlock(block exampleBlock, seqno packetSeqno) ([]byte, error) {
 	// A real implementation would check signatures, check MACs,
 	// decrypt ciphertext, etc.
@@ -78,13 +88,23 @@ func (c exampleChunker) getNextChunk() ([]byte, error) {
 func exampleEncode(plaintext []byte) []byte {
 	buf := bytes.NewBuffer(nil)
 	encoder := newEncoder(buf)
+	var headerBytes []byte
+	// A real implementation would encode the header into
+	// headerBytes.
+	err := encoder.Encode(headerBytes)
+	if err != nil {
+		panic(err)
+	}
 	for i := 0; i < len(plaintext); i++ {
 		block := exampleBlock{
 			PayloadCiphertext: []byte{^plaintext[i]},
-			Seqno:             packetSeqno(i),
+			Seqno:             packetSeqno(i + 1),
 			IsFinal:           i == len(plaintext)-1,
 		}
-		encoder.Encode(block)
+		err := encoder.Encode(block)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return buf.Bytes()
 }
@@ -94,7 +114,7 @@ func ExampleStream() {
 
 	encoded := exampleEncode([]byte(plaintext))
 	mps := newMsgpackStream(bytes.NewReader(encoded))
-	r := newChunkReader(exampleChunker{mps})
+	r := newChunkReader(newExampleChunker(mps))
 
 	decoded, err := ioutil.ReadAll(r)
 	if err != nil {
