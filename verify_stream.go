@@ -39,20 +39,9 @@ func (v *verifyStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	if len(chunk) == 0 {
-		switch v.header.Version.Major {
-		case 1:
-			if !isFinal {
-				return nil, ErrUnexpectedEmptyBlock
-			}
-		case 2:
-			// TODO: Ideally, we'd have a test exercising this case.
-			if seqno != 0 || !isFinal {
-				return nil, ErrUnexpectedEmptyBlock
-			}
-		default:
-			panic(ErrBadVersion{v.header.Version})
-		}
+	err = checkChunkState(v.header.Version, chunk, uint64(seqno-1), isFinal)
+	if err != nil {
+		return nil, err
 	}
 
 	if isFinal {
@@ -84,14 +73,6 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 }
 
 func readSignatureBlock(version Version, mps *msgpackStream) (signature, payloadChunk []byte, isFinal bool, seqno packetSeqno, err error) {
-	defer func() {
-		if err == nil {
-			// The header packet picks up the zero seqno,
-			// so subtract 1 to compensate for that.
-			seqno--
-		}
-	}()
-
 	switch version.Major {
 	case 1:
 		var sbV1 signatureBlockV1
@@ -115,5 +96,5 @@ func readSignatureBlock(version Version, mps *msgpackStream) (signature, payload
 }
 
 func (v *verifyStream) processBlock(signature, payloadChunk []byte, isFinal bool, seqno packetSeqno) error {
-	return v.publicKey.Verify(attachedSignatureInput(v.header.Version, v.headerHash, payloadChunk, seqno, isFinal), signature)
+	return v.publicKey.Verify(attachedSignatureInput(v.header.Version, v.headerHash, payloadChunk, seqno-1, isFinal), signature)
 }
