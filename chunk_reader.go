@@ -11,8 +11,7 @@ type chunker interface {
 }
 
 type chunkReader struct {
-	chunker chunker
-	// Invariant: If prevErr is non-nil, prevChunk is empty.
+	chunker   chunker
 	prevChunk []byte
 	prevErr   error
 }
