@@ -16,6 +16,8 @@ import (
 )
 
 type exampleBlock struct {
+	// The "encrypted" ciphertext is just the bitwise negation of
+	// the plaintext.
 	PayloadCiphertext []byte
 	Seqno             packetSeqno
 	IsFinal           bool
@@ -34,7 +36,6 @@ func (c exampleChunker) processBlock(block exampleBlock, seqno packetSeqno) ([]b
 		return nil, fmt.Errorf("expected seqno %d, got %d", seqno, block.Seqno)
 	}
 
-	// The "encryption" here is just bitwise negation.
 	chunk := make([]byte, len(block.PayloadCiphertext))
 	for i, b := range block.PayloadCiphertext {
 		chunk[i] = ^b
@@ -72,7 +73,6 @@ func exampleEncode(plaintext []byte) []byte {
 	encoder := newEncoder(buf)
 	for i := 0; i < len(plaintext); i++ {
 		block := exampleBlock{
-			// The "encryption" here is just bitwise negation.
 			PayloadCiphertext: []byte{^plaintext[i]},
 			Seqno:             packetSeqno(i),
 			IsFinal:           i == len(plaintext)-1,
