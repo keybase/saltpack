@@ -11,8 +11,8 @@ package saltpack
 type chunker interface {
 	// getNextChunk() returns a plaintext chunk with an error. If
 	// the chunk is empty, the error must be non-nil. Once
-	// getNextChunk() returns a non-nil error, it can assume that
-	// it will never be called again.
+	// getNextChunk() returns a non-nil error (which may be
+	// io.EOF), it can assume that it will never be called again.
 	getNextChunk() ([]byte, error)
 }
 
