@@ -24,7 +24,7 @@ func NewVerifyStream(versionValidator VersionValidator, r io.Reader, keyring Sig
 		return nil, nil, ErrNoSenderKey
 	}
 	s.publicKey = skey
-	return skey, s, nil
+	return skey, newChunkReader(s), nil
 }
 
 // Verify checks the signature in signedMsg. It returns the

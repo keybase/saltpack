@@ -31,16 +31,6 @@ func newVerifyStream(versionValidator VersionValidator, r io.Reader, msgType Mes
 	return s, nil
 }
 
-func (v *verifyStream) Read(p []byte) (n int, err error) {
-	for n == 0 && err == nil {
-		n, err = v.read(p)
-	}
-	if err == io.EOF && v.state != stateEndOfStream {
-		err = io.ErrUnexpectedEOF
-	}
-	return n, err
-}
-
 func (v *verifyStream) read(p []byte) (n int, err error) {
 	// Handle the case of a previous error. Just return the error again.
 	if v.err != nil {
