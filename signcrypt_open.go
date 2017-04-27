@@ -15,9 +15,7 @@ import (
 )
 
 type signcryptOpenStream struct {
-	mps *msgpackStream
-	err error
-
+	mps              *msgpackStream
 	payloadKey       *SymmetricKey
 	signingPublicKey SigningPublicKey
 	senderAnonymous  bool
@@ -27,10 +25,6 @@ type signcryptOpenStream struct {
 }
 
 func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
-	if sos.err != nil {
-		return nil, sos.err
-	}
-
 	var sb signcryptionBlock
 	seqno, err := sos.mps.Read(&sb)
 	if err != nil {
@@ -46,10 +40,9 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 	}
 
 	if sb.IsFinal {
-		sos.err = assertEndOfStream(sos.mps)
+		err = assertEndOfStream(sos.mps)
 	}
-
-	return plaintext, nil
+	return plaintext, err
 }
 
 func (sos *signcryptOpenStream) readHeader(mps *msgpackStream) error {
