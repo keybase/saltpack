@@ -142,3 +142,17 @@ func TestChunkReaderEmptyRead(t *testing.T) {
 	require.Equal(t, io.EOF, err)
 	require.Equal(t, 0, n)
 }
+
+type badChunker struct{}
+
+func (c badChunker) getNextChunk() ([]byte, error) {
+	return nil, nil
+}
+
+func TestChunkReaderBadChunker(t *testing.T) {
+	r := newChunkReader(badChunker{})
+
+	require.Panics(t, func() {
+		r.Read(nil)
+	})
+}

@@ -45,5 +45,8 @@ func (r *chunkReader) Read(p []byte) (n int, err error) {
 		}
 
 		r.prevChunk, r.prevErr = r.chunker.getNextChunk()
+		if len(r.prevChunk) == 0 && r.prevErr == nil {
+			panic("empty chunk and nil error")
+		}
 	}
 }
