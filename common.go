@@ -304,10 +304,6 @@ func SingleVersionValidator(desiredVersion Version) VersionValidator {
 	}
 }
 
-// checkSignatureState sanity-checks some signature parameters. When
-// called by the signer, a non-nil error should cause a panic, but
-// when called by the verifier, it should be treated as a regular
-// error.
 func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
 	makeErr := func() error {
 		return fmt.Errorf("invalid signature state: version=%s, len(chunk)=%d, isFinal=%t", version, len(chunk), isFinal)
@@ -340,6 +336,9 @@ func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
 	return nil
 }
 
+// checkChunkState sanity-checks some chunk parameters. When called by
+// encoders, a non-nil error should cause a panic, but when called by
+// decoders, it should be treated as a regular error.
 func checkChunkState(version Version, chunk []byte, seqno packetSeqno, isFinal bool) error {
 	switch version.Major {
 	case 1:
@@ -353,11 +352,11 @@ func checkChunkState(version Version, chunk []byte, seqno packetSeqno, isFinal b
 	case 2:
 		// TODO: Ideally, we'd have tests exercising this case.
 		//
-		// TODO: Make encoding and decoding agree on what
-		// seqno means -- encoding has the first block
-		// starting at seqno 0, whereas decoding has the first
-		// block starting at seqno 1 (since the header block
-		// has seqno 0).
+		// TODO: Make encoders and decoders agree on what
+		// seqno means -- encoders have the first block
+		// starting at seqno 0, whereas decoders have the
+		// first block starting at seqno 1 (since the header
+		// block has seqno 0).
 		if len(chunk) == 0 && (seqno != 1 || !isFinal) {
 			return ErrUnexpectedEmptyBlock
 		}
