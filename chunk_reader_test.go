@@ -139,8 +139,8 @@ func (c *testChunker) getNextChunk() ([]byte, error) {
 	}
 
 	if len(c.chunks) == 0 {
-		// c.errWithLastChunk can still be set here if call
-		// chunkString with the empty string.
+		// c.errWithLastChunk can still be set here if
+		// chunkString is called with the empty string.
 		c.finalErrHit = true
 		return nil, c.finalErr
 	}
