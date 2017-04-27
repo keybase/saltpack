@@ -294,3 +294,14 @@ func checkChunkState(version Version, chunk []byte, seqno packetSeqno, isFinal b
 
 	return nil
 }
+
+func checkEncodedChunkState(version Version, encodedChunk []byte, encodingOverhead int, seqno packetSeqno, isFinal bool) {
+	if len(encodedChunk) < encodingOverhead {
+		panic("encodedChunk is too small")
+	}
+
+	err := checkChunkState(version, encodedChunk[encodingOverhead:], seqno+1, isFinal)
+	if err != nil {
+		panic(err)
+	}
+}
