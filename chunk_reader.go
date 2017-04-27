@@ -28,16 +28,14 @@ func (r *chunkReader) Read(p []byte) (n int, err error) {
 			n += copied
 			r.prevChunk = r.prevChunk[copied:]
 			if len(r.prevChunk) > 0 {
-				break
+				return n, nil
 			}
 		}
 
 		if r.prevErr != nil {
-			break
+			return n, r.prevErr
 		}
 
 		r.prevChunk, r.prevErr = r.chunker.getNextChunk()
 	}
-
-	return n, r.prevErr
 }

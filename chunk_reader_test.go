@@ -14,21 +14,35 @@ import (
 )
 
 type testChunker struct {
-	chunks   [][]byte
-	finalErr error
+	t                *testing.T
+	chunks           [][]byte
+	finalErr         error
+	errWithLastChunk bool
+	finalErrHit      bool
 }
 
 func (c *testChunker) getNextChunk() ([]byte, error) {
+	if c.finalErrHit {
+		c.t.Fatal("getNextChunk() called with finalErrHit set")
+	}
+
 	if len(c.chunks) == 0 {
+		// c.errWithLastChunk can still be set here if call
+		// chunkString with the empty string.
+		c.finalErrHit = true
 		return nil, c.finalErr
 	}
 
 	chunk := c.chunks[0]
 	c.chunks = c.chunks[1:]
+	if c.errWithLastChunk && len(c.chunks) == 0 {
+		c.finalErrHit = true
+		return chunk, c.finalErr
+	}
 	return chunk, nil
 }
 
-func chunkString(s string, chunkSize int, finalErr error) *testChunker {
+func chunkString(t *testing.T, s string, chunkSize int, finalErr error, errWithLastChunk bool) *testChunker {
 	var chunks [][]byte
 	for len(s) > 0 {
 		n := chunkSize
@@ -38,7 +52,7 @@ func chunkString(s string, chunkSize int, finalErr error) *testChunker {
 		chunks = append(chunks, []byte(s[:n]))
 		s = s[n:]
 	}
-	return &testChunker{chunks, finalErr}
+	return &testChunker{t, chunks, finalErr, errWithLastChunk, false}
 }
 
 func testReadAll(t *testing.T, r io.Reader, readSize int) ([]byte, error) {
@@ -56,8 +70,8 @@ func testReadAll(t *testing.T, r io.Reader, readSize int) ([]byte, error) {
 	}
 }
 
-func testChunkReader(t *testing.T, s string, chunkSize, readSize int, finalErr error) {
-	chunker := chunkString(s, chunkSize, finalErr)
+func testChunkReader(t *testing.T, s string, chunkSize, readSize int, finalErr error, errWithLastChunk bool) {
+	chunker := chunkString(t, s, chunkSize, finalErr, errWithLastChunk)
 	r := newChunkReader(chunker)
 	out, err := testReadAll(t, r, readSize)
 	require.Equal(t, finalErr, err)
@@ -84,8 +98,11 @@ func TestChunkReader(t *testing.T) {
 					chunkSize := chunkSize
 					readSize := readSize
 					finalErr := err
-					t.Run(fmt.Sprintf("input=%q,chunkSize=%d,readSize=%d,finalErr=%v", input, chunkSize, readSize, finalErr), func(t *testing.T) {
-						testChunkReader(t, input, chunkSize, readSize, finalErr)
+					t.Run(fmt.Sprintf("input=%q,chunkSize=%d,readSize=%d,finalErr=%v,errWithLastChunk=false", input, chunkSize, readSize, finalErr), func(t *testing.T) {
+						testChunkReader(t, input, chunkSize, readSize, finalErr, false)
+					})
+					t.Run(fmt.Sprintf("input=%q,chunkSize=%d,readSize=%d,finalErr=%v,errWithLastChunk=true", input, chunkSize, readSize, finalErr), func(t *testing.T) {
+						testChunkReader(t, input, chunkSize, readSize, finalErr, true)
 					})
 				}
 			}
@@ -95,7 +112,7 @@ func TestChunkReader(t *testing.T) {
 
 func TestChunkReaderEmptyRead(t *testing.T) {
 	s := "hello world"
-	chunker := chunkString(s, 5, io.EOF)
+	chunker := chunkString(t, s, 5, io.EOF, false)
 	r := newChunkReader(chunker)
 
 	n, err := r.Read(nil)
