@@ -31,6 +31,7 @@ func (r *chunkReader) Read(p []byte) (n int, err error) {
 	// Copy data into p until it is full, or getNextChunk()
 	// returns a non-nil error.
 	for {
+		// Drain r.prevChunk first before checking for an error.
 		if len(r.prevChunk) > 0 {
 			copied := copy(p[n:], r.prevChunk)
 			n += copied
