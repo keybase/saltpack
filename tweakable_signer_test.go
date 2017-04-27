@@ -138,9 +138,7 @@ func (s *testSignStream) signBlock(isFinal bool) error {
 		return err
 	}
 
-	if err := checkChunkState(s.version, chunk, s.seqno+1, isFinal); err != nil {
-		panic(err)
-	}
+	assertEncodedChunkState(s.version, chunk, 0, s.seqno, isFinal)
 
 	sBlock := makeSignatureBlock(s.version, sig, chunk, isFinal)
 
