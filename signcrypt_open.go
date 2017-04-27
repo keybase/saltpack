@@ -39,9 +39,9 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	// TODO: Ideally, we'd have a test exercising this case.
-	if len(chunk) == 0 && (seqno != 1 || !sb.IsFinal) {
-		return nil, ErrUnexpectedEmptyBlock
+	err = checkChunkState(Version2(), chunk, uint64(seqno-1), sb.IsFinal)
+	if err != nil {
+		return nil, err
 	}
 
 	if sb.IsFinal {
