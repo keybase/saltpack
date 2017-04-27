@@ -62,7 +62,7 @@ func (c exampleChunker) getNextChunk() ([]byte, error) {
 
 	// An empty block must only happen with an empty message.
 	if len(block.PayloadCiphertext) == 0 && (block.Seqno != 0 || !block.IsFinal) {
-		return nil, errors.New("unexpected empty block")
+		return nil, ErrUnexpectedEmptyBlock
 	}
 
 	// There should be nothing else after a final block.

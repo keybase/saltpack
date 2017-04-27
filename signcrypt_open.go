@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
-	"errors"
 	"io"
 	"io/ioutil"
 
@@ -42,7 +41,7 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 
 	// TODO: Ideally, we'd have a test exercising this case.
 	if len(chunk) == 0 && (seqno != 1 || !sb.IsFinal) {
-		return nil, errors.New("unexpected empty block")
+		return nil, ErrUnexpectedEmptyBlock
 	}
 
 	if sb.IsFinal {

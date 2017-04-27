@@ -4,7 +4,6 @@
 package saltpack
 
 import (
-	"errors"
 	"fmt"
 	"io"
 )
@@ -104,7 +103,7 @@ func (v *verifyStream) getNextChunk() ([]byte, error) {
 
 	// TODO: Ideally, we'd have a test exercising this case.
 	if len(chunk) == 0 && (seqno != 0 || !isFinal) {
-		return nil, errors.New("unexpected empty block")
+		return nil, ErrUnexpectedEmptyBlock
 	}
 
 	if isFinal {
