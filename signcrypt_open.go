@@ -247,9 +247,7 @@ func NewSigncryptOpenStream(r io.Reader, keyring SigncryptKeyring, resolver Symm
 		return nil, nil, err
 	}
 
-	chunkReader := newChunkReader(sos)
-
-	return sos.signingPublicKey, chunkReader, nil
+	return sos.signingPublicKey, newChunkReader(sos), nil
 }
 
 type SymmetricKeyResolver interface {
