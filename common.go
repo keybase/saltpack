@@ -304,38 +304,6 @@ func SingleVersionValidator(desiredVersion Version) VersionValidator {
 	}
 }
 
-func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
-	makeErr := func() error {
-		return fmt.Errorf("invalid signature state: version=%s, len(chunk)=%d, isFinal=%t", version, len(chunk), isFinal)
-	}
-
-	switch version.Major {
-	case 1:
-		if (len(chunk) == 0) != isFinal {
-			return makeErr()
-		}
-
-	case 2:
-		// With V2, it's valid to have a final packet with
-		// non-empty chunk, so the below is the only remaining
-		// invalid state.
-		//
-		// TODO: Ideally, we'd disallow empty packets even
-		// with isFinal set, but we still want to allow
-		// signing an empty message. Plumb through an isFirst
-		// flag and change "!isFinal" to "!isFirst ||
-		// !isFinal".
-		if (len(chunk) == 0) && !isFinal {
-			return makeErr()
-		}
-
-	default:
-		panic(ErrBadVersion{version})
-	}
-
-	return nil
-}
-
 // checkChunkState sanity-checks some chunk parameters. When called by
 // encoders, a non-nil error should cause a panic, but when called by
 // decoders, it should be treated as a regular error.
