@@ -87,13 +87,6 @@ const cryptoAuthBytes = 32
 
 const cryptoAuthKeyBytes = 32
 
-type readState int
-
-const (
-	stateBody readState = iota
-	stateEndOfStream
-)
-
 func (m MessageType) String() string {
 	switch m {
 	case MessageTypeEncryption:
