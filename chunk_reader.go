@@ -3,13 +3,17 @@
 
 package saltpack
 
+// chunker is an interface for a type that emits a sequence of
+// plaintext chunks.
 type chunker interface {
-	// TODO: Add a condition that if getNextChunk() returns an
-	// empty chunk and a nil error on first call, the next call
-	// must return an empty chunk and a non-nil error.
+	// getNextChunk() returns a plaintext chunk with an error. If
+	// the chunk is empty, the error must be non-nil. Once
+	// getNextChunk() returns a non-nil error, it can assume that
+	// it will never be called again.
 	getNextChunk() ([]byte, error)
 }
 
+// chunkReader is an io.Reader adaptor for chunker.
 type chunkReader struct {
 	chunker   chunker
 	prevChunk []byte
@@ -21,17 +25,22 @@ func newChunkReader(chunker chunker) *chunkReader {
 }
 
 func (r *chunkReader) Read(p []byte) (n int, err error) {
+	// Copy data into p until it is full, or getNextChunk()
+	// returns a non-nil error.
 	for {
 		if len(r.prevChunk) > 0 {
 			copied := copy(p[n:], r.prevChunk)
 			n += copied
 			r.prevChunk = r.prevChunk[copied:]
 			if len(r.prevChunk) > 0 {
+				// p is full.
 				return n, nil
 			}
 		}
 
 		if r.prevErr != nil {
+			// r.prevChunk is fully drained, so return the
+			// error.
 			return n, r.prevErr
 		}
 
