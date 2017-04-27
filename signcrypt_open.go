@@ -35,7 +35,7 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	chunk, err := sos.processSigncryptionBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
+	chunk, err := sos.processBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (sos *signcryptOpenStream) processSigncryptionHeader(hdr *SigncryptionHeade
 	return nil
 }
 
-func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byte, isFinal bool, seqno packetSeqno) ([]byte, error) {
+func (sos *signcryptOpenStream) processBlock(payloadCiphertext []byte, isFinal bool, seqno packetSeqno) ([]byte, error) {
 
 	blockNum := encryptionBlockNumber(seqno - 1)
 
