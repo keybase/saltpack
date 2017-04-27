@@ -51,10 +51,10 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 	return chunk, nil
 }
 
-func (sos *signcryptOpenStream) readHeader(mps *msgpackStream) error {
+func (sos *signcryptOpenStream) readHeader() error {
 	// Read the header bytes.
 	headerBytes := []byte{}
-	seqno, err := mps.Read(&headerBytes)
+	seqno, err := sos.mps.Read(&headerBytes)
 	if err != nil {
 		return ErrFailedToReadHeaderBytes
 	}
@@ -237,17 +237,16 @@ func (sos *signcryptOpenStream) processBlock(payloadCiphertext []byte, isFinal b
 //
 func NewSigncryptOpenStream(r io.Reader, keyring SigncryptKeyring, resolver SymmetricKeyResolver) (senderPub SigningPublicKey, plaintext io.Reader, err error) {
 	sos := &signcryptOpenStream{
+		mps:      newMsgpackStream(r),
 		keyring:  keyring,
 		resolver: resolver,
 	}
 
-	mps := newMsgpackStream(r)
-	err = sos.readHeader(mps)
+	err = sos.readHeader()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sos.mps = mps
 	chunkReader := newChunkReader(sos)
 
 	return sos.signingPublicKey, chunkReader, nil
