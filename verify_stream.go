@@ -4,15 +4,11 @@
 package saltpack
 
 import (
-	"fmt"
 	"io"
 )
 
 type verifyStream struct {
 	mps        *msgpackStream
-	err        error
-	state      readState
-	buffer     []byte
 	header     *SignatureHeader
 	headerHash headerHash
 	publicKey  SigningPublicKey
@@ -27,63 +23,6 @@ func newVerifyStream(versionValidator VersionValidator, r io.Reader, msgType Mes
 		return nil, err
 	}
 	return s, nil
-}
-
-func (v *verifyStream) read(p []byte) (n int, err error) {
-	// Handle the case of a previous error. Just return the error again.
-	if v.err != nil {
-		return 0, v.err
-	}
-
-	// Handle the case first of a previous read that couldn't put
-	// all of its data into the outgoing buffer.
-	if len(v.buffer) > 0 {
-		n := copy(p, v.buffer)
-		v.buffer = v.buffer[n:]
-		return n, nil
-	}
-
-	// We have two states we can be in, but we can definitely fall
-	// through during one read, so be careful.
-
-	if v.state == stateBody {
-		var last bool
-		n, last, v.err = v.readBlock(p)
-		if v.err != nil {
-			return 0, v.err
-		} else if !last {
-			return n, nil
-		}
-
-		v.state = stateEndOfStream
-		// If we've reached the end of the stream, but have
-		// data left (which only happens in V2), return so
-		// that the next call(s) will hit the case at the top,
-		// and then we'll hit the case below.
-		if len(v.buffer) > 0 {
-			switch v.header.Version.Major {
-			case 1:
-				panic(fmt.Sprintf("version=%s, last=true, len(v.buffer)=%d > 0", v.header.Version, len(v.buffer)))
-			case 2:
-				// Do nothing.
-			default:
-				panic(ErrBadVersion{v.header.Version})
-			}
-
-			return n, nil
-		}
-	}
-
-	if v.state == stateEndOfStream {
-		v.err = assertEndOfStream(v.mps)
-		// If V2, we can fall through here with n > 0. Even if
-		// we have an error, we still want to return n, since
-		// those bytes are verified (by readBlock's
-		// post-condition).
-		return n, v.err
-	}
-
-	panic(fmt.Sprintf("Should never get here: state=%v", v.state))
 }
 
 func (v *verifyStream) getNextChunk() ([]byte, error) {
@@ -141,8 +80,6 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 	if err := header.validate(versionValidator, msgType); err != nil {
 		return err
 	}
-	v.header.Version = header.Version
-	v.state = stateBody
 	return nil
 }
 
@@ -175,24 +112,6 @@ func readSignatureBlock(version Version, mps *msgpackStream) (signature, payload
 	default:
 		panic(ErrBadVersion{version})
 	}
-}
-
-// readBlock reads the next signature block and copies verified data
-// into p. If readBlock returns a non-nil error, then n will be 0.
-func (v *verifyStream) readBlock(p []byte) (n int, lastBlock bool, err error) {
-	signature, payloadChunk, isFinal, seqno, err := readSignatureBlock(v.header.Version, v.mps)
-	if err != nil {
-		return 0, false, err
-	}
-
-	err = v.processBlock(signature, payloadChunk, isFinal, seqno)
-	if err != nil {
-		return 0, false, err
-	}
-
-	n = copy(p, payloadChunk)
-	v.buffer = payloadChunk[n:]
-	return n, isFinal, nil
 }
 
 func (v *verifyStream) processBlock(signature, payloadChunk []byte, isFinal bool, seqno packetSeqno) error {
