@@ -44,6 +44,43 @@ type MessageKeyInfo struct {
 	NumAnonReceivers int
 }
 
+func (ds *decryptStream) getNextChunk() ([]byte, error) {
+	ciphertext, authenticators, isFinal, seqno, err := readEncryptionBlock(ds.version, ds.mps)
+	if err != nil {
+		if err == io.EOF {
+			err = io.ErrUnexpectedEOF
+		}
+		return nil, err
+	}
+
+	chunk, err := ds.processEncryptionBlock(ciphertext, authenticators, isFinal, seqno)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(chunk) == 0 {
+		switch ds.version.Major {
+		case 1:
+			if !isFinal {
+				return nil, ErrUnexpectedEmptyBlock
+			}
+		case 2:
+			// TODO: Ideally, we'd have a test exercising this case.
+			if seqno != 0 || !isFinal {
+				return nil, ErrUnexpectedEmptyBlock
+			}
+		default:
+			panic(ErrBadVersion{ds.version})
+		}
+	}
+
+	if isFinal {
+		return chunk, assertEndOfStream(ds.mps)
+	}
+
+	return chunk, nil
+}
+
 func (ds *decryptStream) Read(b []byte) (n int, err error) {
 	for n == 0 && err == nil {
 		n, err = ds.read(b)
