@@ -21,6 +21,8 @@ type exampleBlock struct {
 	IsFinal           bool
 }
 
+// exampleChunker is an example implementation of chunker that real
+// implementations should follow pretty closely.
 type exampleChunker struct {
 	mps *msgpackStream
 }

@@ -5,6 +5,9 @@ package saltpack
 
 // chunker is an interface for a type that emits a sequence of
 // plaintext chunks.
+//
+// Implementations should follow exampleChunker in
+// chunk_reader_test.go pretty closely.
 type chunker interface {
 	// getNextChunk() returns a plaintext chunk with an error. If
 	// the chunk is empty, the error must be non-nil. Once
