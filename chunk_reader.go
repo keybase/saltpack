@@ -3,12 +3,7 @@
 
 package saltpack
 
-import "fmt"
-
 type chunker interface {
-	// If getNextChunk returns a non-nil error, the returned chunk
-	// must be empty.
-	//
 	// TODO: Add a condition that if getNextChunk() returns an
 	// empty chunk and a nil error on first call, the next call
 	// must return an empty chunk and a non-nil error.
@@ -27,7 +22,7 @@ func newChunkReader(chunker chunker) *chunkReader {
 }
 
 func (r *chunkReader) Read(p []byte) (n int, err error) {
-	for r.prevErr == nil {
+	for {
 		if len(r.prevChunk) > 0 {
 			copied := copy(p[n:], r.prevChunk)
 			n += copied
@@ -37,10 +32,11 @@ func (r *chunkReader) Read(p []byte) (n int, err error) {
 			}
 		}
 
-		r.prevChunk, r.prevErr = r.chunker.getNextChunk()
-		if len(r.prevChunk) > 0 && r.prevErr != nil {
-			panic(fmt.Sprintf("getNextChunk() returned buffer of size %d with err=%v", len(r.prevChunk), r.prevErr))
+		if r.prevErr != nil {
+			break
 		}
+
+		r.prevChunk, r.prevErr = r.chunker.getNextChunk()
 	}
 
 	return n, r.prevErr
