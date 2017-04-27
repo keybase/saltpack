@@ -13,7 +13,6 @@ import (
 	mathrand "math/rand"
 
 	"github.com/keybase/go-codec/codec"
-	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/poly1305"
 )
 
@@ -191,46 +190,6 @@ func sum512Truncate256(in []byte) [32]byte {
 	// different IVs.
 	sum512 := sha512.Sum512(in)
 	return sliceToByte32(sum512[:32])
-}
-
-// checkCiphertextState sanity-checks some ciphertext parameters. When
-// called by the encryptor, a non-nil error should cause a panic, but
-// when called by the decryptor, it should be treated as a regular
-// error.
-func checkCiphertextState(version Version, ciphertext []byte, isFinal bool) error {
-	makeErr := func() error {
-		return fmt.Errorf("invalid ciphertext state: version=%s, len(ciphertext)=%d, isFinal=%t", version, len(ciphertext), isFinal)
-	}
-
-	if len(ciphertext) < secretbox.Overhead {
-		return makeErr()
-	}
-
-	switch version.Major {
-	case 1:
-		if (len(ciphertext) == secretbox.Overhead) != isFinal {
-			return makeErr()
-		}
-
-	case 2:
-		// With V2, it's valid to have a final packet with
-		// non-empty plaintext, so the below is the only
-		// remaining invalid state.
-		//
-		// TODO: Ideally, we'd disallow empty packets even
-		// with isFinal set, but we still want to allow
-		// encrypting an empty message. Plumb through an
-		// isFirst flag and change "!isFinal" to "!isFirst ||
-		// !isFinal".
-		if (len(ciphertext) == secretbox.Overhead) && !isFinal {
-			return makeErr()
-		}
-
-	default:
-		panic(ErrBadVersion{version})
-	}
-
-	return nil
 }
 
 func computePayloadHash(version Version, headerHash headerHash, nonce Nonce, ciphertext []byte, isFinal bool) payloadHash {

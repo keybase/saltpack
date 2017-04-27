@@ -82,6 +82,10 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 		return err
 	}
 
+	if err := checkChunkState(pes.version, plaintext, packetSeqno(pes.numBlocks+1), isFinal); err != nil {
+		panic(err)
+	}
+
 	nonce := nonceForChunkSecretBox(pes.numBlocks)
 
 	if pes.options.corruptPayloadNonce != nil {
@@ -89,11 +93,6 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 	}
 
 	ciphertext := secretbox.Seal([]byte{}, plaintext, (*[24]byte)(&nonce), (*[32]byte)(&pes.payloadKey))
-
-	if err := checkCiphertextState(pes.version, ciphertext, isFinal); err != nil {
-		// We should always create valid ciphertext states.
-		panic(err)
-	}
 
 	if pes.options.corruptCiphertextBeforeHash != nil {
 		pes.options.corruptCiphertextBeforeHash(ciphertext, pes.numBlocks)

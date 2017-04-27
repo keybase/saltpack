@@ -63,6 +63,10 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 		return err
 	}
 
+	if err := checkChunkState(sss.version, plaintext, packetSeqno(sss.numBlocks+1), isFinal); err != nil {
+		panic(err)
+	}
+
 	nonce := nonceForChunkSigncryption(sss.headerHash, isFinal, sss.numBlocks)
 
 	// Handle regular signing mode and anonymous mode (where we don't actually
@@ -83,10 +87,6 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 	attachedSig := append(detachedSig, plaintext...)
 
 	ciphertext := secretbox.Seal([]byte{}, attachedSig, (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
-
-	if err := checkCiphertextState(sss.version, ciphertext, isFinal); err != nil {
-		panic(err)
-	}
 
 	block := signcryptionBlock{
 		PayloadCiphertext: ciphertext,
