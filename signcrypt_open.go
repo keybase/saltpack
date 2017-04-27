@@ -34,7 +34,7 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	plaintext, err := sos.processSigncryptionBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
+	chunk, err := sos.processSigncryptionBlock(sb.PayloadCiphertext, sb.IsFinal, seqno)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,8 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 	if sb.IsFinal {
 		err = assertEndOfStream(sos.mps)
 	}
-	return plaintext, err
+
+	return chunk, err
 }
 
 func (sos *signcryptOpenStream) readHeader(mps *msgpackStream) error {
@@ -214,10 +215,6 @@ func (sos *signcryptOpenStream) processSigncryptionBlock(payloadCiphertext []byt
 		}
 	}
 
-	// The encoding of the empty buffer implies the EOF.  But otherwise, all mechanisms are the same.
-	if len(chunkPlaintext) == 0 {
-		return nil, nil
-	}
 	return chunkPlaintext, nil
 }
 
