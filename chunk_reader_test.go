@@ -42,6 +42,8 @@ func (c *testChunker) getNextChunk() ([]byte, error) {
 	return chunk, nil
 }
 
+// chunkString chunks s up into pieces of size chunkSize, then returns
+// a testChunker to emit those chunks.
 func chunkString(t *testing.T, s string, chunkSize int, finalErr error, errWithLastChunk bool) *testChunker {
 	var chunks [][]byte
 	for len(s) > 0 {
@@ -55,13 +57,14 @@ func chunkString(t *testing.T, s string, chunkSize int, finalErr error, errWithL
 	return &testChunker{t, chunks, finalErr, errWithLastChunk, false}
 }
 
-func testReadAll(t *testing.T, r io.Reader, readSize int) ([]byte, error) {
+// readAll reads all data from r with the given buffer size.
+func readAll(t *testing.T, r io.Reader, bufSize int) ([]byte, error) {
 	var out []byte
-	buf := make([]byte, readSize)
+	buf := make([]byte, bufSize)
 	for {
 		n, err := r.Read(buf)
 		if err == nil {
-			assert.Equal(t, readSize, n)
+			assert.Equal(t, bufSize, n)
 		}
 		out = append(out, buf[:n]...)
 		if err != nil {
@@ -70,40 +73,52 @@ func testReadAll(t *testing.T, r io.Reader, readSize int) ([]byte, error) {
 	}
 }
 
-func testChunkReader(t *testing.T, s string, chunkSize, readSize int, finalErr error, errWithLastChunk bool) {
+func testChunkReader(t *testing.T, s string, chunkSize, bufSize int, finalErr error, errWithLastChunk bool) {
 	chunker := chunkString(t, s, chunkSize, finalErr, errWithLastChunk)
 	r := newChunkReader(chunker)
-	out, err := testReadAll(t, r, readSize)
+	out, err := readAll(t, r, bufSize)
 	require.Equal(t, finalErr, err)
 	require.Equal(t, s, string(out))
 }
 
 func TestChunkReader(t *testing.T) {
 	inputs := []string{
-		"hello world",
 		"",
+		"hello world",
 		"somewhat long string",
+		string(make([]byte, 1024)),
 	}
+
 	sizes := []int{1, 3, 5, 1024}
+
 	errs := []error{
 		errors.New("test error"),
 		io.EOF,
 	}
+
 	for _, input := range inputs {
 		for _, chunkSize := range sizes {
-			for _, readSize := range sizes {
-				for _, err := range errs {
-					// Capture range variables.
-					input := input
-					chunkSize := chunkSize
-					readSize := readSize
-					finalErr := err
-					t.Run(fmt.Sprintf("input=%q,chunkSize=%d,readSize=%d,finalErr=%v,errWithLastChunk=false", input, chunkSize, readSize, finalErr), func(t *testing.T) {
-						testChunkReader(t, input, chunkSize, readSize, finalErr, false)
-					})
-					t.Run(fmt.Sprintf("input=%q,chunkSize=%d,readSize=%d,finalErr=%v,errWithLastChunk=true", input, chunkSize, readSize, finalErr), func(t *testing.T) {
-						testChunkReader(t, input, chunkSize, readSize, finalErr, true)
-					})
+			for _, bufSize := range sizes {
+				for _, finalErr := range errs {
+					for _, errWithLastChunk := range []bool{false, true} {
+						// Capture range variables.
+						input := input
+						chunkSize := chunkSize
+						bufSize := bufSize
+						finalErr := finalErr
+						errWithLastChunk := errWithLastChunk
+
+						var inputName string
+						if len(input) > 5 {
+							inputName = fmt.Sprintf("string(%d)", len(input))
+						} else {
+							inputName = fmt.Sprintf("%q", input)
+						}
+						name := fmt.Sprintf("input=%s,chunkSize=%d,bufSize=%d,finalErr=%v,errWithLastChunk=%t", inputName, chunkSize, bufSize, finalErr, errWithLastChunk)
+						t.Run(name, func(t *testing.T) {
+							testChunkReader(t, input, chunkSize, bufSize, finalErr, errWithLastChunk)
+						})
+					}
 				}
 			}
 		}
@@ -119,7 +134,7 @@ func TestChunkReaderEmptyRead(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 0, n)
 
-	out, err := testReadAll(t, r, 1)
+	out, err := readAll(t, r, 1)
 	require.Equal(t, io.EOF, err)
 	require.Equal(t, s, string(out))
 
