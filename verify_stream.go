@@ -101,9 +101,20 @@ func (v *verifyStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	// TODO: Ideally, we'd have a test exercising this case.
-	if len(chunk) == 0 && (seqno != 0 || !isFinal) {
-		return nil, ErrUnexpectedEmptyBlock
+	if len(chunk) == 0 {
+		switch v.version.Major {
+		case 1:
+			if !isFinal {
+				return nil, ErrUnexpectedEmptyBlock
+			}
+		case 2:
+			// TODO: Ideally, we'd have a test exercising this case.
+			if seqno != 0 || !isFinal {
+				return nil, ErrUnexpectedEmptyBlock
+			}
+		default:
+			panic(ErrBadVersion{v.version})
+		}
 	}
 
 	if isFinal {
