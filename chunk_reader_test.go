@@ -36,16 +36,6 @@ func (c exampleChunker) processBlock(block exampleBlock, seqno packetSeqno) ([]b
 		return nil, fmt.Errorf("expected seqno %d, got %d", seqno, block.Seqno)
 	}
 
-	if len(block.PayloadCiphertext) == 0 {
-		if !block.IsFinal {
-			return nil, errors.New("non-final block with empty ciphertext")
-		}
-
-		if block.Seqno != 0 {
-			return nil, errors.New("non-initial block with empty ciphertext")
-		}
-	}
-
 	chunk := make([]byte, len(block.PayloadCiphertext))
 	for i, b := range block.PayloadCiphertext {
 		chunk[i] = ^b
@@ -64,13 +54,15 @@ func (c exampleChunker) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	// If processBlock returns a non-nil error, chunk must be
-	// empty. Also, if chunk is empty, either err must be non-nil,
-	// or block must be initial and final (i.e., Seqno=0 and
-	// IsFinal=true).
+	// If processBlock returns a non-nil error, chunk must be empty.
 	chunk, err := c.processBlock(block, seqno)
 	if err != nil {
 		return nil, err
+	}
+
+	// An empty block must only happen with an empty message.
+	if len(block.PayloadCiphertext) == 0 && (block.Seqno != 0 || !block.IsFinal) {
+		return nil, errors.New("unexpected empty block")
 	}
 
 	// There should be nothing else after a final block.

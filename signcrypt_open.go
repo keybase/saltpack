@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
+	"errors"
 	"io"
 	"io/ioutil"
 
@@ -39,11 +40,16 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	if sb.IsFinal {
-		err = assertEndOfStream(sos.mps)
+	// TODO: Ideally, we'd have a test exercising this case.
+	if len(chunk) == 0 && (seqno != 1 || !sb.IsFinal) {
+		return nil, errors.New("unexpected empty block")
 	}
 
-	return chunk, err
+	if sb.IsFinal {
+		return chunk, assertEndOfStream(sos.mps)
+	}
+
+	return chunk, nil
 }
 
 func (sos *signcryptOpenStream) readHeader(mps *msgpackStream) error {
