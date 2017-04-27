@@ -53,6 +53,11 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
+	err = checkCiphertextState(ds.version, ciphertext, isFinal)
+	if err != nil {
+		return nil, err
+	}
+
 	chunk, err := ds.processEncryptionBlock(ciphertext, authenticators, isFinal, seqno)
 	if err != nil {
 		return nil, err
@@ -66,7 +71,7 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 			}
 		case 2:
 			// TODO: Ideally, we'd have a test exercising this case.
-			if seqno != 0 || !isFinal {
+			if seqno != 1 || !isFinal {
 				return nil, ErrUnexpectedEmptyBlock
 			}
 		default:
@@ -79,16 +84,6 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 	}
 
 	return chunk, nil
-}
-
-func (ds *decryptStream) Read(b []byte) (n int, err error) {
-	for n == 0 && err == nil {
-		n, err = ds.read(b)
-	}
-	if err == io.EOF && ds.state != stateEndOfStream {
-		err = io.ErrUnexpectedEOF
-	}
-	return n, err
 }
 
 func (ds *decryptStream) read(b []byte) (n int, err error) {
@@ -424,7 +419,7 @@ func NewDecryptStream(versionValidator VersionValidator, r io.Reader, keyring Ke
 		return &ds.mki, nil, err
 	}
 
-	return &ds.mki, ds, nil
+	return &ds.mki, newChunkReader(ds), nil
 }
 
 // Open simply opens a ciphertext given the set of keys in the specified keyring.

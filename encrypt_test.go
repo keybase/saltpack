@@ -240,14 +240,13 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 	var res []byte
 	for eof := false; !eof; {
 		n, err := r.Read(buf)
-		if n == 0 || err == io.EOF {
-			eof = true
+		res = append(res, buf[:n]...)
+		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, buf[0:n]...)
 	}
 	return res, nil
 }
