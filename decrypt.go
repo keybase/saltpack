@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
-	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -19,11 +18,8 @@ type decryptStream struct {
 	version          Version
 	ring             Keyring
 	mps              *msgpackStream
-	err              error
-	state            readState
 	payloadKey       *SymmetricKey
 	senderKey        *RawBoxKey
-	buf              []byte
 	headerHash       headerHash
 	macKey           macKey
 	position         int
@@ -86,65 +82,6 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 	return chunk, nil
 }
 
-func (ds *decryptStream) read(b []byte) (n int, err error) {
-
-	// Handle the case of a previous error. Just return the error
-	// again.
-	if ds.err != nil {
-		return 0, ds.err
-	}
-
-	// Handle the case first of a previous read that couldn't put all
-	// of its data into the outgoing buffer.
-	if len(ds.buf) > 0 {
-		n = copy(b, ds.buf)
-		ds.buf = ds.buf[n:]
-		return n, nil
-	}
-
-	// We have two states we can be in, but we can definitely
-	// fall through during one read, so be careful.
-
-	if ds.state == stateBody {
-		var last bool
-		n, last, ds.err = ds.readBlock(b)
-		if ds.err != nil {
-			return 0, ds.err
-		} else if !last {
-			return n, nil
-		}
-
-		ds.state = stateEndOfStream
-		// If we've reached the end of the stream, but have
-		// data left (which only happens in V2), return so
-		// that the next call(s) will hit the case at the top,
-		// and then we'll hit the case below.
-		if len(ds.buf) > 0 {
-			switch ds.version.Major {
-			case 1:
-				panic(fmt.Sprintf("version=%s, last=true, len(ds.buf)=%d > 0", ds.version, len(ds.buf)))
-			case 2:
-				// Do nothing.
-			default:
-				panic(ErrBadVersion{ds.version})
-			}
-
-			return n, nil
-		}
-	}
-
-	if ds.state == stateEndOfStream {
-		ds.err = assertEndOfStream(ds.mps)
-		// If V2, we can fall through here with n > 0. Even if
-		// we have an error, we still want to return n, since
-		// those bytes are authenticated (by readBlock's
-		// post-condition).
-		return n, ds.err
-	}
-
-	panic(fmt.Sprintf("Should never get here: state=%v", ds.state))
-}
-
 func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 	// Read the header bytes.
 	headerBytes := []byte{}
@@ -165,7 +102,6 @@ func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	ds.state = stateBody
 	return nil
 }
 
@@ -190,33 +126,6 @@ func readEncryptionBlock(version Version, mps *msgpackStream) (ciphertext []byte
 	default:
 		panic(ErrBadVersion{version})
 	}
-}
-
-// readBlock reads the next encryption block and copies authenticated
-// data into p. If readBlock returns a non-nil error, then n will be
-// 0.
-func (ds *decryptStream) readBlock(b []byte) (n int, lastBlock bool, err error) {
-	ciphertext, authenticators, isFinal, seqno, err := readEncryptionBlock(ds.version, ds.mps)
-	if err != nil {
-		return 0, false, err
-	}
-
-	err = checkCiphertextState(ds.version, ciphertext, isFinal)
-	if err != nil {
-		return 0, false, err
-	}
-
-	plaintext, err := ds.processEncryptionBlock(ciphertext, authenticators, isFinal, seqno)
-	if err != nil {
-		return 0, false, err
-	}
-
-	// Copy as much as we can into the given outbuffer
-	n = copy(b, plaintext)
-	// Leave the remainder for a subsequent read
-	ds.buf = plaintext[n:]
-
-	return n, isFinal, nil
 }
 
 func (ds *decryptStream) tryVisibleReceivers(hdr *EncryptionHeader, ephemeralKey BoxPublicKey) (BoxSecretKey, *SymmetricKey, int, error) {
