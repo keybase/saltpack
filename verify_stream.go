@@ -9,7 +9,6 @@ import (
 )
 
 type verifyStream struct {
-	version    Version
 	mps        *msgpackStream
 	err        error
 	state      readState
@@ -62,13 +61,13 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 		// that the next call(s) will hit the case at the top,
 		// and then we'll hit the case below.
 		if len(v.buffer) > 0 {
-			switch v.version.Major {
+			switch v.header.Version.Major {
 			case 1:
-				panic(fmt.Sprintf("version=%s, last=true, len(v.buffer)=%d > 0", v.version, len(v.buffer)))
+				panic(fmt.Sprintf("version=%s, last=true, len(v.buffer)=%d > 0", v.header.Version, len(v.buffer)))
 			case 2:
 				// Do nothing.
 			default:
-				panic(ErrBadVersion{v.version})
+				panic(ErrBadVersion{v.header.Version})
 			}
 
 			return n, nil
@@ -88,7 +87,7 @@ func (v *verifyStream) read(p []byte) (n int, err error) {
 }
 
 func (v *verifyStream) getNextChunk() ([]byte, error) {
-	signature, chunk, isFinal, seqno, err := readSignatureBlock(v.version, v.mps)
+	signature, chunk, isFinal, seqno, err := readSignatureBlock(v.header.Version, v.mps)
 	if err != nil {
 		if err == io.EOF {
 			err = io.ErrUnexpectedEOF
@@ -102,7 +101,7 @@ func (v *verifyStream) getNextChunk() ([]byte, error) {
 	}
 
 	if len(chunk) == 0 {
-		switch v.version.Major {
+		switch v.header.Version.Major {
 		case 1:
 			if !isFinal {
 				return nil, ErrUnexpectedEmptyBlock
@@ -113,7 +112,7 @@ func (v *verifyStream) getNextChunk() ([]byte, error) {
 				return nil, ErrUnexpectedEmptyBlock
 			}
 		default:
-			panic(ErrBadVersion{v.version})
+			panic(ErrBadVersion{v.header.Version})
 		}
 	}
 
@@ -142,7 +141,7 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 	if err := header.validate(versionValidator, msgType); err != nil {
 		return err
 	}
-	v.version = header.Version
+	v.header.Version = header.Version
 	v.state = stateBody
 	return nil
 }
@@ -181,7 +180,7 @@ func readSignatureBlock(version Version, mps *msgpackStream) (signature, payload
 // readBlock reads the next signature block and copies verified data
 // into p. If readBlock returns a non-nil error, then n will be 0.
 func (v *verifyStream) readBlock(p []byte) (n int, lastBlock bool, err error) {
-	signature, payloadChunk, isFinal, seqno, err := readSignatureBlock(v.version, v.mps)
+	signature, payloadChunk, isFinal, seqno, err := readSignatureBlock(v.header.Version, v.mps)
 	if err != nil {
 		return 0, false, err
 	}
@@ -197,5 +196,5 @@ func (v *verifyStream) readBlock(p []byte) (n int, lastBlock bool, err error) {
 }
 
 func (v *verifyStream) processBlock(signature, payloadChunk []byte, isFinal bool, seqno packetSeqno) error {
-	return v.publicKey.Verify(attachedSignatureInput(v.version, v.headerHash, payloadChunk, seqno, isFinal), signature)
+	return v.publicKey.Verify(attachedSignatureInput(v.header.Version, v.headerHash, payloadChunk, seqno, isFinal), signature)
 }
