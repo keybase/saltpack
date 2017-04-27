@@ -165,10 +165,6 @@ func (s *signAttachedStream) signBlock(isFinal bool) error {
 	chunk := s.buffer.Next(signatureBlockSize)
 	checkSignBlockRead(s.version, isFinal, signatureBlockSize, len(chunk), s.buffer.Len())
 
-	if err := checkChunkState(s.version, chunk, s.seqno+1, isFinal); err != nil {
-		panic(err)
-	}
-
 	sig, err := s.computeSig(chunk, s.seqno, isFinal)
 	if err != nil {
 		return err

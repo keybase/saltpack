@@ -39,7 +39,7 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	err = checkChunkState(Version2(), chunk, seqno, sb.IsFinal)
+	err = checkDecodedChunkState(Version2(), chunk, seqno, sb.IsFinal)
 	if err != nil {
 		return nil, err
 	}

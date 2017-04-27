@@ -70,7 +70,7 @@ func (c exampleChunker) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	err = checkChunkState(Version2(), chunk, block.Seqno, block.IsFinal)
+	err = checkDecodedChunkState(Version2(), chunk, block.Seqno, block.IsFinal)
 	if err != nil {
 		return nil, err
 	}

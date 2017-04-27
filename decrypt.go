@@ -54,7 +54,7 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	err = checkChunkState(ds.version, chunk, seqno, isFinal)
+	err = checkDecodedChunkState(ds.version, chunk, seqno, isFinal)
 	if err != nil {
 		return nil, err
 	}

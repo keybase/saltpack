@@ -263,28 +263,19 @@ func SingleVersionValidator(desiredVersion Version) VersionValidator {
 	}
 }
 
-// checkChunkState sanity-checks some chunk parameters. When called by
-// encoders, a non-nil error should cause a panic, but when called by
-// decoders, it should be treated as a regular error.
-func checkChunkState(version Version, chunk []byte, seqno packetSeqno, isFinal bool) error {
+func checkChunkState(version Version, chunkLen int, blockIndex uint64, isFinal bool) error {
 	switch version.Major {
 	case 1:
 		// For V1, we derive isFinal from the chunk length, so
 		// if there's a mismatch, that's a bug and not a
 		// stream error.
-		if (len(chunk) == 0) != isFinal {
-			panic(fmt.Sprintf("len(chunk)=%d and isFinal=%t", len(chunk), isFinal))
+		if (chunkLen == 0) != isFinal {
+			panic(fmt.Sprintf("chunkLen=%d and isFinal=%t", chunkLen, isFinal))
 		}
 
 	case 2:
 		// TODO: Ideally, we'd have tests exercising this case.
-		//
-		// TODO: Make encoders and decoders agree on what
-		// seqno means -- encoders have the first block
-		// starting at seqno 0, whereas decoders have the
-		// first block starting at seqno 1 (since the header
-		// block has seqno 0).
-		if len(chunk) == 0 && (seqno != 1 || !isFinal) {
+		if (chunkLen == 0) && (blockIndex != 0 || !isFinal) {
 			return ErrUnexpectedEmptyBlock
 		}
 
@@ -295,13 +286,22 @@ func checkChunkState(version Version, chunk []byte, seqno packetSeqno, isFinal b
 	return nil
 }
 
+// assertEncodedChunkState sanity-checks some encoded chunk parameters.
 func assertEncodedChunkState(version Version, encodedChunk []byte, encodingOverhead int, seqno packetSeqno, isFinal bool) {
 	if len(encodedChunk) < encodingOverhead {
 		panic("encodedChunk is too small")
 	}
 
-	err := checkChunkState(version, encodedChunk[encodingOverhead:], seqno+1, isFinal)
+	// The first encoded block has seqno 0.
+	err := checkChunkState(version, len(encodedChunk)-encodingOverhead, uint64(seqno), isFinal)
 	if err != nil {
 		panic(err)
 	}
+}
+
+// checkDecodedChunkState sanity-checks some decoded chunk
+// parameters. A returned error means there's something wrong with the
+// decoded stream.
+func checkDecodedChunkState(version Version, chunk []byte, seqno packetSeqno, isFinal bool) error {
+	return checkChunkState(version, len(chunk), uint64(seqno-1), isFinal)
 }
