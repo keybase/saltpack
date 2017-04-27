@@ -49,30 +49,14 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	err = checkCiphertextState(ds.version, ciphertext, isFinal)
-	if err != nil {
-		return nil, err
-	}
-
 	chunk, err := ds.processEncryptionBlock(ciphertext, authenticators, isFinal, seqno)
 	if err != nil {
 		return nil, err
 	}
 
-	switch ds.version.Major {
-	case 1:
-		if len(chunk) == 0 && !isFinal {
-			return nil, ErrUnexpectedEmptyBlock
-		} else if len(chunk) != 0 && isFinal {
-			return nil, ErrUnexpectedNonEmptyFinalBlockV1
-		}
-	case 2:
-		// TODO: Ideally, we'd have a test exercising this case.
-		if len(chunk) == 0 && (seqno != 1 || !isFinal) {
-			return nil, ErrUnexpectedEmptyBlock
-		}
-	default:
-		panic(ErrBadVersion{ds.version})
+	err = checkChunkState(ds.version, chunk, uint64(seqno-1), isFinal)
+	if err != nil {
+		return nil, err
 	}
 
 	if isFinal {

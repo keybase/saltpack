@@ -339,3 +339,26 @@ func checkSignatureState(version Version, chunk []byte, isFinal bool) error {
 
 	return nil
 }
+
+func checkChunkState(version Version, chunk []byte, blockIndex uint64, isFinal bool) error {
+	switch version.Major {
+	case 1:
+		// For V1, we derive isFinal from the chunk length, so
+		// if there's a mismatch, that's a bug and not a
+		// stream error.
+		if len(chunk) == 0 != isFinal {
+			panic(fmt.Sprintf("len(chunk)=%d and isFinal=%t", len(chunk), isFinal))
+		}
+
+	case 2:
+		// TODO: Ideally, we'd have tests exercising this case.
+		if len(chunk) == 0 && (blockIndex != 0 || !isFinal) {
+			return ErrUnexpectedEmptyBlock
+		}
+
+	default:
+		panic(ErrBadVersion{version})
+	}
+
+	return nil
+}
