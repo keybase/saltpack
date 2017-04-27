@@ -170,7 +170,7 @@ func (s *signAttachedStream) signBlock(isFinal bool) error {
 		return err
 	}
 
-	if err := checkSignatureState(s.version, chunk, isFinal); err != nil {
+	if err := checkChunkState(s.version, chunk, s.seqno+1, isFinal); err != nil {
 		panic(err)
 	}
 

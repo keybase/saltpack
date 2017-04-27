@@ -352,6 +352,12 @@ func checkChunkState(version Version, chunk []byte, seqno packetSeqno, isFinal b
 
 	case 2:
 		// TODO: Ideally, we'd have tests exercising this case.
+		//
+		// TODO: Make encoding and decoding agree on what
+		// seqno means -- encoding has the first block
+		// starting at seqno 0, whereas decoding has the first
+		// block starting at seqno 1 (since the header block
+		// has seqno 0).
 		if len(chunk) == 0 && (seqno != 1 || !isFinal) {
 			return ErrUnexpectedEmptyBlock
 		}
