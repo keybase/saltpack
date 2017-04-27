@@ -59,20 +59,20 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 		return nil, err
 	}
 
-	if len(chunk) == 0 {
-		switch ds.version.Major {
-		case 1:
-			if !isFinal {
-				return nil, ErrUnexpectedEmptyBlock
-			}
-		case 2:
-			// TODO: Ideally, we'd have a test exercising this case.
-			if seqno != 1 || !isFinal {
-				return nil, ErrUnexpectedEmptyBlock
-			}
-		default:
-			panic(ErrBadVersion{ds.version})
+	switch ds.version.Major {
+	case 1:
+		if len(chunk) == 0 && !isFinal {
+			return nil, ErrUnexpectedEmptyBlock
+		} else if len(chunk) != 0 && isFinal {
+			return nil, ErrUnexpectedNonEmptyFinalBlockV1
 		}
+	case 2:
+		// TODO: Ideally, we'd have a test exercising this case.
+		if len(chunk) == 0 && (seqno != 1 || !isFinal) {
+			return nil, ErrUnexpectedEmptyBlock
+		}
+	default:
+		panic(ErrBadVersion{ds.version})
 	}
 
 	if isFinal {

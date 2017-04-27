@@ -67,6 +67,10 @@ var (
 	// the same length as the identifiers list.
 	ErrWrongNumberOfKeys = errors.New("wrong number of resolved keys")
 
+	// ErrUnexpectedNonEmptyFinalBlockV1 is returned when a
+	// non-empty final block in a V1 stream.
+	ErrUnexpectedNonEmptyFinalBlockV1 = errors.New("unexpected non-empty final block (V1)")
+
 	// ErrUnexpectedEmptyBlock is returned when an empty block is
 	// encountered that isn't both the last one and the first one
 	// (for V2 and higher), or isn't the last one (for V1).
