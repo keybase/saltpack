@@ -54,7 +54,7 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 func (sos *signcryptOpenStream) readHeader() error {
 	// Read the header bytes.
 	headerBytes := []byte{}
-	seqno, err := sos.mps.Read(&headerBytes)
+	_, err := sos.mps.Read(&headerBytes)
 	if err != nil {
 		return ErrFailedToReadHeaderBytes
 	}
@@ -66,7 +66,6 @@ func (sos *signcryptOpenStream) readHeader() error {
 	if err != nil {
 		return err
 	}
-	header.seqno = seqno
 	err = sos.processHeader(&header)
 	if err != nil {
 		return err

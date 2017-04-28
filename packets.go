@@ -38,7 +38,6 @@ type EncryptionHeader struct {
 	Ephemeral       []byte         `codec:"ephemeral"`
 	SenderSecretbox []byte         `codec:"sendersecretbox"`
 	Receivers       []receiverKeys `codec:"rcvrs"`
-	seqno           packetSeqno
 }
 
 // encryptionBlockV1 contains a block of encrypted data. It contains

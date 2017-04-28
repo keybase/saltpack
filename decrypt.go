@@ -69,7 +69,7 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 	// Read the header bytes.
 	headerBytes := []byte{}
-	seqno, err := ds.mps.Read(&headerBytes)
+	_, err := ds.mps.Read(&headerBytes)
 	if err != nil {
 		return ErrFailedToReadHeaderBytes
 	}
@@ -81,7 +81,6 @@ func (ds *decryptStream) readHeader(rawReader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	header.seqno = seqno
 	err = ds.processHeader(&header)
 	if err != nil {
 		return err
