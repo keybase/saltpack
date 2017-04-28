@@ -55,7 +55,7 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 	var headerBytes []byte
 	_, err := v.mps.Read(&headerBytes)
 	if err != nil {
-		return err
+		return ErrFailedToReadHeaderBytes
 	}
 
 	v.headerHash = hashHeader(headerBytes)
@@ -65,10 +65,11 @@ func (v *verifyStream) readHeader(versionValidator VersionValidator, msgType Mes
 	if err != nil {
 		return err
 	}
-	v.header = &header
 	if err := header.validate(versionValidator, msgType); err != nil {
 		return err
 	}
+
+	v.header = &header
 	return nil
 }
 
