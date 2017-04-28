@@ -67,7 +67,7 @@ func (sos *signcryptOpenStream) readHeader() error {
 		return err
 	}
 	header.seqno = seqno
-	err = sos.processSigncryptionHeader(&header)
+	err = sos.processHeader(&header)
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func (sos *signcryptOpenStream) trySharedSymmetricKeys(hdr *SigncryptionHeader, 
 	return nil, nil
 }
 
-func (sos *signcryptOpenStream) processSigncryptionHeader(hdr *SigncryptionHeader) error {
+func (sos *signcryptOpenStream) processHeader(hdr *SigncryptionHeader) error {
 	if err := hdr.validate(); err != nil {
 		return err
 	}
