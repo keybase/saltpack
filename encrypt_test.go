@@ -1108,9 +1108,7 @@ func testCorruptHeader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err == nil || err.Error() != "only encoded map or array can be decoded into a struct" {
-		t.Fatalf("wanted a msgpack decode error")
-	}
+	requireErrSuffix(t, err, "only encoded map or array can be decoded into a struct")
 }
 
 func testNoSenderKey(t *testing.T, version Version) {

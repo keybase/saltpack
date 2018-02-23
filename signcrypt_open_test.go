@@ -29,7 +29,7 @@ func TestDecryptErrorAtEOF(t *testing.T) {
 	require.NoError(t, err)
 
 	msg, err := ioutil.ReadAll(stream)
-	require.Equal(t, errAtEOF, err)
+	requireErrSuffix(t, err, errAtEOF.Error())
 
 	// Since the bytes are still authenticated, the decrypted
 	// message should still compare equal to the original input.

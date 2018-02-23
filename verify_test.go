@@ -160,9 +160,7 @@ func testVerifyErrorAtEOF(t *testing.T, version Version) {
 	}
 
 	msg, err := ioutil.ReadAll(stream)
-	if err != errAtEOF {
-		t.Fatalf("err=%v != errAtEOF=%v", err, errAtEOF)
-	}
+	requireErrSuffix(t, err, errAtEOF.Error())
 
 	// Since the bytes are still verified, the verified message
 	// should still compare equal to the original input.

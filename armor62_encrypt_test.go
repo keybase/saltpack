@@ -78,7 +78,7 @@ func testNewlineInFrame(t *testing.T, version Version) {
 	plaintext, ciphertext := encryptArmor62RandomData(t, version, 1024)
 
 	//newline space space tab space
-	ss := []string{"\n\n>   ", ciphertext[0:10], "\n  	 ", ciphertext[11:]}
+	ss := []string{"\n\n>   ", ciphertext[0:10], "\n	 ", ciphertext[11:]}
 	ciphertext = strings.Join(ss, "")
 
 	_, plaintext2, brand, err := Dearmor62DecryptOpen(SingleVersionValidator(version), ciphertext, kr)
@@ -118,9 +118,7 @@ func testBadArmor62(t *testing.T, version Version) {
 
 	bad4 := ciphertext + "䁕"
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad4, kr)
-	if err != ErrTrailingGarbage {
-		t.Fatalf("Wanted error %v but got %v", ErrTrailingGarbage, err)
-	}
+	requireErrSuffix(t, err, ErrTrailingGarbage.Error())
 
 	bad5 := ciphertext[0:(l-8)] + "䁕" + ciphertext[(l-7):]
 	_, _, _, err = Armor62Open(bad5)
