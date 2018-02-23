@@ -294,7 +294,9 @@ func NewSigncryptSealStream(ciphertext io.Writer, keyring Keyring, sender Signin
 	return sss, err
 }
 
-// Seal a plaintext from the given sender, for the specified receiver groups.
+// SigncryptSeal seals a plaintext from the given sender, for the
+// specified receiver groups.
+//
 // Returns a ciphertext, or an error if something bad happened.
 func SigncryptSeal(plaintext []byte, keyring Keyring, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) (out []byte, err error) {
 	var buf bytes.Buffer
