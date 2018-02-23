@@ -28,15 +28,20 @@ const MessageTypeDetachedSignature MessageType = 2
 // signcrypted message.
 const MessageTypeSigncryption MessageType = 3
 
+// Version1 returns the Version for Saltpack V1.
 func Version1() Version {
 	return Version{Major: 1, Minor: 0}
 }
+
+// Version2 returns the Version for Saltpack V2.
 func Version2() Version {
 	return Version{Major: 2, Minor: 0}
 }
 
+// CurrentVersion returns the Version for the currently-used Saltpack
+// version.
 func CurrentVersion() Version {
-	return Version1()
+	return Version2()
 }
 
 func KnownVersions() []Version {
