@@ -14,6 +14,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/nacl/box"
 )
 
@@ -191,9 +192,7 @@ func (b boxSecretKey) IsNull() bool { return !b.isInit }
 
 func newHiddenBoxKeyNoInsert(t *testing.T) BoxSecretKey {
 	ret, err := (boxPublicKey{hide: true}).CreateEphemeralKey()
-	if err != nil {
-		t.Fatalf("In gen key: %s", err)
-	}
+	require.NoError(t, err)
 	return ret
 }
 
@@ -205,9 +204,7 @@ func newHiddenBoxKey(t *testing.T) BoxSecretKey {
 
 func newBoxKeyNoInsert(t *testing.T) BoxSecretKey {
 	ret, err := (boxPublicKey{}).CreateEphemeralKey()
-	if err != nil {
-		t.Fatalf("In gen key: %s", err)
-	}
+	require.NoError(t, err)
 	return ret
 }
 
@@ -225,9 +222,8 @@ func newBoxKeyBlacklistPublic(t *testing.T) BoxSecretKey {
 
 func randomMsg(t *testing.T, sz int) []byte {
 	out := make([]byte, sz)
-	if _, err := rand.Read(out); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(out)
+	require.NoError(t, err)
 	return out
 }
 
@@ -281,6 +277,11 @@ func getEncryptReceiverOrder(receivers []BoxPublicKey) []int {
 	return order
 }
 
+func requireValidNonTrivialPermutation(t *testing.T, count int, shuffledOrder []int) {
+	t.Helper()
+	require.True(t, isValidNonTrivialPermutation(count, shuffledOrder), "shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
+}
+
 func TestShuffleEncryptReceivers(t *testing.T) {
 	receiverCount := 20
 	var receivers []BoxPublicKey
@@ -294,9 +295,7 @@ func TestShuffleEncryptReceivers(t *testing.T) {
 	shuffled := shuffleEncryptReceivers(receivers)
 
 	shuffledOrder := getEncryptReceiverOrder(shuffled)
-	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
-		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
-	}
+	requireValidNonTrivialPermutation(t, receiverCount, shuffledOrder)
 }
 
 func getEncryptReceiverKeysOrder(receiverKeys []receiverKeys) []int {
@@ -322,25 +321,17 @@ func testNewEncryptStreamShuffledReaders(t *testing.T, version Version) {
 	}
 	var ciphertext bytes.Buffer
 	_, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var headerBytes []byte
 	err = decodeFromBytes(&headerBytes, ciphertext.Bytes())
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	var header EncryptionHeader
 	err = decodeFromBytes(&header, headerBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	shuffledOrder := getEncryptReceiverKeysOrder(header.Receivers)
-	if !isValidNonTrivialPermutation(receiverCount, shuffledOrder) {
-		t.Fatalf("shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
-	}
+	requireValidNonTrivialPermutation(t, receiverCount, shuffledOrder)
 }
 
 func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPublicKey, opts *options) {
@@ -351,20 +342,14 @@ func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPub
 	}
 	strm, err := newTestEncryptStream(version, &ciphertext, sndr, receivers,
 		testEncryptionOptions{blockSize: 1024})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err = strm.Write(msg); err != nil {
-		t.Fatal(err)
-	}
-	if err = strm.Close(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	_, err = strm.Write(msg)
+	require.NoError(t, err)
+	err = strm.Close()
+	require.NoError(t, err)
 
 	_, plaintextStream, err := NewDecryptStream(SingleVersionValidator(version), &ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var plaintext []byte
 	if opts != nil && opts.readSize != 0 {
@@ -372,12 +357,8 @@ func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPub
 	} else {
 		plaintext, err = ioutil.ReadAll(plaintextStream)
 	}
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(plaintext, msg) {
-		t.Fatalf("decryption mismatch: %x != %x", plaintext, msg)
-	}
+	require.NoError(t, err)
+	require.Equal(t, msg, plaintext)
 }
 
 func testEmptyEncryptionOneReceiver(t *testing.T, version Version) {
