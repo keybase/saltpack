@@ -44,6 +44,7 @@ func CurrentVersion() Version {
 	return Version2()
 }
 
+// KnownVersions returns all known Saltpack versions.
 func KnownVersions() []Version {
 	return []Version{Version1(), Version2()}
 }
