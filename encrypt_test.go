@@ -1358,3 +1358,30 @@ func TestEncrypt(t *testing.T) {
 	}
 	runTestsOverVersions(t, "test", tests)
 }
+
+func TestHardcodedEncryptMessageV1(t *testing.T) {
+	// The test message
+	msg := []byte("The Magic Words are Squeamish Ossifrage")
+
+	// Make a secret key for the sender
+	sender := newBoxKey(t)
+
+	// And one for the receiver
+	receiver := newBoxKey(t)
+
+	// AllReceivers can contain more receivers (like the sender)
+	// but for now, just the one.
+	allReceivers := []BoxPublicKey{receiver.GetPublicKey()}
+	ciphertext, err := EncryptArmor62Seal(CurrentVersion(), msg, sender, allReceivers, "")
+	require.NoError(t, err)
+
+	// Make a new Keyring, initialized to be empty
+	keyring := newKeyring()
+	keyring.insert(receiver)
+
+	// The decrypted message should match the input mesasge.
+	_, msg2, _, err := Dearmor62DecryptOpen(CheckKnownMajorVersion, ciphertext, keyring)
+	require.NoError(t, err)
+
+	require.Equal(t, msg, msg2)
+}
