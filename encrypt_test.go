@@ -1306,9 +1306,7 @@ func TestEncryptSubsequenceV1(t *testing.T) {
 
 	encode := func(e encoder, i interface{}) {
 		err = e.Encode(i)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}
 
 	var headerBytes []byte
@@ -1380,9 +1378,7 @@ func TestEncryptSubsequenceV2(t *testing.T) {
 
 	encode := func(e encoder, i interface{}) {
 		err = e.Encode(i)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	}
 
 	var headerBytes []byte
