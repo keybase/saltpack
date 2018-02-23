@@ -741,11 +741,7 @@ func testCorruptSenderSecretboxPlaintext(t *testing.T, version Version) {
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if mm, ok := err.(ErrBadTag); !ok {
-		t.Fatalf("Got wrong error; wanted 'Bad Tag' but got %v", err)
-	} else if int(mm) != 1 {
-		t.Fatalf("Wanted a failure in packet %d but got %d", 1, mm)
-	}
+	require.Equal(t, ErrBadTag(1), err)
 
 	// Also try truncating the sender key. This should hit the bad length
 	// check.
@@ -824,11 +820,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	})
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if mm, ok := err.(ErrBadTag); !ok {
-		t.Fatalf("Got wrong error; wanted 'Bad Ciphertext' but got %v", err)
-	} else if int(mm) != 3 {
-		t.Fatalf("Wanted a failure in packet %d but got %d", 3, mm)
-	}
+	require.Equal(t, ErrBadTag(3), err)
 
 	// Next check that a corruption of the Poly1305 tags causes a failure
 	ciphertext, err = testSeal(version, msg, sender, receivers, testEncryptionOptions{
@@ -842,11 +834,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	})
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if mm, ok := err.(ErrBadTag); !ok {
-		t.Fatalf("Got wrong error; wanted 'Bad Tag; failed Poly1305' but got %v", err)
-	} else if int(mm) != 3 {
-		t.Fatalf("Wanted a failure in packet %d but got %d", 3, mm)
-	}
+	require.Equal(t, ErrBadTag(3), err)
 
 	// Next check what happens if we swap nonces for blocks 0 and 1
 	msg = randomMsg(t, 1024*2-1)
@@ -864,11 +852,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	})
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if emm, ok := err.(ErrBadTag); !ok {
-		t.Fatalf("Expected a 'bad tag' error but got %v", err)
-	} else if int(emm) != 1 {
-		t.Fatalf("Wanted error packet %d but got %d", 1, emm)
-	}
+	require.Equal(t, ErrBadTag(1), err)
 }
 
 func testCorruptButAuthenticPayloadBox(t *testing.T, version Version) {
@@ -909,11 +893,7 @@ func testCorruptNonce(t *testing.T, version Version) {
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if bcte, ok := err.(ErrBadTag); !ok {
-		t.Fatalf("Wanted error 'ErrBadTag' but got %v", err)
-	} else if int(bcte) != 3 {
-		t.Fatalf("wrong packet; wanted %d but got %d", 3, bcte)
-	}
+	require.Equal(t, ErrBadTag(3), err)
 }
 
 func testCorruptHeader(t *testing.T, version Version) {
