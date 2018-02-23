@@ -69,19 +69,13 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 		go func() {
 			defer wg.Done()
 			skey, msg, err := Verify(SingleVersionValidator(version), smsg, kr)
-			if err != nil {
-				t.Logf("input:      %x", in)
-				t.Logf("signed msg: %x", smsg)
-				t.Error(err)
+			if !assert.NoError(t, err, "input:      %x\nsigned msg: %x", in, smsg) {
 				// Don't fall through, as the tests below will panic.
 				return
 			}
-			if !PublicKeyEqual(skey, key.GetPublicKey()) {
-				t.Errorf("sender key %x, expected %x", skey.ToKID(), key.GetPublicKey().ToKID())
-			}
-			if !bytes.Equal(msg, in) {
-				t.Errorf("verified msg '%x', expected '%x'", msg, in)
-			}
+			assert.True(t, PublicKeyEqual(skey, key.GetPublicKey()),
+				"sender key %x, expected %x", skey.ToKID(), key.GetPublicKey().ToKID())
+			assert.Equal(t, in, msg)
 		}()
 	}
 	wg.Wait()
@@ -128,9 +122,7 @@ func testVerifyErrorAtEOF(t *testing.T, version Version) {
 
 	// Since the bytes are still verified, the verified message
 	// should still compare equal to the original input.
-	if !bytes.Equal(msg, in) {
-		t.Errorf("verified msg '%x', expected '%x'", msg, in)
-	}
+	assert.Equal(t, in, msg)
 }
 
 func TestVerify(t *testing.T) {
