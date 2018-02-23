@@ -478,15 +478,11 @@ func testTruncation(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	strm, err := newTestEncryptStream(version, &out, sndr, receivers,
 		testEncryptionOptions{blockSize: 1024})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := strm.Write(msg); err != nil {
-		t.Fatal(err)
-	}
-	if err := strm.Close(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	_, err = strm.Write(msg)
+	require.NoError(t, err)
+	err = strm.Close()
+	require.NoError(t, err)
 
 	ciphertext := out.Bytes()
 	trunced1 := ciphertext[0 : len(ciphertext)-51]
@@ -498,25 +494,22 @@ func testTruncation(t *testing.T, version Version) {
 
 func testMediumEncryptionOneReceiverSmallReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
-	if _, err := rand.Read(buf); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(buf)
+	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, &options{readSize: 1})
 }
 
 func testMediumEncryptionOneReceiverSmallishReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
-	if _, err := rand.Read(buf); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(buf)
+	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, &options{readSize: 7})
 }
 
 func testMediumEncryptionOneReceiverMediumReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
-	if _, err := rand.Read(buf); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(buf)
+	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, &options{readSize: 79})
 }
 
@@ -528,13 +521,9 @@ func testSealAndOpen(t *testing.T, version Version, sz int) {
 		t.Fatal(err)
 	}
 	ciphertext, err := Seal(version, plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, plaintext2, err := Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if !bytes.Equal(plaintext, plaintext2) {
 		t.Fatal("decryption mismatch")
 	}
@@ -559,13 +548,9 @@ func testSealAndOpenTwoReceivers(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	ciphertext, err := Seal(version, plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, plaintext2, err := Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if !bytes.Equal(plaintext, plaintext2) {
 		t.Fatal("decryption mismatch")
 	}
@@ -604,9 +589,7 @@ func testCorruptHeaderNonce(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != errPublicKeyDecryptionFailed {
 		t.Fatalf("Wanted an error %v; got %v", errPublicKeyDecryptionFailed, err)
@@ -637,9 +620,7 @@ func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 		newBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != errPublicKeyDecryptionFailed {
 		t.Fatalf("Wanted an error %v; got %v", errPublicKeyDecryptionFailed, err)
@@ -658,13 +639,9 @@ func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func testCorruptPayloadKeyBoxR5(t *testing.T, version Version) {
@@ -688,9 +665,7 @@ func testCorruptPayloadKeyBoxR5(t *testing.T, version Version) {
 		newBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != errPublicKeyDecryptionFailed {
 		t.Fatalf("Wanted an error %v; got %v", errPublicKeyDecryptionFailed, err)
@@ -706,13 +681,9 @@ func testCorruptPayloadKeyBoxR5(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func testCorruptPayloadKeyPlaintext(t *testing.T, version Version) {
@@ -735,9 +706,7 @@ func testCorruptPayloadKeyPlaintext(t *testing.T, version Version) {
 	}
 
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// If we've corrupted the payload key, the first thing that will fail is
 	// opening the sender secretbox.
@@ -755,9 +724,7 @@ func testCorruptPayloadKeyPlaintext(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != ErrBadSymmetricKey {
 		t.Fatalf("Got wrong error; wanted 'Bad Symmetric Key' but got %v", err)
@@ -772,9 +739,7 @@ func testCorruptPayloadKeyPlaintext(t *testing.T, version Version) {
 		sender.GetPublicKey(),
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, iterableKeyring)
 	if err != ErrBadSymmetricKey {
 		t.Fatalf("Got wrong error; wanted 'Bad Symmetric Key' but got %v", err)
@@ -798,9 +763,7 @@ func testCorruptSenderSecretboxPlaintext(t *testing.T, version Version) {
 		newBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if mm, ok := err.(ErrBadTag); !ok {
 		t.Fatalf("Got wrong error; wanted 'Bad Tag' but got %v", err)
@@ -818,9 +781,7 @@ func testCorruptSenderSecretboxPlaintext(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != ErrBadBoxKey {
 		t.Fatalf("Got wrong error; wanted 'Bad Sender Key' but got %v", err)
@@ -843,9 +804,7 @@ func testCorruptSenderSecretboxCiphertext(t *testing.T, version Version) {
 		newBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != ErrBadSenderKeySecretbox {
 		t.Fatalf("Got wrong error; wanted 'Bad Sender Key Secretbox' but got %v", err)
@@ -860,9 +819,7 @@ func testMissingFooter(t *testing.T, version Version) {
 		skipFooter: true,
 		blockSize:  1024,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != io.ErrUnexpectedEOF {
 		t.Fatalf("Wanted %v but got %v", io.ErrUnexpectedEOF, err)
@@ -895,9 +852,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 			}
 		},
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if mm, ok := err.(ErrBadTag); !ok {
 		t.Fatalf("Got wrong error; wanted 'Bad Ciphertext' but got %v", err)
@@ -915,9 +870,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 			}
 		},
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if mm, ok := err.(ErrBadTag); !ok {
 		t.Fatalf("Got wrong error; wanted 'Bad Tag; failed Poly1305' but got %v", err)
@@ -939,9 +892,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 			return n
 		},
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if emm, ok := err.(ErrBadTag); !ok {
 		t.Fatalf("Expected a 'bad tag' error but got %v", err)
@@ -961,9 +912,7 @@ func testCorruptButAuthenticPayloadBox(t *testing.T, version Version) {
 			}
 		},
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if emm, ok := err.(ErrBadCiphertext); !ok {
 		t.Fatalf("Expected a 'bad ciphertext' error but got %v", err)
@@ -988,9 +937,7 @@ func testCorruptNonce(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if bcte, ok := err.(ErrBadTag); !ok {
 		t.Fatalf("Wanted error 'ErrBadTag' but got %v", err)
@@ -1015,9 +962,7 @@ func testCorruptHeader(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if ebv, ok := err.(ErrBadVersion); !ok {
 		t.Fatalf("Got wrong error; wanted 'Bad Version' but got %v", err)
@@ -1033,9 +978,7 @@ func testCorruptHeader(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if ebv, ok := err.(ErrWrongMessageType); !ok {
 		t.Fatalf("Got wrong error; wanted 'Bad Type' but got %v", err)
@@ -1056,9 +999,7 @@ func testCorruptHeader(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	requireErrSuffix(t, err, "only encoded map or array can be decoded into a struct")
 }
@@ -1070,9 +1011,7 @@ func testNoSenderKey(t *testing.T, version Version) {
 	ciphertext, err := testSeal(version, msg, sender, receivers, testEncryptionOptions{
 		blockSize: 1024,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != ErrNoSenderKey {
 		t.Fatalf("Wanted %v but got %v", ErrNoSenderKey, err)
@@ -1084,9 +1023,7 @@ func testSealAndOpenTrailingGarbage(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := randomMsg(t, 1024*3)
 	ciphertext, err := Seal(version, plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	var buf bytes.Buffer
 	buf.Write(ciphertext)
 	newEncoder(&buf).Encode(randomMsg(t, 14))
@@ -1100,13 +1037,9 @@ func testAnonymousSender(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := randomMsg(t, 1024*3)
 	ciphertext, err := Seal(version, plaintext, nil, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func testAllAnonymous(t *testing.T, version Version) {
@@ -1122,9 +1055,7 @@ func testAllAnonymous(t *testing.T, version Version) {
 	}
 	plaintext := randomMsg(t, 1024*3)
 	ciphertext, err := Seal(version, plaintext, nil, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != ErrNoDecryptionKey {
 		t.Fatalf("Got %v but wanted %v", err, ErrNoDecryptionKey)
@@ -1132,9 +1063,7 @@ func testAllAnonymous(t *testing.T, version Version) {
 
 	var mki *MessageKeyInfo
 	mki, _, err = Open(SingleVersionValidator(version), ciphertext, kr.makeIterable())
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if !mki.SenderIsAnon {
 		t.Fatal("sender should be anon")
 	}
@@ -1153,9 +1082,7 @@ func testAllAnonymous(t *testing.T, version Version) {
 
 	receivers[5] = newHiddenBoxKeyNoInsert(t).GetPublicKey()
 	ciphertext, err = Seal(version, plaintext, nil, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	mki, _, err = Open(SingleVersionValidator(version), ciphertext, kr.makeIterable())
 	if err != ErrNoDecryptionKey {
@@ -1186,9 +1113,7 @@ func testCorruptEphemeralKey(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err := testSeal(version, plaintext, nil, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != ErrBadEphemeralKey {
 		t.Fatalf("Got %v but wanted %v", err, ErrBadEphemeralKey)
@@ -1208,9 +1133,7 @@ func testCiphertextSwapKeys(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err := testSeal(version, plaintext, nil, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != errPublicKeyDecryptionFailed {
 		t.Fatalf("Got %v but wanted %v", err, errPublicKeyDecryptionFailed)
@@ -1230,9 +1153,7 @@ func testEmptyReceiverKID(t *testing.T, version Version) {
 		},
 	}
 	ciphertext, err := testSeal(version, plaintext, nil, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != ErrNoDecryptionKey {
 		t.Fatalf("Got %v but wanted %v", err, ErrNoDecryptionKey)
@@ -1250,13 +1171,9 @@ func testAnonymousThenNamed(t *testing.T, version Version) {
 	}
 	plaintext := randomMsg(t, 1024*3)
 	ciphertext, err := Seal(version, plaintext, nil, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func testBadKeyLookup(t *testing.T, version Version) {
@@ -1270,9 +1187,7 @@ func testBadKeyLookup(t *testing.T, version Version) {
 	}
 	plaintext := randomMsg(t, 1024*3)
 	ciphertext, err := Seal(version, plaintext, nil, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	kr.bad = true
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	if err != ErrBadLookup {
@@ -1284,9 +1199,7 @@ func testBadKeyLookup(t *testing.T, version Version) {
 func TestCorruptFraming(t *testing.T) {
 	// Create a "ciphertext" where header packet is a type other than bytes.
 	nonInteger, err := encodeToBytes(42)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, _, err = Open(CheckKnownMajorVersion, nonInteger, kr)
 	if err != ErrFailedToReadHeaderBytes {
 		t.Fatal(err)
@@ -1301,19 +1214,13 @@ func testNoWriteMessage(t *testing.T, version Version) {
 	}
 	var ciphertext bytes.Buffer
 	es, err := NewEncryptStream(version, &ciphertext, nil, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	// Usually we would call Write() here. But with an empty message, we don't
 	// have to!
 	err = es.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	_, plaintext, err := Open(SingleVersionValidator(version), ciphertext.Bytes(), kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	if len(plaintext) != 0 {
 		t.Fatal("Expected empty plaintext!")
 	}
@@ -1327,31 +1234,23 @@ func TestEncryptSinglePacketV1(t *testing.T) {
 
 	plaintext := make([]byte, encryptionBlockSize)
 	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(ciphertext))
 
 	var headerBytes []byte
 	_, err = mps.Read(&headerBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var block encryptionBlockV1
 
 	// Payload packet.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// Empty footer payload packet.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// Nothing else.
 	_, err = mps.Read(&block)
@@ -1368,25 +1267,19 @@ func TestEncryptSinglePacketV2(t *testing.T) {
 
 	plaintext := make([]byte, encryptionBlockSize)
 	ciphertext, err := Seal(Version2(), plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(ciphertext))
 
 	var headerBytes []byte
 	_, err = mps.Read(&headerBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var block encryptionBlockV2
 
 	// Payload packet.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	if !block.IsFinal {
 		t.Fatal("IsFinal unexpectedly not set")
@@ -1405,9 +1298,7 @@ func TestEncryptSubsequenceV1(t *testing.T) {
 
 	plaintext := make([]byte, 2*encryptionBlockSize)
 	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(ciphertext))
 
@@ -1430,9 +1321,7 @@ func TestEncryptSubsequenceV1(t *testing.T) {
 
 	var headerBytes []byte
 	_, err = mps.Read(&headerBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	encode(encoder1, headerBytes)
 	encode(encoder2, headerBytes)
@@ -1442,25 +1331,19 @@ func TestEncryptSubsequenceV1(t *testing.T) {
 
 	// Payload packet 1.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	encode(encoder1, block)
 
 	// Payload packet 2.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	encode(encoder2, block)
 
 	// Empty footer payload packet.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	encode(encoder1, block)
 	encode(encoder2, block)
@@ -1492,9 +1375,7 @@ func TestEncryptSubsequenceV2(t *testing.T) {
 
 	plaintext := make([]byte, 2*encryptionBlockSize)
 	ciphertext, err := Seal(Version2(), plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(ciphertext))
 
@@ -1514,9 +1395,7 @@ func TestEncryptSubsequenceV2(t *testing.T) {
 
 	var headerBytes []byte
 	_, err = mps.Read(&headerBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	encode(encoder1, headerBytes)
 	encode(encoder2, headerBytes)
@@ -1525,18 +1404,14 @@ func TestEncryptSubsequenceV2(t *testing.T) {
 
 	// Payload packet 1.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	block.IsFinal = true
 	encode(encoder1, block)
 
 	// Payload packet 2.
 	_, err = mps.Read(&block)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	block.IsFinal = true
 	encode(encoder2, block)
