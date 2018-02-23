@@ -12,6 +12,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,17 +32,10 @@ func testVerify(t *testing.T, version Version) {
 	smsg, err := Sign(version, in, key)
 	require.NoError(t, err)
 	skey, msg, err := Verify(SingleVersionValidator(version), smsg, kr)
-	if err != nil {
-		t.Logf("input:      %x", in)
-		t.Logf("signed msg: %x", smsg)
-		t.Fatal(err)
-	}
-	if !PublicKeyEqual(skey, key.GetPublicKey()) {
-		t.Errorf("sender key %x, expected %x", skey.ToKID(), key.GetPublicKey().ToKID())
-	}
-	if !bytes.Equal(msg, in) {
-		t.Errorf("verified msg '%x', expected '%x'", msg, in)
-	}
+	require.NoError(t, err, "input:      %x\nsigned msg: %x", in, smsg)
+	assert.True(t, PublicKeyEqual(skey, key.GetPublicKey()),
+		"sender key %x, expected %x", skey.ToKID(), key.GetPublicKey().ToKID())
+	assert.Equal(t, in, msg)
 }
 
 func testVerifyNewMinorVersion(t *testing.T, version Version) {
