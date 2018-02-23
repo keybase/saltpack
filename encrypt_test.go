@@ -554,9 +554,7 @@ func testRepeatedKey(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{pk, pk}
 	plaintext := randomMsg(t, 1024*3)
 	_, err := Seal(version, plaintext, sender, receivers)
-	if _, ok := err.(ErrRepeatedKey); !ok {
-		t.Fatalf("Wanted a repeated key error; got %v", err)
-	}
+	require.IsType(t, ErrRepeatedKey{}, err)
 }
 
 func testEmptyReceivers(t *testing.T, version Version) {
@@ -564,9 +562,7 @@ func testEmptyReceivers(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{}
 	plaintext := randomMsg(t, 1024*3)
 	_, err := Seal(version, plaintext, sender, receivers)
-	if err != ErrBadReceivers {
-		t.Fatalf("Wanted error %v but got %v", ErrBadReceivers, err)
-	}
+	require.Equal(t, ErrBadReceivers, err)
 }
 
 func testCorruptHeaderNonce(t *testing.T, version Version) {
@@ -583,9 +579,7 @@ func testCorruptHeaderNonce(t *testing.T, version Version) {
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != errPublicKeyDecryptionFailed {
-		t.Fatalf("Wanted an error %v; got %v", errPublicKeyDecryptionFailed, err)
-	}
+	require.Equal(t, errPublicKeyDecryptionFailed, err)
 }
 
 func testCorruptHeaderNonceR5(t *testing.T, version Version) {
@@ -614,9 +608,7 @@ func testCorruptHeaderNonceR5(t *testing.T, version Version) {
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != errPublicKeyDecryptionFailed {
-		t.Fatalf("Wanted an error %v; got %v", errPublicKeyDecryptionFailed, err)
-	}
+	require.Equal(t, errPublicKeyDecryptionFailed, err)
 
 	// If someone else's encryption was tampered with, we don't care and
 	// shouldn't get an error.
@@ -659,9 +651,7 @@ func testCorruptPayloadKeyBoxR5(t *testing.T, version Version) {
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != errPublicKeyDecryptionFailed {
-		t.Fatalf("Wanted an error %v; got %v", errPublicKeyDecryptionFailed, err)
-	}
+	require.Equal(t, errPublicKeyDecryptionFailed, err)
 
 	// If someone else's encryption was tampered with, we don't care and
 	// shouldn't get an error.
