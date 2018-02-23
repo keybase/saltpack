@@ -109,7 +109,7 @@ func exampleEncode(plaintext []byte) []byte {
 	return buf.Bytes()
 }
 
-func ExampleStream() {
+func Example_stream() {
 	plaintext := "example plaintext"
 
 	encoded := exampleEncode([]byte(plaintext))
