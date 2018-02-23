@@ -150,7 +150,7 @@ func (k *Keyring) GenerateBoxKey() (*SecretKey, error) {
 	return ret, nil
 }
 
-// CreateEmphemeralKey creates a random ephemeral key. It is not added to the
+// CreateEphemeralKey creates a random ephemeral key. It is not added to the
 // keyring. The BoxPublicKey and Keyring interfaces both support this method,
 // for convenience.
 func (k *Keyring) CreateEphemeralKey() (saltpack.BoxSecretKey, error) {
