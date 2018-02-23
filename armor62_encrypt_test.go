@@ -73,26 +73,18 @@ func testBadArmor62(t *testing.T, version Version) {
 	_, ciphertext := encryptArmor62RandomData(t, version, 24)
 	bad1 := ciphertext[0:2] + "䁕" + ciphertext[2:]
 	_, _, _, err := Dearmor62DecryptOpen(SingleVersionValidator(version), bad1, kr)
-	if _, ok := err.(ErrBadFrame); !ok {
-		t.Fatalf("Wanted error type %T but got type %T", ErrBadFrame{}, err)
-	}
+	require.IsType(t, ErrBadFrame{}, err)
 	_, _, _, err = Armor62Open(bad1)
-	if _, ok := err.(ErrBadFrame); !ok {
-		t.Fatalf("Wanted error type %T but got type %T", ErrBadFrame{}, err)
-	}
+	require.IsType(t, ErrBadFrame{}, err)
 
 	bad2 := ciphertext[0:1] + "z" + ciphertext[2:]
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad2, kr)
-	if _, ok := err.(ErrBadFrame); !ok {
-		t.Fatalf("Wanted error of type ErrBadFrame; got %v", err)
-	}
+	require.IsType(t, ErrBadFrame{}, err)
 
 	l := len(ciphertext)
 	bad3 := ciphertext[0:(l-8)] + "z" + ciphertext[(l-7):]
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad3, kr)
-	if _, ok := err.(ErrBadFrame); !ok {
-		t.Fatalf("Wanted error of type ErrBadFrame; got %v", err)
-	}
+	require.IsType(t, ErrBadFrame{}, err)
 
 	bad4 := ciphertext + "䁕"
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad4, kr)
@@ -100,15 +92,11 @@ func testBadArmor62(t *testing.T, version Version) {
 
 	bad5 := ciphertext[0:(l-8)] + "䁕" + ciphertext[(l-7):]
 	_, _, _, err = Armor62Open(bad5)
-	if _, ok := err.(ErrBadFrame); !ok {
-		t.Fatalf("Wanted error type %T but got type %T", ErrBadFrame{}, err)
-	}
+	require.IsType(t, ErrBadFrame{}, err)
 	half := l >> 1
 	bad6 := ciphertext[0:half] + "䁕" + ciphertext[(half+1):]
 	_, _, _, err = Armor62Open(bad6)
-	if _, ok := err.(basex.CorruptInputError); !ok {
-		t.Fatalf("Wanted error of type CorruptInputError but got %v", err)
-	}
+	require.IsType(t, basex.CorruptInputError(0), err)
 }
 
 func TestArmor62Encrypt(t *testing.T) {
