@@ -22,9 +22,7 @@ func TestVerifyVersionValidator(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, err = Verify(SingleVersionValidator(Version2()), smg, kr)
-	if err == nil {
-		t.Fatal("Unexpected nil error")
-	}
+	require.NotNil(t, err)
 }
 
 func testVerify(t *testing.T, version Version) {
@@ -106,12 +104,7 @@ func testVerifyEmptyKeyring(t *testing.T, version Version) {
 	require.NoError(t, err)
 
 	_, _, err = Verify(SingleVersionValidator(version), smsg, emptySigKeyring{})
-	if err == nil {
-		t.Fatal("Verify worked with empty keyring")
-	}
-	if err != ErrNoSenderKey {
-		t.Errorf("error: %v, expected ErrNoSenderKey", err)
-	}
+	require.Equal(t, ErrNoSenderKey, err)
 }
 
 func testVerifyDetachedEmptyKeyring(t *testing.T, version Version) {
@@ -121,12 +114,7 @@ func testVerifyDetachedEmptyKeyring(t *testing.T, version Version) {
 	require.NoError(t, err)
 
 	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, emptySigKeyring{})
-	if err == nil {
-		t.Fatal("VerifyDetached worked with empty keyring")
-	}
-	if err != ErrNoSenderKey {
-		t.Errorf("error: %v, expected ErrNoSenderKey", err)
-	}
+	require.Equal(t, ErrNoSenderKey, err)
 }
 
 func testVerifyErrorAtEOF(t *testing.T, version Version) {
