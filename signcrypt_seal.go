@@ -157,6 +157,7 @@ func (r receiverBoxKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, payloadKey 
 	}
 }
 
+// ReceiverSymmetricKey is a symmetric key paired with an identifier.
 type ReceiverSymmetricKey struct {
 	// In practice these identifiers will be KBFS TLF keys.
 	Key SymmetricKey

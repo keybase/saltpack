@@ -249,6 +249,7 @@ func NewSigncryptOpenStream(r io.Reader, keyring SigncryptKeyring, resolver Symm
 	return sos.signingPublicKey, newChunkReader(sos), nil
 }
 
+// SymmetricKeyResolver is an interface for resolving identifiers to keys.
 type SymmetricKeyResolver interface {
 	ResolveKeys(identifiers [][]byte) ([]*SymmetricKey, error)
 }
@@ -269,6 +270,8 @@ func SigncryptOpen(ciphertext []byte, keyring SigncryptKeyring, resolver Symmetr
 	return senderPub, ret, err
 }
 
+// SigncryptKeyring is a combination of the Keyring and SigKeyring
+// interfaces.
 type SigncryptKeyring interface {
 	Keyring
 	SigKeyring
