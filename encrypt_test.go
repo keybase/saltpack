@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/curve25519"
 	"golang.org/x/crypto/nacl/box"
 )
 
@@ -1359,29 +1360,52 @@ func TestEncrypt(t *testing.T) {
 	runTestsOverVersions(t, "test", tests)
 }
 
+// makeSecretKeyString is a helper function for making a secret key
+// and returning its string representation.
+func makeSecretKeyString(t *testing.T) string {
+	_, sk, err := box.GenerateKey(rand.Reader)
+	require.NoError(t, err)
+	return hex.EncodeToString((*sk)[:])
+}
+
+func decodeSecretKeyString(t *testing.T, s string) boxSecretKey {
+	decoded, err := hex.DecodeString(s)
+	require.NoError(t, err)
+	private := sliceToByte32(decoded)
+	var public [32]byte
+	curve25519.ScalarBaseMult(&public, &private)
+	return boxSecretKey{
+		key: private,
+		pub: boxPublicKey{
+			key: public,
+		},
+	}
+}
+
+const hardcodedV1PlaintextMessage = "hardcoded message v1"
+
+const hardcodedV1SenderSecretKey = "4902237dc127e1cbbd5dbf0b3ce74e751aa6bbfd894f2e1658fb2c7b3b5eb9fc"
+
+const hardcodedV1Receiver0SecretKey = "3833f2e7bbc09b27713d4b43b03a97df784e7a0c9634d9bb1046a7354b5fa84f"
+
+const hardcodedV1Receiver1SecretKey = "82f0c46354c69e360d703525a2e0b92e4cb7a64ae23bcbfbc89978ee2772fbc1"
+
+const hardcodedV1EncryptedMessageA = `BEGIN SALTPACK ENCRYPTED MESSAGE. kiOUtMhcc4NXXRb XMxIdgQyljqYzXu NnDO2pAj8VshkJm mjLxf1AU5sb4XYG qi8gfVP8udgo6tJ F7GMNXjTNMtsN3z 6EfG7ZFLxSLKQT9 wBDC4H4MkVdOqN5 m8jhqQA4X6Z6nyD QKUUfVzX5SUdzPt 7u892SKsrd8VHiG ZU1BkMxHrcwc99r ALFuv9KlXUJh5We qaYnF6zHN4mUwu7 VHl8HiHzZlZh6Vz uHE70mAHIHYutCu nBezmAjVmhHxwoT FJAJOEffThCshkV gWQp8s2Jz5MqDGC sdsfnUrOgwWF7F7 A0UZwzsS98ayCwO 4CD05ET7CbBTa1X Jz1VNGVmn7QfKY3 jbUOPpXqclAvMZt LkVLDN6Wcf3bVRR 4BhfRjhbXvIOU2Y CN9paSAxcXH8ixw V6Hj5EpfRGurwPk gXncgHKtwBDIzsg AR6a1cHYA0nUhIQ UnpHu28bzKluzJ2 ZItHumxBAQpN177 vSgUiPqGmFZAFWb zQg59qgg5rdYSyA qsErwg3NcOijQuS BTyqDJEZktQ9vtm QAEj9QUohkVbovY 0h2OMWyECwqeIEd QDfuBz5It9UeR2D GkosgQJddgsIA1W BBUvPpcz1gix4w4 G5hLiga81NN41xc naE5d5mvpMBWtWE RFNFPToU2OHVhFr SjLWsYAS5iGoxhV uYHk6KcR7Q4xxSR 8fQWhEQNkWNPbsp Ab2okWCZIJAQuZX vHhpD4qbcGg5epE lI2frLcCg3IGudJ MOYq3F321sloT1F iAQ4DMtD0Q8wTCQ n1cc5FfMTU2V0HI t4OhFcopsj8vyst 5xjqQWR5XSN69oE kT5rcfDaWR. END SALTPACK ENCRYPTED MESSAGE.
+`
+
 func TestHardcodedEncryptMessageV1(t *testing.T) {
-	// The test message
-	msg := []byte("The Magic Words are Squeamish Ossifrage")
+	sender := decodeSecretKeyString(t, hardcodedV1SenderSecretKey)
+	receiver0 := decodeSecretKeyString(t, hardcodedV1Receiver0SecretKey)
+	receiver1 := decodeSecretKeyString(t, hardcodedV1Receiver1SecretKey)
 
-	// Make a secret key for the sender
-	sender := newBoxKey(t)
+	allReceivers := []BoxPublicKey{
+		sender.GetPublicKey(),
+		receiver0.GetPublicKey(),
+		receiver1.GetPublicKey(),
+	}
 
-	// And one for the receiver
-	receiver := newBoxKey(t)
-
-	// AllReceivers can contain more receivers (like the sender)
-	// but for now, just the one.
-	allReceivers := []BoxPublicKey{receiver.GetPublicKey()}
-	ciphertext, err := EncryptArmor62Seal(CurrentVersion(), msg, sender, allReceivers, "")
+	ciphertext, err := EncryptArmor62Seal(Version1(), []byte(hardcodedV1PlaintextMessage), sender, allReceivers, "")
 	require.NoError(t, err)
 
-	// Make a new Keyring, initialized to be empty
-	keyring := newKeyring()
-	keyring.insert(receiver)
-
-	// The decrypted message should match the input mesasge.
-	_, msg2, _, err := Dearmor62DecryptOpen(CheckKnownMajorVersion, ciphertext, keyring)
-	require.NoError(t, err)
-
-	require.Equal(t, msg, msg2)
+	require.Equal(t, hardcodedV1EncryptedMessageA, ciphertext)
 }
