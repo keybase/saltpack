@@ -487,9 +487,7 @@ func testTruncation(t *testing.T, version Version) {
 	ciphertext := out.Bytes()
 	trunced1 := ciphertext[0 : len(ciphertext)-51]
 	_, _, err = Open(SingleVersionValidator(version), trunced1, kr)
-	if err != io.ErrUnexpectedEOF {
-		t.Fatalf("Wanted an %v; but got %v", io.ErrUnexpectedEOF, err)
-	}
+	require.Equal(t, io.ErrUnexpectedEOF, err)
 }
 
 func testMediumEncryptionOneReceiverSmallReads(t *testing.T, version Version) {
@@ -517,16 +515,13 @@ func testSealAndOpen(t *testing.T, version Version, sz int) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := make([]byte, sz)
-	if _, err := rand.Read(plaintext); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(plaintext)
+	require.NoError(t, err)
 	ciphertext, err := Seal(version, plaintext, sender, receivers)
 	require.NoError(t, err)
 	_, plaintext2, err := Open(SingleVersionValidator(version), ciphertext, kr)
 	require.NoError(t, err)
-	if !bytes.Equal(plaintext, plaintext2) {
-		t.Fatal("decryption mismatch")
-	}
+	require.Equal(t, plaintext, plaintext2)
 }
 
 func testSealAndOpenSmall(t *testing.T, version Version) {
@@ -544,16 +539,13 @@ func testSealAndOpenTwoReceivers(t *testing.T, version Version) {
 		newBoxKey(t).GetPublicKey(),
 	}
 	plaintext := make([]byte, 1024*10)
-	if _, err := rand.Read(plaintext); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(plaintext)
+	require.NoError(t, err)
 	ciphertext, err := Seal(version, plaintext, sender, receivers)
 	require.NoError(t, err)
 	_, plaintext2, err := Open(SingleVersionValidator(version), ciphertext, kr)
 	require.NoError(t, err)
-	if !bytes.Equal(plaintext, plaintext2) {
-		t.Fatal("decryption mismatch")
-	}
+	require.Equal(t, plaintext, plaintext2)
 }
 
 func testRepeatedKey(t *testing.T, version Version) {
