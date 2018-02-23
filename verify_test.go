@@ -19,9 +19,7 @@ func TestVerifyVersionValidator(t *testing.T) {
 	in := []byte{0x01}
 	key := newSigPrivKey(t)
 	smg, err := Sign(Version1(), in, key)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, _, err = Verify(SingleVersionValidator(Version2()), smg, kr)
 	if err == nil {
@@ -33,9 +31,7 @@ func testVerify(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
 	smsg, err := Sign(version, in, key)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	skey, msg, err := Verify(SingleVersionValidator(version), smsg, kr)
 	if err != nil {
 		t.Logf("input:      %x", in)
@@ -63,23 +59,17 @@ func testVerifyNewMinorVersion(t *testing.T, version Version) {
 	}
 	key := newSigPrivKey(t)
 	smg, err := testTweakSign(version, in, key, tso)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, _, err = Verify(SingleVersionValidator(newVersion), smg, kr)
-	if err != nil {
-		t.Fatalf("Unepected error %v", err)
-	}
+	require.NoError(t, err)
 }
 
 func testVerifyConcurrent(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
 	smsg, err := Sign(version, in, key)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 100; i++ {
@@ -113,9 +103,7 @@ func testVerifyEmptyKeyring(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
 	smsg, err := Sign(version, in, key)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, _, err = Verify(SingleVersionValidator(version), smsg, emptySigKeyring{})
 	if err == nil {
@@ -130,9 +118,7 @@ func testVerifyDetachedEmptyKeyring(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
 	msg := randomMsg(t, 128)
 	sig, err := SignDetached(version, msg, key)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, emptySigKeyring{})
 	if err == nil {
@@ -147,17 +133,13 @@ func testVerifyErrorAtEOF(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
 	key := newSigPrivKey(t)
 	smsg, err := Sign(version, in, key)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var reader io.Reader = bytes.NewReader(smsg)
 	errAtEOF := errors.New("err at EOF")
 	reader = errAtEOFReader{reader, errAtEOF}
 	_, stream, err := NewVerifyStream(SingleVersionValidator(version), reader, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	msg, err := ioutil.ReadAll(stream)
 	requireErrSuffix(t, err, errAtEOF.Error())
