@@ -88,7 +88,7 @@ func (r *keyring) GetAllBoxSecretKeys() (ret []BoxSecretKey) {
 	return ret
 }
 
-func (k *keyring) CreateEphemeralKey() (BoxSecretKey, error) {
+func (r *keyring) CreateEphemeralKey() (BoxSecretKey, error) {
 	pk, sk, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
