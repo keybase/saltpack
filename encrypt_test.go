@@ -1146,9 +1146,7 @@ func testBadKeyLookup(t *testing.T, version Version) {
 	require.NoError(t, err)
 	kr.bad = true
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != ErrBadLookup {
-		t.Fatal(err)
-	}
+	require.Equal(t, ErrBadLookup, err)
 	kr.bad = false
 }
 
@@ -1157,9 +1155,7 @@ func TestCorruptFraming(t *testing.T) {
 	nonInteger, err := encodeToBytes(42)
 	require.NoError(t, err)
 	_, _, err = Open(CheckKnownMajorVersion, nonInteger, kr)
-	if err != ErrFailedToReadHeaderBytes {
-		t.Fatal(err)
-	}
+	require.Equal(t, ErrFailedToReadHeaderBytes, err)
 }
 
 func testNoWriteMessage(t *testing.T, version Version) {
