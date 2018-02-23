@@ -997,21 +997,11 @@ func testAllAnonymous(t *testing.T, version Version) {
 	var mki *MessageKeyInfo
 	mki, _, err = Open(SingleVersionValidator(version), ciphertext, kr.makeIterable())
 	require.NoError(t, err)
-	if !mki.SenderIsAnon {
-		t.Fatal("sender should be anon")
-	}
-	if !mki.ReceiverIsAnon {
-		t.Fatal("receiver should be anon")
-	}
-	if !PublicKeyEqual(receivers[5], mki.ReceiverKey.GetPublicKey()) {
-		t.Fatal("wrong receiver key")
-	}
-	if mki.NumAnonReceivers != 8 {
-		t.Fatal("wrong number of anon receivers")
-	}
-	if len(mki.NamedReceivers) > 0 {
-		t.Fatal("got named receivers")
-	}
+	require.True(t, mki.SenderIsAnon)
+	require.True(t, mki.ReceiverIsAnon)
+	require.True(t, PublicKeyEqual(receivers[5], mki.ReceiverKey.GetPublicKey()))
+	require.Equal(t, 8, mki.NumAnonReceivers)
+	require.Equal(t, 0, len(mki.NamedReceivers))
 
 	receivers[5] = newHiddenBoxKeyNoInsert(t).GetPublicKey()
 	ciphertext, err = Seal(version, plaintext, nil, receivers)
@@ -1020,18 +1010,10 @@ func testAllAnonymous(t *testing.T, version Version) {
 	mki, _, err = Open(SingleVersionValidator(version), ciphertext, kr.makeIterable())
 	require.Equal(t, ErrNoDecryptionKey, err)
 
-	if mki.SenderIsAnon {
-		t.Fatal("that the sender shouldn't be anonymous")
-	}
-	if mki.ReceiverKey != nil {
-		t.Fatal("non-nil receiver key")
-	}
-	if mki.NumAnonReceivers != 8 {
-		t.Fatal("wrong number of anon receivers")
-	}
-	if len(mki.NamedReceivers) > 0 {
-		t.Fatal("got named receivers")
-	}
+	require.False(t, mki.SenderIsAnon)
+	require.Nil(t, mki.ReceiverKey)
+	require.Equal(t, 8, mki.NumAnonReceivers)
+	require.Equal(t, 0, len(mki.NamedReceivers))
 
 }
 
@@ -1142,9 +1124,7 @@ func testNoWriteMessage(t *testing.T, version Version) {
 	require.NoError(t, err)
 	_, plaintext, err := Open(SingleVersionValidator(version), ciphertext.Bytes(), kr)
 	require.NoError(t, err)
-	if len(plaintext) != 0 {
-		t.Fatal("Expected empty plaintext!")
-	}
+	require.Equal(t, 0, len(plaintext))
 }
 
 func TestEncryptSinglePacketV1(t *testing.T) {
@@ -1200,9 +1180,7 @@ func TestEncryptSinglePacketV2(t *testing.T) {
 	_, err = mps.Read(&block)
 	require.NoError(t, err)
 
-	if !block.IsFinal {
-		t.Fatal("IsFinal unexpectedly not set")
-	}
+	require.True(t, block.IsFinal)
 
 	// Nothing else.
 	_, err = mps.Read(&block)
