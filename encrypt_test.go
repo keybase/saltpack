@@ -373,61 +373,40 @@ func testSmallEncryptionOneReceiver(t *testing.T, version Version) {
 
 func testMediumEncryptionOneReceiver(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
-	if _, err := rand.Read(buf); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(buf)
+	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, nil)
 }
 
 func testBiggishEncryptionOneReceiver(t *testing.T, version Version) {
 	buf := make([]byte, 1024*100)
-	if _, err := rand.Read(buf); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(buf)
+	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, nil)
 }
 
 func testRealEncryptor(t *testing.T, version Version, sz int) {
 	msg := make([]byte, sz)
-	if _, err := rand.Read(msg); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(msg)
+	require.NoError(t, err)
 	sndr := newBoxKey(t)
 	var ciphertext bytes.Buffer
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	strm, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := strm.Write(msg); err != nil {
-		t.Fatal(err)
-	}
-	if err := strm.Close(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	_, err = strm.Write(msg)
+	require.NoError(t, err)
+	err = strm.Close()
+	require.NoError(t, err)
 
 	mki, msg2, err := Open(SingleVersionValidator(version), ciphertext.Bytes(), kr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(msg2, msg) {
-		t.Fatal("decryption mismatch")
-	}
-	if mki.SenderIsAnon {
-		t.Fatal("sender should't be anon")
-	}
-	if mki.ReceiverIsAnon {
-		t.Fatal("receiver shouldn't be anon")
-	}
-	if !PublicKeyEqual(sndr.GetPublicKey(), mki.SenderKey) {
-		t.Fatal("got wrong sender key")
-	}
-	if !PublicKeyEqual(receivers[0], mki.ReceiverKey.GetPublicKey()) {
-		t.Fatal("wrong receiver key")
-	}
-	if mki.NumAnonReceivers != 0 {
-		t.Fatal("wrong number of anon receivers")
-	}
+	require.NoError(t, err)
+	require.Equal(t, msg, msg2)
+	require.False(t, mki.SenderIsAnon)
+	require.False(t, mki.ReceiverIsAnon)
+	require.True(t, PublicKeyEqual(sndr.GetPublicKey(), mki.SenderKey))
+	require.True(t, PublicKeyEqual(receivers[0], mki.ReceiverKey.GetPublicKey()))
+	require.Equal(t, 0, mki.NumAnonReceivers)
 }
 
 func testRealEncryptorSmall(t *testing.T, version Version) {
@@ -440,9 +419,8 @@ func testRealEncryptorBig(t *testing.T, version Version) {
 
 func testRoundTripMedium6Receivers(t *testing.T, version Version) {
 	msg := make([]byte, 1024*3)
-	if _, err := rand.Read(msg); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(msg)
+	require.NoError(t, err)
 	receivers := []BoxPublicKey{
 		newBoxKeyNoInsert(t).GetPublicKey(),
 		newBoxKeyNoInsert(t).GetPublicKey(),
@@ -456,9 +434,8 @@ func testRoundTripMedium6Receivers(t *testing.T, version Version) {
 
 func testRoundTripSmall6Receivers(t *testing.T, version Version) {
 	msg := []byte("hoppy halloween")
-	if _, err := rand.Read(msg); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(msg)
+	require.NoError(t, err)
 	receivers := []BoxPublicKey{
 		newBoxKeyNoInsert(t).GetPublicKey(),
 		newBoxKeyNoInsert(t).GetPublicKey(),
@@ -485,19 +462,13 @@ func testReceiverNotFound(t *testing.T, version Version) {
 
 	strm, err := newTestEncryptStream(version, &out, sndr, receivers,
 		testEncryptionOptions{blockSize: 1024})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := strm.Write(msg); err != nil {
-		t.Fatal(err)
-	}
-	if err := strm.Close(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	_, err = strm.Write(msg)
+	require.NoError(t, err)
+	err = strm.Close()
+	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), out.Bytes(), kr)
-	if err != ErrNoDecryptionKey {
-		t.Fatalf("expected an ErrNoDecryptionkey; got %v", err)
-	}
+	require.Equal(t, ErrNoDecryptionKey, err)
 }
 
 func testTruncation(t *testing.T, version Version) {
