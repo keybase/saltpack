@@ -868,11 +868,7 @@ func testCorruptButAuthenticPayloadBox(t *testing.T, version Version) {
 	})
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if emm, ok := err.(ErrBadCiphertext); !ok {
-		t.Fatalf("Expected a 'bad ciphertext' error but got %v", err)
-	} else if int(emm) != 1 {
-		t.Fatalf("Wanted error packet %d but got %d", 1, emm)
-	}
+	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
 func testCorruptNonce(t *testing.T, version Version) {
@@ -914,11 +910,7 @@ func testCorruptHeader(t *testing.T, version Version) {
 	ciphertext, err := testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if ebv, ok := err.(ErrBadVersion); !ok {
-		t.Fatalf("Got wrong error; wanted 'Bad Version' but got %v", err)
-	} else if ebv.received != badVersion {
-		t.Fatalf("got wrong version # in error message: %v", ebv.received)
-	}
+	require.Equal(t, ErrBadVersion{received: badVersion}, err)
 
 	// Test bad header Tag
 	teo = testEncryptionOptions{
@@ -930,13 +922,10 @@ func testCorruptHeader(t *testing.T, version Version) {
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if ebv, ok := err.(ErrWrongMessageType); !ok {
-		t.Fatalf("Got wrong error; wanted 'Bad Type' but got %v", err)
-	} else if ebv.wanted != MessageTypeEncryption {
-		t.Fatalf("got wrong wanted in error message: %d", ebv.wanted)
-	} else if ebv.received != MessageTypeAttachedSignature {
-		t.Fatalf("got wrong received in error message: %d", ebv.received)
-	}
+	require.Equal(t, ErrWrongMessageType{
+		wanted:   MessageTypeEncryption,
+		received: MessageTypeAttachedSignature,
+	}, err)
 
 	// Corrupt Header after packing
 	teo = testEncryptionOptions{
