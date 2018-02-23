@@ -36,23 +36,13 @@ const ftr = "END ACME SALTPACK ENCRYPTED MESSAGE"
 
 func testArmor(t *testing.T, sz int) {
 	m := msg(sz)
-	a, e := Armor62Seal(m, MessageTypeEncryption, ourBrand)
-	if e != nil {
-		t.Fatal(e)
-	}
+	a, err := Armor62Seal(m, MessageTypeEncryption, ourBrand)
+	require.NoError(t, err)
 	m2, hdr2, ftr2, err := Armor62Open(a)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(m, m2) {
-		t.Errorf("Buffers disagreed: %v != %v (%d v %d)", m, m2, len(m), len(m2))
-	}
-	if hdr != hdr2 {
-		t.Errorf("headers disagreed: %s != %s", hdr, hdr2)
-	}
-	if ftr != ftr2 {
-		t.Errorf("headers disagreed: %s != %s", ftr, ftr2)
-	}
+	require.NoError(t, err)
+	require.Equal(t, m, m2)
+	require.Equal(t, hdr, hdr2)
+	require.Equal(t, ftr, ftr2)
 }
 
 func TestArmor128(t *testing.T) {
@@ -78,30 +68,18 @@ func TestSlowWriter(t *testing.T) {
 	m := msg(1024 * 16)
 	var out bytes.Buffer
 	enc, err := NewArmor62EncoderStream(&out, MessageTypeEncryption, ourBrand)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	for _, c := range m {
-		if _, err = enc.Write([]byte{c}); err != nil {
-			t.Fatal(err)
-		}
+		_, err = enc.Write([]byte{c})
+		require.NoError(t, err)
 	}
-	if err = enc.Close(); err != nil {
-		t.Fatal(err)
-	}
+	err = enc.Close()
+	require.NoError(t, err)
 	m2, hdr2, ftr2, err := Armor62Open(out.String())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(m, m2) {
-		t.Fatal("Buffer mismatch")
-	}
-	if ftr != ftr2 {
-		t.Fatal("footer mismatch")
-	}
-	if hdr != hdr2 {
-		t.Fatal("header mismatch")
-	}
+	require.NoError(t, err)
+	require.Equal(t, m, m2)
+	require.Equal(t, hdr, hdr2)
+	require.Equal(t, ftr, ftr2)
 }
 
 type slowReader struct {
