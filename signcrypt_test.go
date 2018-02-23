@@ -217,10 +217,10 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 
 	// Assert that swapping packets 1 and 2 fails to decrypt. (Start with a
 	// fresh slice to avoid confusing overwrites.)
-	swapped_sealed := append([]byte{}, header...)
-	swapped_sealed = append(swapped_sealed, packet2...)
-	swapped_sealed = append(swapped_sealed, packet1...)
-	_, _, err = SigncryptOpen(swapped_sealed, keyring, nil)
+	swappedSealed := append([]byte{}, header...)
+	swappedSealed = append(swappedSealed, packet2...)
+	swappedSealed = append(swappedSealed, packet1...)
+	_, _, err = SigncryptOpen(swappedSealed, keyring, nil)
 	require.Equal(t, ErrBadCiphertext(1), err)
 }
 
