@@ -21,15 +21,11 @@ func TestDecryptVersionValidator(t *testing.T) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, _, err = Open(SingleVersionValidator(Version2()), ciphertext, kr)
 	expectedErr := ErrBadVersion{Version1()}
-	if err != expectedErr {
-		t.Fatalf("expected %v, got %v", expectedErr, err)
-	}
+	require.Equal(t, expectedErr, err)
 }
 
 func testDecryptNewMinorVersion(t *testing.T, version Version) {
@@ -46,14 +42,10 @@ func testDecryptNewMinorVersion(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	ciphertext, err := testSeal(version, plaintext, sender, receivers, teo)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, _, err = Open(SingleVersionValidator(newVersion), ciphertext, kr)
-	if err != nil {
-		t.Fatalf("Unepected error %v", err)
-	}
+	require.NoError(t, err)
 }
 
 type errAtEOFReader struct {
@@ -74,26 +66,20 @@ func testDecryptErrorAtEOF(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	ciphertext, err := Seal(version, plaintext, sender, receivers)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	var reader io.Reader = bytes.NewReader(ciphertext)
 	errAtEOF := errors.New("err at EOF")
 	reader = errAtEOFReader{reader, errAtEOF}
 	_, stream, err := NewDecryptStream(SingleVersionValidator(version), reader, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	msg, err := ioutil.ReadAll(stream)
 	requireErrSuffix(t, err, errAtEOF.Error())
 
 	// Since the bytes are still authenticated, the decrypted
 	// message should still compare equal to the original input.
-	if !bytes.Equal(msg, plaintext) {
-		t.Errorf("decrypted msg '%x', expected '%x'", msg, plaintext)
-	}
+	require.Equal(t, plaintext, msg)
 }
 
 func TestDecrypt(t *testing.T) {
