@@ -693,9 +693,7 @@ func testCorruptPayloadKeyPlaintext(t *testing.T, version Version) {
 	// If we've corrupted the payload key, the first thing that will fail is
 	// opening the sender secretbox.
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != ErrBadSenderKeySecretbox {
-		t.Fatalf("Got wrong error; wanted %v but got %v", ErrBadSenderKeySecretbox, err)
-	}
+	require.Equal(t, ErrBadSenderKeySecretbox, err)
 
 	// Also try truncating the payload key. This should fail with a different
 	// error.
@@ -708,9 +706,7 @@ func testCorruptPayloadKeyPlaintext(t *testing.T, version Version) {
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	if err != ErrBadSymmetricKey {
-		t.Fatalf("Got wrong error; wanted 'Bad Symmetric Key' but got %v", err)
-	}
+	require.Equal(t, ErrBadSymmetricKey, err)
 
 	// Finally, do the above test again with a hidden receiver. The default
 	// testing keyring is not iterable, so we need to make a new one.
@@ -723,9 +719,7 @@ func testCorruptPayloadKeyPlaintext(t *testing.T, version Version) {
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, iterableKeyring)
-	if err != ErrBadSymmetricKey {
-		t.Fatalf("Got wrong error; wanted 'Bad Symmetric Key' but got %v", err)
-	}
+	require.Equal(t, ErrBadSymmetricKey, err)
 }
 
 func testCorruptSenderSecretboxPlaintext(t *testing.T, version Version) {
