@@ -4,74 +4,56 @@
 package saltpack
 
 import (
-	"bytes"
 	"crypto/rand"
 	"io/ioutil"
 	"strings"
 	"testing"
 
 	"github.com/keybase/saltpack/encoding/basex"
+	"github.com/stretchr/testify/require"
 )
 
 func encryptArmor62RandomData(t *testing.T, version Version, sz int) ([]byte, string) {
 	msg := randomMsg(t, sz)
-	if _, err := rand.Read(msg); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(msg)
+	require.NoError(t, err)
 	sndr := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 
 	ciphertext, err := EncryptArmor62Seal(version, msg, sndr, receivers, ourBrand)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return msg, ciphertext
 }
 
 func testEncryptArmor62(t *testing.T, version Version) {
 	plaintext, ciphertext := encryptArmor62RandomData(t, version, 1024)
 	_, plaintext2, brand, err := Dearmor62DecryptOpen(SingleVersionValidator(version), ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(plaintext, plaintext2) {
-		t.Fatalf("bad message back out")
-	}
+	require.NoError(t, err)
+	require.Equal(t, plaintext, plaintext2)
 	brandCheck(t, brand)
 }
 
 func testDearmor62DecryptSlowReader(t *testing.T, version Version) {
 	sz := 1024*16 + 3
 	msg := randomMsg(t, sz)
-	if _, err := rand.Read(msg); err != nil {
-		t.Fatal(err)
-	}
+	_, err := rand.Read(msg)
+	require.NoError(t, err)
 	sndr := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 
 	ciphertext, err := EncryptArmor62Seal(version, msg, sndr, receivers, ourBrand)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	_, dec, frame, err := NewDearmor62DecryptStream(SingleVersionValidator(version), &slowReader{[]byte(ciphertext)}, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	plaintext, err := ioutil.ReadAll(dec)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if brand, err := CheckArmor62Frame(frame, MessageTypeEncryption); err != nil {
-		t.Fatal(err)
-	} else {
-		brandCheck(t, brand)
-	}
+	require.NoError(t, err)
+	brand, err := CheckArmor62Frame(frame, MessageTypeEncryption)
+	require.NoError(t, err)
+	brandCheck(t, brand)
 
-	if !bytes.Equal(plaintext, msg) {
-		t.Fatalf("bad message back out")
-	}
+	require.Equal(t, msg, plaintext)
 }
 
 func testNewlineInFrame(t *testing.T, version Version) {
@@ -82,12 +64,8 @@ func testNewlineInFrame(t *testing.T, version Version) {
 	ciphertext = strings.Join(ss, "")
 
 	_, plaintext2, brand, err := Dearmor62DecryptOpen(SingleVersionValidator(version), ciphertext, kr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(plaintext, plaintext2) {
-		t.Fatalf("bad message back out")
-	}
+	require.NoError(t, err)
+	require.Equal(t, plaintext, plaintext2)
 	brandCheck(t, brand)
 }
 

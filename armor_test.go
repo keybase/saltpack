@@ -27,9 +27,8 @@ func msg(sz int) []byte {
 const ourBrand = "ACME"
 
 func brandCheck(t *testing.T, received string) {
-	if received != ourBrand {
-		t.Fatalf("brand mismatch; wanted %q but got %q", ourBrand, received)
-	}
+	t.Helper()
+	require.Equal(t, ourBrand, received)
 }
 
 const hdr = "BEGIN ACME SALTPACK ENCRYPTED MESSAGE"
