@@ -60,7 +60,7 @@ func testNewlineInFrame(t *testing.T, version Version) {
 	plaintext, ciphertext := encryptArmor62RandomData(t, version, 1024)
 
 	//newline space space tab space
-	ss := []string{"\n\n>   ", ciphertext[0:10], "\n	 ", ciphertext[11:]}
+	ss := []string{"\n\n>   ", ciphertext[0:10], "\n  	 ", ciphertext[11:]}
 	ciphertext = strings.Join(ss, "")
 
 	_, plaintext2, brand, err := Dearmor62DecryptOpen(SingleVersionValidator(version), ciphertext, kr)
