@@ -42,6 +42,8 @@ func (s cryptoSource) Seed(seed int64) {
 	panic("cryptoSource.Seed() called unexpectedly")
 }
 
+// TODO: Use go 1.10's random.Shuffle instead, which removes a source
+// of bias.
 func randomPerm(n int) []int {
 	rnd := mathrand.New(cryptoSource{})
 	return rnd.Perm(n)
