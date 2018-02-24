@@ -23,6 +23,18 @@ func (c closeForwarder) Close() error {
 	return nil
 }
 
+func newEncryptArmor62Stream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG, brand string) (plaintext io.WriteCloser, err error) {
+	enc, err := NewArmor62EncoderStream(ciphertext, MessageTypeEncryption, brand)
+	if err != nil {
+		return nil, err
+	}
+	out, err := newEncryptStream(version, enc, sender, receivers, ephemeralKeyCreator, rng)
+	if err != nil {
+		return nil, err
+	}
+	return closeForwarder([]io.WriteCloser{out, enc}), nil
+}
+
 // NewEncryptArmor62Stream creates a stream that consumes plaintext data.
 // It will write out encrypted data to the io.Writer passed in as ciphertext.
 // The encryption is from the specified sender, and is encrypted for the
@@ -36,15 +48,22 @@ func (c closeForwarder) Close() error {
 // Returns an io.WriteCloser that accepts plaintext data to be encrypted; and
 // also returns an error if initialization failed.
 func NewEncryptArmor62Stream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, brand string) (plaintext io.WriteCloser, err error) {
-	enc, err := NewArmor62EncoderStream(ciphertext, MessageTypeEncryption, brand)
+	return newEncryptArmor62Stream(version, ciphertext, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{}, brand)
+}
+
+func encryptArmor62Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG, brand string) (string, error) {
+	var buf bytes.Buffer
+	enc, err := newEncryptArmor62Stream(version, &buf, sender, receivers, ephemeralKeyCreator, rng, brand)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	out, err := NewEncryptStream(version, enc, sender, receivers, ephemeralKeyCreator)
-	if err != nil {
-		return nil, err
+	if _, err := enc.Write(plaintext); err != nil {
+		return "", err
 	}
-	return closeForwarder([]io.WriteCloser{out, enc}), nil
+	if err := enc.Close(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // EncryptArmor62Seal is the non-streaming version of NewEncryptArmor62Stream, which
