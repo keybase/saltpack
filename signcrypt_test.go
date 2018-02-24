@@ -46,7 +46,7 @@ func makeEmptyKeyring(t *testing.T) *keyring {
 func makeKeyringWithOneKey(t *testing.T) (*keyring, []BoxPublicKey) {
 	keyring := makeEmptyKeyring(t)
 	keyring.iterable = true
-	receiverBoxSecretKey, err := keyring.CreateEphemeralKey()
+	receiverBoxSecretKey, err := createEphemeralKey()
 	require.NoError(t, err)
 	keyring.insert(receiverBoxSecretKey)
 	receiverBoxKeys := []BoxPublicKey{receiverBoxSecretKey.GetPublicKey()}
@@ -83,7 +83,7 @@ func TestSigncryptionBoxKeyHelloWorld(t *testing.T) {
 
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	senderPub, opened, err := SigncryptOpen(sealed, keyring, nil)
@@ -102,7 +102,7 @@ func TestSigncryptionResolvedKeyHelloWorld(t *testing.T) {
 
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, nil, receivers)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, nil, receivers)
 	require.NoError(t, err)
 
 	senderPub, opened, err := SigncryptOpen(sealed, keyring, resolver)
@@ -117,7 +117,7 @@ func TestSigncryptionAnonymousSenderHelloWorld(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 
-	sealed, err := SigncryptSeal(msg, keyring, nil /* senderSigningPrivKey */, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, nil /* senderSigningPrivKey */, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	senderPub, opened, err := SigncryptOpen(sealed, keyring, nil)
@@ -143,7 +143,7 @@ func TestSigncryptionMultiPacket(t *testing.T) {
 
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	senderPub, opened, err := SigncryptOpen(sealed, keyring, nil)
@@ -172,7 +172,7 @@ func TestSigncryptionTruncatedAtPacketBoundary(t *testing.T) {
 
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	// Truncate to just the header packet.
@@ -201,7 +201,7 @@ func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {
 	msg := make([]byte, encryptionBlockSize*2)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	// Extract the header and packets, and assert they're the length we expect
@@ -230,7 +230,7 @@ func TestSigncryptionSinglePacket(t *testing.T) {
 
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(sealed))
@@ -259,7 +259,7 @@ func testSigncryptionSubsequence(t *testing.T, anon bool) {
 		senderSigningPrivKey = makeSigningKey(t, keyring)
 	}
 
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(sealed))
@@ -319,13 +319,13 @@ func TestSigncryptionPacketSwappingBetweenMessages(t *testing.T) {
 	msg := make([]byte, encryptionBlockSize*2)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed1, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed1, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 	// Another sealed version of the same message. This will generate a second
 	// set of ephemeral keys, and the payload packets should not be compatible
 	// with the first message. (At least, not in this sanity check test.
 	// Hopefully the design is secure against more creative attacks.)
-	sealed2, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed2, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	// Extract the header and packets, and assert they're the length we expect
@@ -355,7 +355,7 @@ func TestSigncryptionStream(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	_, reader, err := NewSigncryptOpenStream(bytes.NewBuffer(sealed), keyring, nil)
@@ -379,7 +379,7 @@ func TestSigncryptionStreamWithError(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	// Break the final packet.
@@ -400,7 +400,7 @@ func TestSigncryptionInvalidMessagepack(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	// Truncate the header right in the middle. This should lead to a
@@ -418,7 +418,7 @@ func TestSigncryptionBoxKeyHeaderDecryptionError(t *testing.T) {
 	keyring := makeEmptyKeyring(t)
 	resolver, receivers := makeResolverWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, nil, receivers)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, nil, receivers)
 	require.NoError(t, err)
 
 	// The recipient secretbox is the very last thing in the header. Flip the
@@ -435,7 +435,7 @@ func TestSigncryptionResolvedKeyHeaderDecryptionError(t *testing.T) {
 	keyring := makeEmptyKeyring(t)
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	// The recipient secretbox is the very last thing in the header. Flip the
@@ -469,7 +469,7 @@ func TestSigncryptionBadResolvers(t *testing.T) {
 	keyring := makeEmptyKeyring(t)
 	_, receivers := makeResolverWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, nil, receivers)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, nil, receivers)
 	require.NoError(t, err)
 
 	// Check that errors from the resolver get forwarded.
@@ -494,7 +494,7 @@ func TestSigncryptionNoMatchingReceivers(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	// Use a new keyring and an always-nil resolver, to guarantee no matching keys.
@@ -523,7 +523,7 @@ func TestSigncryptionBadSenderSecretbox(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	badSealed := messWithHeader(t, sealed, func(hdr *SigncryptionHeader) {
@@ -538,7 +538,7 @@ func TestSigncryptionWrongMessageType(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	badSealed := messWithHeader(t, sealed, func(hdr *SigncryptionHeader) {
@@ -553,7 +553,7 @@ func TestSigncryptionCrazyMessageVersion(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	badSealed := messWithHeader(t, sealed, func(hdr *SigncryptionHeader) {
@@ -584,7 +584,7 @@ func TestSigncryptionInvalidSignature(t *testing.T) {
 	msg := []byte("hello world")
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	senderSigningPrivKey := makeSigningKey(t, keyring)
-	sealed, err := SigncryptSeal(msg, keyring, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
 	require.NoError(t, err)
 
 	// Use the RandomSigningKeysKeyring to make signature verification fail.

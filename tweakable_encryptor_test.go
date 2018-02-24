@@ -273,7 +273,7 @@ func newTestEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCre
 
 func testSeal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (out []byte, err error) {
 	var buf bytes.Buffer
-	es, err := newTestEncryptStream(version, &buf, newKeyring(), sender, receivers, options)
+	es, err := newTestEncryptStream(version, &buf, ephemeralKeyCreator{}, sender, receivers, options)
 	if err != nil {
 		return nil, err
 	}
