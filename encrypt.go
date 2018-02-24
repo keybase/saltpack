@@ -189,14 +189,14 @@ func shuffleEncryptReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 	return shuffled
 }
 
-type random interface {
+type encryptRNG interface {
 	createSymmetricKey() (*SymmetricKey, error)
 	shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey
 }
 
 func (es *encryptStream) init(
 	version Version, sender BoxSecretKey, receivers []BoxPublicKey,
-	ephemeralKeyCreator EphemeralKeyCreator, random random) error {
+	ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG) error {
 	if err := checkKnownVersion(version); err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (es *encryptStream) init(
 		return err
 	}
 
-	receivers = random.shuffleReceivers(receivers)
+	receivers = rng.shuffleReceivers(receivers)
 
 	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
@@ -225,7 +225,7 @@ func (es *encryptStream) init(
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
-	payloadKey, err := random.createSymmetricKey()
+	payloadKey, err := rng.createSymmetricKey()
 	if err != nil {
 		return err
 	}
@@ -330,13 +330,13 @@ func (es *encryptStream) Close() error {
 	}
 }
 
-type defaultRandom struct{}
+type defaultEncryptRNG struct{}
 
-func (defaultRandom) createSymmetricKey() (*SymmetricKey, error) {
+func (defaultEncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
 	return newRandomSymmetricKey()
 }
 
-func (defaultRandom) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 	return shuffleEncryptReceivers(receivers)
 }
 
@@ -354,7 +354,7 @@ func NewEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCreator
 		output:  ciphertext,
 		encoder: newEncoder(ciphertext),
 	}
-	err := es.init(version, sender, receivers, ephemeralKeyCreator, defaultRandom{})
+	err := es.init(version, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{})
 	if err != nil {
 		return nil, err
 	}

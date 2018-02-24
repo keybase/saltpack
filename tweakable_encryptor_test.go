@@ -121,8 +121,8 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 
 func (pes *testEncryptStream) init(
 	version Version, sender BoxSecretKey, receivers []BoxPublicKey,
-	ephemeralKeyCreator EphemeralKeyCreator, random random) error {
-	receivers = random.shuffleReceivers(receivers)
+	ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG) error {
+	receivers = rng.shuffleReceivers(receivers)
 
 	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
@@ -142,7 +142,7 @@ func (pes *testEncryptStream) init(
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
-	payloadKey, err := random.createSymmetricKey()
+	payloadKey, err := rng.createSymmetricKey()
 	if err != nil {
 		return err
 	}
@@ -262,13 +262,13 @@ func (pes *testEncryptStream) Close() error {
 	}
 }
 
-type randomNoShuffle struct{}
+type noShuffleRNG struct{}
 
-func (randomNoShuffle) createSymmetricKey() (*SymmetricKey, error) {
+func (noShuffleRNG) createSymmetricKey() (*SymmetricKey, error) {
 	return newRandomSymmetricKey()
 }
 
-func (randomNoShuffle) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+func (noShuffleRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 	return receivers
 }
 
@@ -281,7 +281,7 @@ func newTestEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCre
 		encoder: newEncoder(ciphertext),
 		options: options,
 	}
-	err := pes.init(version, sender, receivers, ephemeralKeyCreator, randomNoShuffle{})
+	err := pes.init(version, sender, receivers, ephemeralKeyCreator, noShuffleRNG{})
 	return pes, err
 }
 
