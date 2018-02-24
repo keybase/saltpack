@@ -1382,6 +1382,20 @@ func decodeSecretKeyString(t *testing.T, s string) boxSecretKey {
 	}
 }
 
+// makeSymmetricKeyString is a helper function for making a secret key
+// and returning its string representation.
+func makeSymmetricKeyString(t *testing.T) string {
+	sk, err := newRandomSymmetricKey()
+	require.NoError(t, err)
+	return hex.EncodeToString((*sk)[:])
+}
+
+func decodeSymmetricKeyString(t *testing.T, s string) SymmetricKey {
+	decoded, err := hex.DecodeString(s)
+	require.NoError(t, err)
+	return sliceToByte32(decoded)
+}
+
 const hardcodedV1PlaintextMessage = "hardcoded message v1"
 
 const hardcodedV1SenderSecretKey = "4902237dc127e1cbbd5dbf0b3ce74e751aa6bbfd894f2e1658fb2c7b3b5eb9fc"
@@ -1390,13 +1404,47 @@ const hardcodedV1Receiver0SecretKey = "3833f2e7bbc09b27713d4b43b03a97df784e7a0c9
 
 const hardcodedV1Receiver1SecretKey = "82f0c46354c69e360d703525a2e0b92e4cb7a64ae23bcbfbc89978ee2772fbc1"
 
+// TODO: Fix.
+const hardcodedV1EphemeralSecretKey = "82f0c46354c69e360d703525a2e0b92e4cb7a64ae23bcbfbc89978ee2772fbc1"
+
+// TODO: Fix
+const hardcodedV1SymmetricKey = "82f0c46354c69e360d703525a2e0b92e4cb7a64ae23bcbfbc89978ee2772fbc1"
+
 const hardcodedV1EncryptedMessageA = `BEGIN SALTPACK ENCRYPTED MESSAGE. kiOUtMhcc4NXXRb XMxIdgQyljqYzXu NnDO2pAj8VshkJm mjLxf1AU5sb4XYG qi8gfVP8udgo6tJ F7GMNXjTNMtsN3z 6EfG7ZFLxSLKQT9 wBDC4H4MkVdOqN5 m8jhqQA4X6Z6nyD QKUUfVzX5SUdzPt 7u892SKsrd8VHiG ZU1BkMxHrcwc99r ALFuv9KlXUJh5We qaYnF6zHN4mUwu7 VHl8HiHzZlZh6Vz uHE70mAHIHYutCu nBezmAjVmhHxwoT FJAJOEffThCshkV gWQp8s2Jz5MqDGC sdsfnUrOgwWF7F7 A0UZwzsS98ayCwO 4CD05ET7CbBTa1X Jz1VNGVmn7QfKY3 jbUOPpXqclAvMZt LkVLDN6Wcf3bVRR 4BhfRjhbXvIOU2Y CN9paSAxcXH8ixw V6Hj5EpfRGurwPk gXncgHKtwBDIzsg AR6a1cHYA0nUhIQ UnpHu28bzKluzJ2 ZItHumxBAQpN177 vSgUiPqGmFZAFWb zQg59qgg5rdYSyA qsErwg3NcOijQuS BTyqDJEZktQ9vtm QAEj9QUohkVbovY 0h2OMWyECwqeIEd QDfuBz5It9UeR2D GkosgQJddgsIA1W BBUvPpcz1gix4w4 G5hLiga81NN41xc naE5d5mvpMBWtWE RFNFPToU2OHVhFr SjLWsYAS5iGoxhV uYHk6KcR7Q4xxSR 8fQWhEQNkWNPbsp Ab2okWCZIJAQuZX vHhpD4qbcGg5epE lI2frLcCg3IGudJ MOYq3F321sloT1F iAQ4DMtD0Q8wTCQ n1cc5FfMTU2V0HI t4OhFcopsj8vyst 5xjqQWR5XSN69oE kT5rcfDaWR. END SALTPACK ENCRYPTED MESSAGE.
 `
+
+type constantEphemeralKeyCreator struct {
+	k boxSecretKey
+}
+
+func (c constantEphemeralKeyCreator) CreateEphemeralKey() (BoxSecretKey, error) {
+	return c.k, nil
+}
+
+type constantEncryptRNG struct {
+	k SymmetricKey
+}
+
+func (c constantEncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
+	return &c.k, nil
+}
+
+func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+	// Move every element to the previous index, wrapping around the
+	// first element.
+	shuffled := make([]BoxPublicKey, len(receivers))
+	for i := 0; i < len(receivers); i++ {
+		shuffled[i] = receivers[(i+1)%len(receivers)]
+	}
+	return shuffled
+}
 
 func TestHardcodedEncryptMessageV1(t *testing.T) {
 	sender := decodeSecretKeyString(t, hardcodedV1SenderSecretKey)
 	receiver0 := decodeSecretKeyString(t, hardcodedV1Receiver0SecretKey)
 	receiver1 := decodeSecretKeyString(t, hardcodedV1Receiver1SecretKey)
+	ephemeral := decodeSecretKeyString(t, hardcodedV1EphemeralSecretKey)
+	symmetric := decodeSymmetricKeyString(t, hardcodedV1SymmetricKey)
 
 	allReceivers := []BoxPublicKey{
 		sender.GetPublicKey(),
@@ -1404,7 +1452,7 @@ func TestHardcodedEncryptMessageV1(t *testing.T) {
 		receiver1.GetPublicKey(),
 	}
 
-	ciphertext, err := EncryptArmor62Seal(Version1(), []byte(hardcodedV1PlaintextMessage), ephemeralKeyCreator{}, sender, allReceivers, "")
+	ciphertext, err := encryptArmor62Seal(Version1(), []byte(hardcodedV1PlaintextMessage), sender, allReceivers, constantEphemeralKeyCreator{ephemeral}, constantEncryptRNG{symmetric}, "")
 	require.NoError(t, err)
 
 	require.Equal(t, hardcodedV1EncryptedMessageA, ciphertext)
