@@ -15,15 +15,14 @@ import (
 )
 
 type signcryptSealStream struct {
-	version             Version
-	output              io.Writer
-	encoder             encoder
-	encryptionKey       SymmetricKey
-	signingKey          SigningSecretKey
-	senderAnonymous     bool
-	ephemeralKeyCreator EphemeralKeyCreator
-	buffer              bytes.Buffer
-	headerHash          headerHash
+	version         Version
+	output          io.Writer
+	encoder         encoder
+	encryptionKey   SymmetricKey
+	signingKey      SigningSecretKey
+	senderAnonymous bool
+	buffer          bytes.Buffer
+	headerHash      headerHash
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
 
@@ -206,16 +205,25 @@ func shuffleSigncryptionReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmet
 	return receivers
 }
 
+type signcryptRNG interface {
+	createSymmetricKey() (*SymmetricKey, error)
+	shuffleReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker
+}
+
 // This generates the payload key, and encrypts it for all the different
 // recipients of the two different types. Symmetric key recipients and DH key
 // recipients use different types of identifiers, but they are the same length,
 // and should both be indistinguishable from random noise.
-func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
-	if len(receivers) == 0 {
+func (sss *signcryptSealStream) init(
+	receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey,
+	ephemeralKeyCreator EphemeralKeyCreator, rng signcryptRNG) error {
+	if len(receiverBoxKeys)+len(receiverSymmetricKeys) == 0 {
 		return ErrBadReceivers
 	}
 
-	ephemeralKey, err := sss.ephemeralKeyCreator.CreateEphemeralKey()
+	receivers := rng.shuffleReceivers(receiverBoxKeys, receiverSymmetricKeys)
+
+	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
 		return err
 	}
@@ -226,7 +234,7 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 		Type:       MessageTypeSigncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 	}
-	encryptionKey, err := newRandomSymmetricKey()
+	encryptionKey, err := rng.createSymmetricKey()
 	if err != nil {
 		return err
 	}
@@ -281,6 +289,16 @@ func (sss *signcryptSealStream) Close() error {
 	return nil
 }
 
+type defaultSigncryptRNG struct{}
+
+func (defaultSigncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
+	return newRandomSymmetricKey()
+}
+
+func (defaultSigncryptRNG) shuffleReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker {
+	return shuffleSigncryptionReceivers(receiverBoxKeys, receiverSymmetricKeys)
+}
+
 // NewSigncryptSealStream creates a stream that consumes plaintext data. It
 // will write out signed and encrypted data to the io.Writer passed in as
 // ciphertext. The encryption is from the specified sender, and is encrypted
@@ -290,14 +308,12 @@ func (sss *signcryptSealStream) Close() error {
 // also returns an error if initialization failed.
 func NewSigncryptSealStream(ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) (io.WriteCloser, error) {
 	sss := &signcryptSealStream{
-		version:             Version2(),
-		output:              ciphertext,
-		encoder:             newEncoder(ciphertext),
-		signingKey:          sender,
-		ephemeralKeyCreator: ephemeralKeyCreator,
+		version:    Version2(),
+		output:     ciphertext,
+		encoder:    newEncoder(ciphertext),
+		signingKey: sender,
 	}
-	receivers := shuffleSigncryptionReceivers(receiverBoxKeys, receiverSymmetricKeys)
-	err := sss.init(receivers)
+	err := sss.init(receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{})
 	return sss, err
 }
 
