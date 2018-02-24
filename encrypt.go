@@ -365,11 +365,9 @@ func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey
 	return newEncryptStream(version, ciphertext, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{})
 }
 
-// Seal a plaintext from the given sender, for the specified receiver groups.
-// Returns a ciphertext, or an error if something bad happened.
-func Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator) (out []byte, err error) {
+func seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG) (out []byte, err error) {
 	var buf bytes.Buffer
-	es, err := NewEncryptStream(version, &buf, sender, receivers, ephemeralKeyCreator)
+	es, err := newEncryptStream(version, &buf, sender, receivers, ephemeralKeyCreator, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -380,4 +378,10 @@ func Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []Bo
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// Seal a plaintext from the given sender, for the specified receiver groups.
+// Returns a ciphertext, or an error if something bad happened.
+func Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator) (out []byte, err error) {
+	return seal(version, plaintext, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{})
 }
