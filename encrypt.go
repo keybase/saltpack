@@ -330,16 +330,6 @@ func (es *encryptStream) Close() error {
 	}
 }
 
-type defaultEncryptRNG struct{}
-
-func (defaultEncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
-	return newRandomSymmetricKey()
-}
-
-func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
-	return shuffleEncryptReceivers(receivers)
-}
-
 func newEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG) (io.WriteCloser, error) {
 	es := &encryptStream{
 		version: version,
@@ -351,6 +341,16 @@ func newEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey
 		return nil, err
 	}
 	return es, nil
+}
+
+type defaultEncryptRNG struct{}
+
+func (defaultEncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
+	return newRandomSymmetricKey()
+}
+
+func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+	return shuffleEncryptReceivers(receivers)
 }
 
 // NewEncryptStream creates a stream that consumes plaintext data.

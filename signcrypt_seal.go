@@ -289,6 +289,20 @@ func (sss *signcryptSealStream) Close() error {
 	return nil
 }
 
+func newSigncryptSealStream(ciphertext io.Writer, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator, rng signcryptRNG) (io.WriteCloser, error) {
+	sss := &signcryptSealStream{
+		version:    Version2(),
+		output:     ciphertext,
+		encoder:    newEncoder(ciphertext),
+		signingKey: sender,
+	}
+	err := sss.init(receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{})
+	if err != nil {
+		return nil, err
+	}
+	return sss, nil
+}
+
 type defaultSigncryptRNG struct{}
 
 func (defaultSigncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
@@ -321,13 +335,9 @@ func NewSigncryptSealStream(ciphertext io.Writer, ephemeralKeyCreator EphemeralK
 	return sss, nil
 }
 
-// SigncryptSeal seals a plaintext from the given sender, for the
-// specified receiver groups.
-//
-// Returns a ciphertext, or an error if something bad happened.
-func SigncryptSeal(plaintext []byte, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) (out []byte, err error) {
+func signcryptSeal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator, rng signcryptRNG) (out []byte, err error) {
 	var buf bytes.Buffer
-	sss, err := NewSigncryptSealStream(&buf, ephemeralKeyCreator, sender, receiverBoxKeys, receiverSymmetricKeys)
+	sss, err := newSigncryptSealStream(&buf, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -338,4 +348,10 @@ func SigncryptSeal(plaintext []byte, ephemeralKeyCreator EphemeralKeyCreator, se
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// Seal a plaintext from the given sender, for the specified receiver groups.
+// Returns a ciphertext, or an error if something bad happened.
+func SigncryptSeal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator) (out []byte, err error) {
+	return signcryptSeal(plaintext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{})
 }

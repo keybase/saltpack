@@ -19,7 +19,7 @@ func TestDecryptErrorAtEOF(t *testing.T) {
 
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 
-	sealed, err := SigncryptSeal(plaintext, ephemeralKeyCreator{}, senderSigningPrivKey, receiverBoxKeys, nil)
+	sealed, err := SigncryptSeal(plaintext, senderSigningPrivKey, receiverBoxKeys, nil, ephemeralKeyCreator{})
 	require.NoError(t, err)
 
 	var reader io.Reader = bytes.NewReader(sealed)
