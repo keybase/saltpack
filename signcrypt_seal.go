@@ -211,6 +211,10 @@ func shuffleSigncryptionReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmet
 // recipients use different types of identifiers, but they are the same length,
 // and should both be indistinguishable from random noise.
 func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
+	if len(receivers) == 0 {
+		return ErrBadReceivers
+	}
+
 	ephemeralKey, err := sss.ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
 		return err
