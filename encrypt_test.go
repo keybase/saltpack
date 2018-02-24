@@ -1404,7 +1404,7 @@ func TestHardcodedEncryptMessageV1(t *testing.T) {
 		receiver1.GetPublicKey(),
 	}
 
-	ciphertext, err := EncryptArmor62Seal(Version1(), []byte(hardcodedV1PlaintextMessage), sender, allReceivers, "")
+	ciphertext, err := EncryptArmor62Seal(Version1(), []byte(hardcodedV1PlaintextMessage), ephemeralKeyCreator{}, sender, allReceivers, "")
 	require.NoError(t, err)
 
 	require.Equal(t, hardcodedV1EncryptedMessageA, ciphertext)
