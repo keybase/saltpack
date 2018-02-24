@@ -176,23 +176,12 @@ func (b boxSecretKey) Unbox(sender BoxPublicKey, nonce Nonce, msg []byte) ([]byt
 
 var kr = newKeyring()
 
-func (b boxPublicKey) CreateEphemeralKey() (BoxSecretKey, error) {
-	pk, sk, err := box.GenerateKey(rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-	ret := &boxSecretKey{hide: b.hide}
-	ret.key = *sk
-	ret.pub.key = *pk
-	ret.isInit = true
-	return ret, nil
-}
-
 func (b boxSecretKey) IsNull() bool { return !b.isInit }
 
 func newHiddenBoxKeyNoInsert(t *testing.T) BoxSecretKey {
-	ret, err := (boxPublicKey{hide: true}).CreateEphemeralKey()
+	ret, err := newKeyring().CreateEphemeralKey()
 	require.NoError(t, err)
+	ret.(*boxSecretKey).hide = true
 	return ret
 }
 
@@ -203,7 +192,7 @@ func newHiddenBoxKey(t *testing.T) BoxSecretKey {
 }
 
 func newBoxKeyNoInsert(t *testing.T) BoxSecretKey {
-	ret, err := (boxPublicKey{}).CreateEphemeralKey()
+	ret, err := newKeyring().CreateEphemeralKey()
 	require.NoError(t, err)
 	return ret
 }

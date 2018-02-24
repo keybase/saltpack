@@ -121,7 +121,6 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 }
 
 func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
-
 	ephemeralKey, err := pes.ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
 		return err

@@ -51,16 +51,6 @@ func generateBoxKey() (*SecretKey, error) {
 	return &ret, nil
 }
 
-// CreateEphemeralKey takes a PublicKey and returns a new ephemeral
-// secret key of the same type.
-func (k PublicKey) CreateEphemeralKey() (saltpack.BoxSecretKey, error) {
-	ret, err := generateBoxKey()
-	if err != nil {
-		return nil, err
-	}
-	return *ret, nil
-}
-
 var _ saltpack.BoxPublicKey = PublicKey{}
 
 // Box runs the NaCl box for the given sender and receiver key.
