@@ -41,18 +41,19 @@ type BasePublicKey interface {
 	ToKID() []byte
 }
 
+type EphemeralKeyCreator interface {
+	// CreateEmphemeralKey creates a random ephemeral key.
+	CreateEphemeralKey() (BoxSecretKey, error)
+}
+
 // BoxPublicKey is an generic interface to NaCl's public key Box function.
 type BoxPublicKey interface {
 	BasePublicKey
+	EphemeralKeyCreator
 
 	// ToRawBoxKeyPointer returns this public key as a *[32]byte,
 	// for use with nacl.box.Seal
 	ToRawBoxKeyPointer() *RawBoxKey
-
-	// CreateEmphemeralKey creates an ephemeral key of the same type, but
-	// totally random. The BoxPublicKey and the Keyring interfaces both support
-	// this method, for convenience.
-	CreateEphemeralKey() (BoxSecretKey, error)
 
 	// HideIdentity returns true if we should hide the identity of this
 	// key in our output message format.
@@ -106,6 +107,8 @@ type SigningPublicKey interface {
 // recover public or private keys during the decryption process.
 // Calls can block on network action.
 type Keyring interface {
+	EphemeralKeyCreator
+
 	// LookupBoxSecretKey looks in the Keyring for the secret key corresponding
 	// to one of the given Key IDs.  Returns the index and the key on success,
 	// or -1 and nil on failure.
@@ -123,11 +126,6 @@ type Keyring interface {
 	// BoxPublicKey format. This key has never been seen before, so
 	// will be ephemeral.
 	ImportBoxEphemeralKey(kid []byte) BoxPublicKey
-
-	// CreateEmphemeralKey creates a random ephemeral key. It is not added to
-	// the keyring. The BoxPublicKey and Keyring interfaces both support this
-	// method, for convenience.
-	CreateEphemeralKey() (BoxSecretKey, error)
 }
 
 // SigKeyring is an interface used during verification to find
