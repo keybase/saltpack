@@ -14,14 +14,13 @@ import (
 )
 
 type encryptStream struct {
-	version             Version
-	output              io.Writer
-	encoder             encoder
-	ephemeralKeyCreator EphemeralKeyCreator
-	payloadKey          SymmetricKey
-	buffer              bytes.Buffer
-	headerHash          headerHash
-	macKeys             []macKey
+	version    Version
+	output     io.Writer
+	encoder    encoder
+	payloadKey SymmetricKey
+	buffer     bytes.Buffer
+	headerHash headerHash
+	macKeys    []macKey
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
 
@@ -190,7 +189,14 @@ func shuffleEncryptReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 	return shuffled
 }
 
-func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
+type random interface {
+	createSymmetricKey() (*SymmetricKey, error)
+	shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey
+}
+
+func (es *encryptStream) init(
+	version Version, sender BoxSecretKey, receivers []BoxPublicKey,
+	ephemeralKeyCreator EphemeralKeyCreator, random random) error {
 	if err := checkKnownVersion(version); err != nil {
 		return err
 	}
@@ -199,7 +205,9 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		return err
 	}
 
-	ephemeralKey, err := es.ephemeralKeyCreator.CreateEphemeralKey()
+	receivers = random.shuffleReceivers(receivers)
+
+	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
 		return err
 	}
@@ -217,7 +225,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
-	payloadKey, err := newRandomSymmetricKey()
+	payloadKey, err := random.createSymmetricKey()
 	if err != nil {
 		return err
 	}
@@ -322,6 +330,16 @@ func (es *encryptStream) Close() error {
 	}
 }
 
+type defaultRandom struct{}
+
+func (defaultRandom) createSymmetricKey() (*SymmetricKey, error) {
+	return newRandomSymmetricKey()
+}
+
+func (defaultRandom) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+	return shuffleEncryptReceivers(receivers)
+}
+
 // NewEncryptStream creates a stream that consumes plaintext data.
 // It will write out encrypted data to the io.Writer passed in as ciphertext.
 // The encryption is from the specified sender, and is encrypted for the
@@ -331,12 +349,11 @@ func (es *encryptStream) Close() error {
 // also returns an error if initialization failed.
 func NewEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey) (io.WriteCloser, error) {
 	es := &encryptStream{
-		version:             version,
-		output:              ciphertext,
-		encoder:             newEncoder(ciphertext),
-		ephemeralKeyCreator: ephemeralKeyCreator,
+		version: version,
+		output:  ciphertext,
+		encoder: newEncoder(ciphertext),
 	}
-	err := es.init(version, sender, shuffleEncryptReceivers(receivers))
+	err := es.init(version, sender, receivers, ephemeralKeyCreator, defaultRandom{})
 	return es, err
 }
 
