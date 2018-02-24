@@ -106,8 +106,6 @@ type EphemeralKeyCreator interface {
 // recover public or private keys during the decryption process.
 // Calls can block on network action.
 type Keyring interface {
-	EphemeralKeyCreator
-
 	// LookupBoxSecretKey looks in the Keyring for the secret key corresponding
 	// to one of the given Key IDs.  Returns the index and the key on success,
 	// or -1 and nil on failure.

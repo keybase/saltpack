@@ -109,6 +109,13 @@ func (k PrecomputedSharedKey) Unbox(nonce saltpack.Nonce, msg []byte) ([]byte, e
 
 var _ saltpack.BoxPrecomputedSharedKey = PrecomputedSharedKey{}
 
+type EphemeralKeyCreator struct{}
+
+// CreateEphemeralKey creates a random ephemeral key.
+func (c EphemeralKeyCreator) CreateEphemeralKey() (saltpack.BoxSecretKey, error) {
+	return generateBoxKey()
+}
+
 // Keyring holds signing and box secret/public keypairs.
 type Keyring struct {
 	encKeys map[PublicKey]SecretKey
@@ -137,17 +144,6 @@ func (k *Keyring) GenerateBoxKey() (*SecretKey, error) {
 		return nil, err
 	}
 	k.encKeys[ret.pub] = *ret
-	return ret, nil
-}
-
-// CreateEphemeralKey creates a random ephemeral key. It is not added to the
-// keyring. The BoxPublicKey and Keyring interfaces both support this method,
-// for convenience.
-func (k *Keyring) CreateEphemeralKey() (saltpack.BoxSecretKey, error) {
-	ret, err := generateBoxKey()
-	if err != nil {
-		return nil, err
-	}
 	return ret, nil
 }
 
