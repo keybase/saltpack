@@ -35,14 +35,15 @@ func (eo testEncryptionOptions) getBlockSize() int {
 }
 
 type testEncryptStream struct {
-	version    Version
-	output     io.Writer
-	encoder    encoder
-	payloadKey SymmetricKey
-	buffer     bytes.Buffer
-	options    testEncryptionOptions
-	headerHash headerHash
-	macKeys    []macKey
+	version             Version
+	output              io.Writer
+	encoder             encoder
+	ephemeralKeyCreator EphemeralKeyCreator
+	payloadKey          SymmetricKey
+	buffer              bytes.Buffer
+	options             testEncryptionOptions
+	headerHash          headerHash
+	macKeys             []macKey
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
 
@@ -121,7 +122,7 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 
 func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
 
-	ephemeralKey, err := receivers[0].CreateEphemeralKey()
+	ephemeralKey, err := pes.ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
 		return err
 	}
@@ -259,12 +260,13 @@ func (pes *testEncryptStream) Close() error {
 
 // Options are available mainly for testing.  Can't think of a good reason for
 // end-users to have to specify options.
-func newTestEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (io.WriteCloser, error) {
+func newTestEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (io.WriteCloser, error) {
 	pes := &testEncryptStream{
-		version: version,
-		output:  ciphertext,
-		encoder: newEncoder(ciphertext),
-		options: options,
+		version:             version,
+		output:              ciphertext,
+		encoder:             newEncoder(ciphertext),
+		ephemeralKeyCreator: ephemeralKeyCreator,
+		options:             options,
 	}
 	err := pes.init(version, sender, receivers)
 	return pes, err
@@ -272,7 +274,7 @@ func newTestEncryptStream(version Version, ciphertext io.Writer, sender BoxSecre
 
 func testSeal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (out []byte, err error) {
 	var buf bytes.Buffer
-	es, err := newTestEncryptStream(version, &buf, sender, receivers, options)
+	es, err := newTestEncryptStream(version, &buf, newKeyring(), sender, receivers, options)
 	if err != nil {
 		return nil, err
 	}

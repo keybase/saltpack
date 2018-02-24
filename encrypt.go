@@ -199,7 +199,7 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		return err
 	}
 
-	ephemeralKey, err := receivers[0].CreateEphemeralKey()
+	ephemeralKey, err := es.ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
 		return err
 	}

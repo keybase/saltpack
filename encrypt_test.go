@@ -339,7 +339,7 @@ func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPub
 	if receivers == nil {
 		receivers = []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	}
-	strm, err := newTestEncryptStream(version, &ciphertext, sndr, receivers,
+	strm, err := newTestEncryptStream(version, &ciphertext, newKeyring(), sndr, receivers,
 		testEncryptionOptions{blockSize: 1024})
 	require.NoError(t, err)
 	_, err = strm.Write(msg)
@@ -459,7 +459,7 @@ func testReceiverNotFound(t *testing.T, version Version) {
 		newBoxKeyNoInsert(t).GetPublicKey(),
 	}
 
-	strm, err := newTestEncryptStream(version, &out, sndr, receivers,
+	strm, err := newTestEncryptStream(version, &out, newKeyring(), sndr, receivers,
 		testEncryptionOptions{blockSize: 1024})
 	require.NoError(t, err)
 	_, err = strm.Write(msg)
@@ -475,7 +475,7 @@ func testTruncation(t *testing.T, version Version) {
 	var out bytes.Buffer
 	msg := []byte("this message is going to be truncated")
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
-	strm, err := newTestEncryptStream(version, &out, sndr, receivers,
+	strm, err := newTestEncryptStream(version, &out, newKeyring(), sndr, receivers,
 		testEncryptionOptions{blockSize: 1024})
 	require.NoError(t, err)
 	_, err = strm.Write(msg)

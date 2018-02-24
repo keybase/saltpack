@@ -41,15 +41,9 @@ type BasePublicKey interface {
 	ToKID() []byte
 }
 
-type EphemeralKeyCreator interface {
-	// CreateEmphemeralKey creates a random ephemeral key.
-	CreateEphemeralKey() (BoxSecretKey, error)
-}
-
 // BoxPublicKey is an generic interface to NaCl's public key Box function.
 type BoxPublicKey interface {
 	BasePublicKey
-	EphemeralKeyCreator
 
 	// ToRawBoxKeyPointer returns this public key as a *[32]byte,
 	// for use with nacl.box.Seal
@@ -101,6 +95,11 @@ type SigningPublicKey interface {
 	// Verify verifies that signature is a valid signature of message for
 	// this public key.
 	Verify(message []byte, signature []byte) error
+}
+
+type EphemeralKeyCreator interface {
+	// CreateEmphemeralKey creates a random ephemeral key.
+	CreateEphemeralKey() (BoxSecretKey, error)
 }
 
 // Keyring is an interface used with decryption; it is called to
