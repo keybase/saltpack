@@ -319,7 +319,7 @@ func testNewEncryptStreamShuffledReaders(t *testing.T, version Version) {
 		key: RawBoxKey{0x08},
 	}
 	var ciphertext bytes.Buffer
-	_, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
+	_, err := NewEncryptStream(version, &ciphertext, newKeyring(), sndr, receivers)
 	require.NoError(t, err)
 
 	var headerBytes []byte
@@ -391,7 +391,7 @@ func testRealEncryptor(t *testing.T, version Version, sz int) {
 	sndr := newBoxKey(t)
 	var ciphertext bytes.Buffer
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
-	strm, err := NewEncryptStream(version, &ciphertext, sndr, receivers)
+	strm, err := NewEncryptStream(version, &ciphertext, newKeyring(), sndr, receivers)
 	require.NoError(t, err)
 	_, err = strm.Write(msg)
 	require.NoError(t, err)
@@ -516,7 +516,7 @@ func testSealAndOpen(t *testing.T, version Version, sz int) {
 	plaintext := make([]byte, sz)
 	_, err := rand.Read(plaintext)
 	require.NoError(t, err)
-	ciphertext, err := Seal(version, plaintext, sender, receivers)
+	ciphertext, err := Seal(version, plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 	_, plaintext2, err := Open(SingleVersionValidator(version), ciphertext, kr)
 	require.NoError(t, err)
@@ -540,7 +540,7 @@ func testSealAndOpenTwoReceivers(t *testing.T, version Version) {
 	plaintext := make([]byte, 1024*10)
 	_, err := rand.Read(plaintext)
 	require.NoError(t, err)
-	ciphertext, err := Seal(version, plaintext, sender, receivers)
+	ciphertext, err := Seal(version, plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 	_, plaintext2, err := Open(SingleVersionValidator(version), ciphertext, kr)
 	require.NoError(t, err)
@@ -552,7 +552,7 @@ func testRepeatedKey(t *testing.T, version Version) {
 	pk := newBoxKey(t).GetPublicKey()
 	receivers := []BoxPublicKey{pk, pk}
 	plaintext := randomMsg(t, 1024*3)
-	_, err := Seal(version, plaintext, sender, receivers)
+	_, err := Seal(version, plaintext, newKeyring(), sender, receivers)
 	require.IsType(t, ErrRepeatedKey{}, err)
 }
 
@@ -560,7 +560,7 @@ func testEmptyReceivers(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{}
 	plaintext := randomMsg(t, 1024*3)
-	_, err := Seal(version, plaintext, sender, receivers)
+	_, err := Seal(version, plaintext, newKeyring(), sender, receivers)
 	require.Equal(t, ErrBadReceivers, err)
 }
 
@@ -958,7 +958,7 @@ func testSealAndOpenTrailingGarbage(t *testing.T, version Version) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(version, plaintext, sender, receivers)
+	ciphertext, err := Seal(version, plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 	var buf bytes.Buffer
 	buf.Write(ciphertext)
@@ -970,7 +970,7 @@ func testSealAndOpenTrailingGarbage(t *testing.T, version Version) {
 func testAnonymousSender(t *testing.T, version Version) {
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(version, plaintext, nil, receivers)
+	ciphertext, err := Seal(version, plaintext, newKeyring(), nil, receivers)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	require.NoError(t, err)
@@ -988,7 +988,7 @@ func testAllAnonymous(t *testing.T, version Version) {
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(version, plaintext, nil, receivers)
+	ciphertext, err := Seal(version, plaintext, newKeyring(), nil, receivers)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	require.Equal(t, ErrNoDecryptionKey, err)
@@ -1003,7 +1003,7 @@ func testAllAnonymous(t *testing.T, version Version) {
 	require.Equal(t, 0, len(mki.NamedReceivers))
 
 	receivers[5] = newHiddenBoxKeyNoInsert(t).GetPublicKey()
-	ciphertext, err = Seal(version, plaintext, nil, receivers)
+	ciphertext, err = Seal(version, plaintext, newKeyring(), nil, receivers)
 	require.NoError(t, err)
 
 	mki, _, err = Open(SingleVersionValidator(version), ciphertext, kr.makeIterable())
@@ -1076,7 +1076,7 @@ func testAnonymousThenNamed(t *testing.T, version Version) {
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(version, plaintext, nil, receivers)
+	ciphertext, err := Seal(version, plaintext, newKeyring(), nil, receivers)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
 	require.NoError(t, err)
@@ -1092,7 +1092,7 @@ func testBadKeyLookup(t *testing.T, version Version) {
 		newHiddenBoxKeyNoInsert(t).GetPublicKey(),
 	}
 	plaintext := randomMsg(t, 1024*3)
-	ciphertext, err := Seal(version, plaintext, nil, receivers)
+	ciphertext, err := Seal(version, plaintext, newKeyring(), nil, receivers)
 	require.NoError(t, err)
 	kr.bad = true
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
@@ -1115,7 +1115,7 @@ func testNoWriteMessage(t *testing.T, version Version) {
 		newBoxKey(t).GetPublicKey(),
 	}
 	var ciphertext bytes.Buffer
-	es, err := NewEncryptStream(version, &ciphertext, nil, receivers)
+	es, err := NewEncryptStream(version, &ciphertext, newKeyring(), nil, receivers)
 	require.NoError(t, err)
 	// Usually we would call Write() here. But with an empty message, we don't
 	// have to!
@@ -1133,7 +1133,7 @@ func TestEncryptSinglePacketV1(t *testing.T) {
 	receivers := []BoxPublicKey{boxPublicKey{key: RawBoxKey{0x1}}}
 
 	plaintext := make([]byte, encryptionBlockSize)
-	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(ciphertext))
@@ -1164,7 +1164,7 @@ func TestEncryptSinglePacketV2(t *testing.T) {
 	receivers := []BoxPublicKey{boxPublicKey{key: RawBoxKey{0x1}}}
 
 	plaintext := make([]byte, encryptionBlockSize)
-	ciphertext, err := Seal(Version2(), plaintext, sender, receivers)
+	ciphertext, err := Seal(Version2(), plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(ciphertext))
@@ -1191,7 +1191,7 @@ func TestEncryptSubsequenceV1(t *testing.T) {
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 
 	plaintext := make([]byte, 2*encryptionBlockSize)
-	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(ciphertext))
@@ -1266,7 +1266,7 @@ func TestEncryptSubsequenceV2(t *testing.T) {
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 
 	plaintext := make([]byte, 2*encryptionBlockSize)
-	ciphertext, err := Seal(Version2(), plaintext, sender, receivers)
+	ciphertext, err := Seal(Version2(), plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 
 	mps := newMsgpackStream(bytes.NewReader(ciphertext))

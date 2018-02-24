@@ -20,7 +20,7 @@ func TestDecryptVersionValidator(t *testing.T) {
 	plaintext := []byte{0x01}
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
-	ciphertext, err := Seal(Version1(), plaintext, sender, receivers)
+	ciphertext, err := Seal(Version1(), plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 
 	_, _, err = Open(SingleVersionValidator(Version2()), ciphertext, kr)
@@ -65,7 +65,7 @@ func testDecryptErrorAtEOF(t *testing.T, version Version) {
 	plaintext := randomMsg(t, 128)
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
-	ciphertext, err := Seal(version, plaintext, sender, receivers)
+	ciphertext, err := Seal(version, plaintext, newKeyring(), sender, receivers)
 	require.NoError(t, err)
 
 	var reader io.Reader = bytes.NewReader(ciphertext)

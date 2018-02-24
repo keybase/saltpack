@@ -20,7 +20,7 @@ func encryptArmor62RandomData(t *testing.T, version Version, sz int) ([]byte, st
 	sndr := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 
-	ciphertext, err := EncryptArmor62Seal(version, msg, sndr, receivers, ourBrand)
+	ciphertext, err := EncryptArmor62Seal(version, msg, newKeyring(), sndr, receivers, ourBrand)
 	require.NoError(t, err)
 	return msg, ciphertext
 }
@@ -41,7 +41,7 @@ func testDearmor62DecryptSlowReader(t *testing.T, version Version) {
 	sndr := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 
-	ciphertext, err := EncryptArmor62Seal(version, msg, sndr, receivers, ourBrand)
+	ciphertext, err := EncryptArmor62Seal(version, msg, newKeyring(), sndr, receivers, ourBrand)
 	require.NoError(t, err)
 
 	_, dec, frame, err := NewDearmor62DecryptStream(SingleVersionValidator(version), &slowReader{[]byte(ciphertext)}, kr)

@@ -19,15 +19,14 @@ import (
 //
 // The ciphertext is additionally armored with the recommended armor62-style format.
 //
-// Returns an io.WriteCloser that accepts plaintext data to be signcrypted; and
-// also returns an error if initialization failed.
-func NewSigncryptArmor62SealStream(ciphertext io.Writer, keyring Keyring, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (plaintext io.WriteCloser, err error) {
+// Returns an io.WriteCloser that accepts plaintext data to be signcrypted; and // also returns an error if initialization failed.
+func NewSigncryptArmor62SealStream(ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (plaintext io.WriteCloser, err error) {
 	// Note: same "BEGIN SALTPACK ENCRYPTED" visible message type.
 	enc, err := NewArmor62EncoderStream(ciphertext, MessageTypeEncryption, brand)
 	if err != nil {
 		return nil, err
 	}
-	out, err := NewSigncryptSealStream(enc, keyring, sender, receiverBoxKeys, receiverSymmetricKeys)
+	out, err := NewSigncryptSealStream(enc, ephemeralKeyCreator, sender, receiverBoxKeys, receiverSymmetricKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -36,9 +35,9 @@ func NewSigncryptArmor62SealStream(ciphertext io.Writer, keyring Keyring, sender
 
 // SigncryptArmor62Seal is the non-streaming version of NewSigncryptArmor62SealStream, which
 // inputs a plaintext (in bytes) and output a ciphertext (as a string).
-func SigncryptArmor62Seal(plaintext []byte, keyring Keyring, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (string, error) {
+func SigncryptArmor62Seal(plaintext []byte, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (string, error) {
 	var buf bytes.Buffer
-	enc, err := NewSigncryptArmor62SealStream(&buf, keyring, sender, receiverBoxKeys, receiverSymmetricKeys, brand)
+	enc, err := NewSigncryptArmor62SealStream(&buf, ephemeralKeyCreator, sender, receiverBoxKeys, receiverSymmetricKeys, brand)
 	if err != nil {
 		return "", err
 	}
