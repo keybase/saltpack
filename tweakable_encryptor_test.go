@@ -274,7 +274,7 @@ func (noShuffleRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 
 // Options are available mainly for testing.  Can't think of a good reason for
 // end-users to have to specify options.
-func newTestEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (io.WriteCloser, error) {
+func newTestEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, options testEncryptionOptions) (io.WriteCloser, error) {
 	pes := &testEncryptStream{
 		version: version,
 		output:  ciphertext,
@@ -287,7 +287,7 @@ func newTestEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCre
 
 func testSeal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (out []byte, err error) {
 	var buf bytes.Buffer
-	es, err := newTestEncryptStream(version, &buf, ephemeralKeyCreator{}, sender, receivers, options)
+	es, err := newTestEncryptStream(version, &buf, sender, receivers, ephemeralKeyCreator{}, options)
 	if err != nil {
 		return nil, err
 	}

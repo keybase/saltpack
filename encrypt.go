@@ -340,6 +340,19 @@ func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicK
 	return shuffleEncryptReceivers(receivers)
 }
 
+func newEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG) (io.WriteCloser, error) {
+	es := &encryptStream{
+		version: version,
+		output:  ciphertext,
+		encoder: newEncoder(ciphertext),
+	}
+	err := es.init(version, sender, receivers, ephemeralKeyCreator, rng)
+	if err != nil {
+		return nil, err
+	}
+	return es, nil
+}
+
 // NewEncryptStream creates a stream that consumes plaintext data.
 // It will write out encrypted data to the io.Writer passed in as ciphertext.
 // The encryption is from the specified sender, and is encrypted for the
@@ -348,24 +361,15 @@ func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicK
 // If initialization succeeded, returns an io.WriteClose that accepts
 // plaintext data to be encrypted and a nil error. Otherwise, returns
 // nil and the initialization error.
-func NewEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey) (io.WriteCloser, error) {
-	es := &encryptStream{
-		version: version,
-		output:  ciphertext,
-		encoder: newEncoder(ciphertext),
-	}
-	err := es.init(version, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{})
-	if err != nil {
-		return nil, err
-	}
-	return es, nil
+func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator) (io.WriteCloser, error) {
+	return newEncryptStream(version, ciphertext, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{})
 }
 
 // Seal a plaintext from the given sender, for the specified receiver groups.
 // Returns a ciphertext, or an error if something bad happened.
-func Seal(version Version, plaintext []byte, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey) (out []byte, err error) {
+func Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator) (out []byte, err error) {
 	var buf bytes.Buffer
-	es, err := NewEncryptStream(version, &buf, ephemeralKeyCreator, sender, receivers)
+	es, err := NewEncryptStream(version, &buf, sender, receivers, ephemeralKeyCreator)
 	if err != nil {
 		return nil, err
 	}

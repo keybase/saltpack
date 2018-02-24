@@ -35,12 +35,12 @@ func (c closeForwarder) Close() error {
 //
 // Returns an io.WriteCloser that accepts plaintext data to be encrypted; and
 // also returns an error if initialization failed.
-func NewEncryptArmor62Stream(version Version, ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey, brand string) (plaintext io.WriteCloser, err error) {
+func NewEncryptArmor62Stream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, brand string) (plaintext io.WriteCloser, err error) {
 	enc, err := NewArmor62EncoderStream(ciphertext, MessageTypeEncryption, brand)
 	if err != nil {
 		return nil, err
 	}
-	out, err := NewEncryptStream(version, enc, ephemeralKeyCreator, sender, receivers)
+	out, err := NewEncryptStream(version, enc, sender, receivers, ephemeralKeyCreator)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +49,9 @@ func NewEncryptArmor62Stream(version Version, ciphertext io.Writer, ephemeralKey
 
 // EncryptArmor62Seal is the non-streaming version of NewEncryptArmor62Stream, which
 // inputs a plaintext (in bytes) and output a ciphertext (as a string).
-func EncryptArmor62Seal(version Version, plaintext []byte, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey, brand string) (string, error) {
+func EncryptArmor62Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, brand string) (string, error) {
 	var buf bytes.Buffer
-	enc, err := NewEncryptArmor62Stream(version, &buf, ephemeralKeyCreator, sender, receivers, brand)
+	enc, err := NewEncryptArmor62Stream(version, &buf, sender, receivers, ephemeralKeyCreator, brand)
 	if err != nil {
 		return "", err
 	}
