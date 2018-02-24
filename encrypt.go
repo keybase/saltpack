@@ -345,8 +345,9 @@ func (defaultRandom) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 // The encryption is from the specified sender, and is encrypted for the
 // given receivers.
 //
-// Returns an io.WriteClose that accepts plaintext data to be encrypted; and
-// also returns an error if initialization failed.
+// If initialization succeeded, returns an io.WriteClose that accepts
+// plaintext data to be encrypted and a nil error. Otherwise, returns
+// nil and the initialization error.
 func NewEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey) (io.WriteCloser, error) {
 	es := &encryptStream{
 		version: version,
@@ -354,7 +355,10 @@ func NewEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCreator
 		encoder: newEncoder(ciphertext),
 	}
 	err := es.init(version, sender, receivers, ephemeralKeyCreator, defaultRandom{})
-	return es, err
+	if err != nil {
+		return nil, err
+	}
+	return es, nil
 }
 
 // Seal a plaintext from the given sender, for the specified receiver groups.
