@@ -26,18 +26,6 @@ func codecHandle() *codec.MsgpackHandle {
 	return &mh
 }
 
-func randomFill(b []byte) (err error) {
-	l := len(b)
-	n, err := cryptorand.Read(b)
-	if err != nil {
-		return err
-	}
-	if n != l {
-		return ErrInsufficientRandomness
-	}
-	return nil
-}
-
 type cryptoSource struct{}
 
 var _ mathrand.Source = cryptoSource{}

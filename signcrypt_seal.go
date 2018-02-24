@@ -226,9 +226,11 @@ func (sss *signcryptSealStream) init(receivers []receiverKeysMaker) error {
 		Type:       MessageTypeSigncryption,
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 	}
-	if err := randomFill(sss.encryptionKey[:]); err != nil {
+	encryptionKey, err := newRandomSymmetricKey()
+	if err != nil {
 		return err
 	}
+	sss.encryptionKey = *encryptionKey
 
 	// Prepare the secretbox that contains the sender's public key. If the
 	// sender is anonymous, use an all-zeros key, so that the anonymity bit

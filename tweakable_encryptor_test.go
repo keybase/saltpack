@@ -139,9 +139,11 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
-	if err := randomFill(pes.payloadKey[:]); err != nil {
+	payloadKey, err := newRandomSymmetricKey()
+	if err != nil {
 		return err
 	}
+	pes.payloadKey = *payloadKey
 
 	senderPlaintext := sliceToByte32(sender.GetPublicKey().ToKID())
 	senderPlaintextSlice := senderPlaintext[:]

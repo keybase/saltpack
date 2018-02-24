@@ -217,9 +217,11 @@ func (es *encryptStream) init(version Version, sender BoxSecretKey, receivers []
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
-	if err := randomFill(es.payloadKey[:]); err != nil {
+	payloadKey, err := newRandomSymmetricKey()
+	if err != nil {
 		return err
 	}
+	es.payloadKey = *payloadKey
 
 	nonce := nonceForSenderKeySecretBox()
 	eh.SenderSecretbox = secretbox.Seal([]byte{}, sender.GetPublicKey().ToKID(), (*[24]byte)(&nonce), (*[32]byte)(&es.payloadKey))
