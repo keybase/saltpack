@@ -35,15 +35,14 @@ func (eo testEncryptionOptions) getBlockSize() int {
 }
 
 type testEncryptStream struct {
-	version             Version
-	output              io.Writer
-	encoder             encoder
-	ephemeralKeyCreator EphemeralKeyCreator
-	payloadKey          SymmetricKey
-	buffer              bytes.Buffer
-	options             testEncryptionOptions
-	headerHash          headerHash
-	macKeys             []macKey
+	version    Version
+	output     io.Writer
+	encoder    encoder
+	payloadKey SymmetricKey
+	buffer     bytes.Buffer
+	options    testEncryptionOptions
+	headerHash headerHash
+	macKeys    []macKey
 
 	numBlocks encryptionBlockNumber // the lower 64 bits of the nonce
 
@@ -120,8 +119,12 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 	return nil
 }
 
-func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receivers []BoxPublicKey) error {
-	ephemeralKey, err := pes.ephemeralKeyCreator.CreateEphemeralKey()
+func (pes *testEncryptStream) init(
+	version Version, sender BoxSecretKey, receivers []BoxPublicKey,
+	ephemeralKeyCreator EphemeralKeyCreator, random random) error {
+	receivers = random.shuffleReceivers(receivers)
+
+	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
 		return err
 	}
@@ -139,7 +142,7 @@ func (pes *testEncryptStream) init(version Version, sender BoxSecretKey, receive
 		Ephemeral:  ephemeralKey.GetPublicKey().ToKID(),
 		Receivers:  make([]receiverKeys, 0, len(receivers)),
 	}
-	payloadKey, err := newRandomSymmetricKey()
+	payloadKey, err := random.createSymmetricKey()
 	if err != nil {
 		return err
 	}
@@ -259,17 +262,26 @@ func (pes *testEncryptStream) Close() error {
 	}
 }
 
+type randomNoShuffle struct{}
+
+func (randomNoShuffle) createSymmetricKey() (*SymmetricKey, error) {
+	return newRandomSymmetricKey()
+}
+
+func (randomNoShuffle) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+	return receivers
+}
+
 // Options are available mainly for testing.  Can't think of a good reason for
 // end-users to have to specify options.
 func newTestEncryptStream(version Version, ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender BoxSecretKey, receivers []BoxPublicKey, options testEncryptionOptions) (io.WriteCloser, error) {
 	pes := &testEncryptStream{
-		version:             version,
-		output:              ciphertext,
-		encoder:             newEncoder(ciphertext),
-		ephemeralKeyCreator: ephemeralKeyCreator,
-		options:             options,
+		version: version,
+		output:  ciphertext,
+		encoder: newEncoder(ciphertext),
+		options: options,
 	}
-	err := pes.init(version, sender, receivers)
+	err := pes.init(version, sender, receivers, ephemeralKeyCreator, randomNoShuffle{})
 	return pes, err
 }
 
