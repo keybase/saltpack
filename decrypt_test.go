@@ -5,15 +5,12 @@ package saltpack
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
 	"io"
 	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"golang.org/x/crypto/curve25519"
 )
 
 func TestDecryptVersionValidator(t *testing.T) {
@@ -110,20 +107,19 @@ FuHsCazBwbC8RMw mK04rfrmwew. END KEYBASE SALTPACK ENCRYPTED MESSAGE.
 const hardcodedV1DecryptionKey = "1fcf32dbefa43c1af55f1387b5e30117657a6eb9ef1bbbd4e95b3f1436fc3310"
 
 func TestHardcodedEncryptedMessageV1(t *testing.T) {
-	decoded, err := hex.DecodeString(hardcodedV1DecryptionKey)
-	require.NoError(t, err)
-	private := sliceToByte32(decoded)
-	var public [32]byte
-	curve25519.ScalarBaseMult(&public, &private)
-	key := boxSecretKey{
-		key: private,
-		pub: boxPublicKey{
-			key: public,
-		},
-	}
+	key := decodeSecretKeyString(t, hardcodedV1DecryptionKey)
 	keyring := newKeyring()
 	keyring.insert(key)
 	_, plaintext, _, err := Dearmor62DecryptOpen(SingleVersionValidator(Version1()), hardcodedV1EncryptedMessage, keyring)
 	require.NoError(t, err)
 	require.Equal(t, "test message!", string(plaintext))
+}
+
+func TestHardcodedEncryptedMessageV2(t *testing.T) {
+	key := decodeSecretKeyString(t, hardcodedV2Receiver0SecretKey)
+	keyring := newKeyring()
+	keyring.insert(key)
+	_, plaintext, _, err := Dearmor62DecryptOpen(SingleVersionValidator(Version2()), hardcodedV2EncryptedMessageA, keyring)
+	require.NoError(t, err)
+	require.Equal(t, hardcodedV2PlaintextMessage, string(plaintext))
 }
