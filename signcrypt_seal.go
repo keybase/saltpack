@@ -205,6 +205,10 @@ func shuffleSigncryptionReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmet
 	return receivers
 }
 
+// signcryptRNG is an interface encapsulating all the randomness
+// (aside from ephemeral key generation) that happens during
+// signcryption. Tests can override it to make encryption
+// deterministic.
 type signcryptRNG interface {
 	createSymmetricKey() (*SymmetricKey, error)
 	shuffleReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker
