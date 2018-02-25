@@ -122,6 +122,10 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 func (pes *testEncryptStream) init(
 	version Version, sender BoxSecretKey, receivers []BoxPublicKey,
 	ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG) error {
+	if err := checkKnownVersion(version); err != nil {
+		return err
+	}
+
 	receivers = rng.shuffleReceivers(receivers)
 
 	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
