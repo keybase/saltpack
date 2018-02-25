@@ -126,6 +126,10 @@ func (pes *testEncryptStream) init(
 		return err
 	}
 
+	if err := checkReceivers(receivers); err != nil {
+		return err
+	}
+
 	receivers = rng.shuffleReceivers(receivers)
 
 	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()

@@ -139,10 +139,19 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 	return nil
 }
 
-// Do some sanity checking on the receivers. Check that receivers
-// aren't sent to twice; check that there's at least one receiver.
-func (es *encryptStream) checkReceivers(v []BoxPublicKey) error {
+func checkKnownVersion(version Version) error {
+	for _, knownVersion := range KnownVersions() {
+		if version == knownVersion {
+			return nil
+		}
+	}
+	return ErrBadVersion{version}
+}
 
+// checkReceivers does some sanity checking on the receivers. Check
+// that receivers aren't sent to twice; check that there's at least
+// one receiver.
+func checkReceivers(v []BoxPublicKey) error {
 	if len(v) == 0 {
 		return ErrBadReceivers
 	}
@@ -171,15 +180,6 @@ func (es *encryptStream) checkReceivers(v []BoxPublicKey) error {
 	return nil
 }
 
-func checkKnownVersion(version Version) error {
-	for _, knownVersion := range KnownVersions() {
-		if version == knownVersion {
-			return nil
-		}
-	}
-	return ErrBadVersion{version}
-}
-
 func shuffleEncryptReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 	order := randomPerm(len(receivers))
 	shuffled := make([]BoxPublicKey, len(receivers))
@@ -204,7 +204,7 @@ func (es *encryptStream) init(
 		return err
 	}
 
-	if err := es.checkReceivers(receivers); err != nil {
+	if err := checkReceivers(receivers); err != nil {
 		return err
 	}
 
