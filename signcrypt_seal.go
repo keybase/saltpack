@@ -322,7 +322,7 @@ func (defaultSigncryptRNG) shuffleReceivers(receiverBoxKeys []BoxPublicKey, rece
 // ciphertext. The encryption is from the specified sender, and is encrypted
 // for the given receivers.
 //
-// If initialization succeeded, returns an io.WriteClose that accepts
+// If initialization succeeds, returns an io.WriteCloser that accepts
 // plaintext data to be encrypted and a nil error. Otherwise, returns
 // nil and the initialization error.
 func NewSigncryptSealStream(ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) (io.WriteCloser, error) {
