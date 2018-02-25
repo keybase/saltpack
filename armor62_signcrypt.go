@@ -32,7 +32,9 @@ func newSigncryptArmor62SealStream(ciphertext io.Writer, sender SigningSecretKey
 //
 // The ciphertext is additionally armored with the recommended armor62-style format.
 //
-// Returns an io.WriteCloser that accepts plaintext data to be signcrypted; and // also returns an error if initialization failed.
+// If initialization succeeds, returns an io.WriteCloser that accepts
+// plaintext data to be signcrypted and a nil error. Otherwise,
+// returns nil and the initialization error.
 func NewSigncryptArmor62SealStream(ciphertext io.Writer, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator, brand string) (plaintext io.WriteCloser, err error) {
 	return newSigncryptArmor62SealStream(ciphertext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{}, brand)
 }
