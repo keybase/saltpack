@@ -110,6 +110,8 @@ type SigningPublicKey interface {
 	Verify(message []byte, signature []byte) error
 }
 
+// EphemeralKeyCreator is an interface for objects that can create
+// random ephemeral keys.
 type EphemeralKeyCreator interface {
 	// CreateEmphemeralKey creates a random ephemeral key.
 	CreateEphemeralKey() (BoxSecretKey, error)
