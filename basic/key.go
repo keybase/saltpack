@@ -109,6 +109,7 @@ func (k PrecomputedSharedKey) Unbox(nonce saltpack.Nonce, msg []byte) ([]byte, e
 
 var _ saltpack.BoxPrecomputedSharedKey = PrecomputedSharedKey{}
 
+// EphemeralKeyCreator creates random ephemeral keys.
 type EphemeralKeyCreator struct{}
 
 // CreateEphemeralKey creates a random ephemeral key.
