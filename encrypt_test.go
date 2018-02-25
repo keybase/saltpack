@@ -88,7 +88,7 @@ func (r *keyring) GetAllBoxSecretKeys() (ret []BoxSecretKey) {
 	return ret
 }
 
-func createEphemeralKey() (BoxSecretKey, error) {
+func createEphemeralKey(hide bool) (BoxSecretKey, error) {
 	pk, sk, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
@@ -97,13 +97,14 @@ func createEphemeralKey() (BoxSecretKey, error) {
 	ret.key = *sk
 	ret.pub.key = *pk
 	ret.isInit = true
+	ret.hide = hide
 	return ret, nil
 }
 
 type ephemeralKeyCreator struct{}
 
 func (c ephemeralKeyCreator) CreateEphemeralKey() (BoxSecretKey, error) {
-	return createEphemeralKey()
+	return createEphemeralKey(false)
 }
 
 func (r *keyring) makeIterable() *keyring {
@@ -185,9 +186,8 @@ var kr = newKeyring()
 func (b boxSecretKey) IsNull() bool { return !b.isInit }
 
 func newHiddenBoxKeyNoInsert(t *testing.T) BoxSecretKey {
-	ret, err := createEphemeralKey()
+	ret, err := createEphemeralKey(true)
 	require.NoError(t, err)
-	ret.(*boxSecretKey).hide = true
 	return ret
 }
 
@@ -198,7 +198,7 @@ func newHiddenBoxKey(t *testing.T) BoxSecretKey {
 }
 
 func newBoxKeyNoInsert(t *testing.T) BoxSecretKey {
-	ret, err := createEphemeralKey()
+	ret, err := createEphemeralKey(false)
 	require.NoError(t, err)
 	return ret
 }

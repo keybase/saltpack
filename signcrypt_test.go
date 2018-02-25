@@ -46,7 +46,7 @@ func makeEmptyKeyring(t *testing.T) *keyring {
 func makeKeyringWithOneKey(t *testing.T) (*keyring, []BoxPublicKey) {
 	keyring := makeEmptyKeyring(t)
 	keyring.iterable = true
-	receiverBoxSecretKey, err := createEphemeralKey()
+	receiverBoxSecretKey, err := createEphemeralKey(false)
 	require.NoError(t, err)
 	keyring.insert(receiverBoxSecretKey)
 	receiverBoxKeys := []BoxPublicKey{receiverBoxSecretKey.GetPublicKey()}
