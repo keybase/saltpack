@@ -262,6 +262,8 @@ func (pes *testEncryptStream) Close() error {
 	}
 }
 
+// noShuffleRNG implements encryptRNG to not shuffle. All of the tests
+// above no shuffling.
 type noShuffleRNG struct{}
 
 func (noShuffleRNG) createSymmetricKey() (*SymmetricKey, error) {
