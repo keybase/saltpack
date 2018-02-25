@@ -45,8 +45,9 @@ func newEncryptArmor62Stream(version Version, ciphertext io.Writer, sender BoxSe
 //
 // The ciphertext is additionally armored with the recommended armor62-style format.
 //
-// Returns an io.WriteCloser that accepts plaintext data to be encrypted; and
-// also returns an error if initialization failed.
+// If initialization succeeds, returns an io.WriteCloser that accepts
+// plaintext data to be encrypted and a nil error. Otherwise, returns
+// nil and the initialization error.
 func NewEncryptArmor62Stream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, brand string) (plaintext io.WriteCloser, err error) {
 	return newEncryptArmor62Stream(version, ciphertext, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{}, brand)
 }
