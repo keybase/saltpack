@@ -189,6 +189,9 @@ func shuffleEncryptReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 	return shuffled
 }
 
+// encryptRNG is an interface encapsulating all the randomness (aside
+// from ephemeral key generation) that happens during
+// encryption. Tests can override it to make encryption deterministic.
 type encryptRNG interface {
 	createSymmetricKey() (*SymmetricKey, error)
 	shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey
