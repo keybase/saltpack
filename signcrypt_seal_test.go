@@ -64,7 +64,7 @@ func TestNewSigncryptSealStreamShuffledReaders(t *testing.T) {
 	}
 
 	var ciphertext bytes.Buffer
-	_, err := NewSigncryptSealStream(&ciphertext, ephemeralKeyCreator{}, nil, nil, receiverSymmetricKeys)
+	_, err := NewSigncryptSealStream(&ciphertext, nil, nil, receiverSymmetricKeys, ephemeralKeyCreator{})
 	require.NoError(t, err)
 
 	var headerBytes []byte

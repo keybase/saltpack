@@ -325,18 +325,8 @@ func (defaultSigncryptRNG) shuffleReceivers(receiverBoxKeys []BoxPublicKey, rece
 // If initialization succeeds, returns an io.WriteCloser that accepts
 // plaintext data to be encrypted and a nil error. Otherwise, returns
 // nil and the initialization error.
-func NewSigncryptSealStream(ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) (io.WriteCloser, error) {
-	sss := &signcryptSealStream{
-		version:    Version2(),
-		output:     ciphertext,
-		encoder:    newEncoder(ciphertext),
-		signingKey: sender,
-	}
-	err := sss.init(receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{})
-	if err != nil {
-		return nil, err
-	}
-	return sss, nil
+func NewSigncryptSealStream(ciphertext io.Writer, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator) (io.WriteCloser, error) {
+	return newSigncryptSealStream(ciphertext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{})
 }
 
 func signcryptSeal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator, rng signcryptRNG) (out []byte, err error) {
