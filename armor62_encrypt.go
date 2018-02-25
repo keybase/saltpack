@@ -70,16 +70,5 @@ func encryptArmor62Seal(version Version, plaintext []byte, sender BoxSecretKey, 
 // EncryptArmor62Seal is the non-streaming version of NewEncryptArmor62Stream, which
 // inputs a plaintext (in bytes) and output a ciphertext (as a string).
 func EncryptArmor62Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator, brand string) (string, error) {
-	var buf bytes.Buffer
-	enc, err := NewEncryptArmor62Stream(version, &buf, sender, receivers, ephemeralKeyCreator, brand)
-	if err != nil {
-		return "", err
-	}
-	if _, err := enc.Write(plaintext); err != nil {
-		return "", err
-	}
-	if err := enc.Close(); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
+	return encryptArmor62Seal(version, plaintext, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{}, brand)
 }
