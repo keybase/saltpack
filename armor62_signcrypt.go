@@ -35,11 +35,10 @@ func newSigncryptArmor62SealStream(ciphertext io.Writer, sender SigningSecretKey
 // If initialization succeeds, returns an io.WriteCloser that accepts
 // plaintext data to be signcrypted and a nil error. Otherwise,
 // returns nil and the initialization error.
-func NewSigncryptArmor62SealStream(ciphertext io.Writer, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (plaintext io.WriteCloser, err error) {
-	ephemeralKeyCreator, err := receiversToEphemeralKeyCreator(receiverBoxKeys)
-	if err != nil {
-		return nil, err
-	}
+//
+// ephemeralKeyCreator should be the last argument; it's the 2nd one
+// to preserve the public API.
+func NewSigncryptArmor62SealStream(ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (plaintext io.WriteCloser, err error) {
 	return newSigncryptArmor62SealStream(ciphertext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{}, brand)
 }
 
