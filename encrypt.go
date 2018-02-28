@@ -148,29 +148,30 @@ func checkKnownVersion(version Version) error {
 }
 
 // maxEncryptReceiverCount is the maximum number of receivers allowed
-// for a single saltpack message. It is the maximum length of a
-// msgpack array, less the number of fields before the recipient list.
+// for a single encrypted saltpack message. It is the maximum length
+// of a msgpack array, less the number of fields before the recipient
+// list.
 const maxEncryptReceiverCount = (1 << 32) - 1
 
 // checkEncryptReceivers does some sanity checking on the
 // receivers. Check that receivers aren't sent to twice; check that
 // there's at least one receiver and not too many receivers.
-func checkEncryptReceivers(v []BoxPublicKey) error {
-	if len(v) <= 0 || len(v) > maxEncryptReceiverCount {
+func checkEncryptReceivers(receivers []BoxPublicKey) error {
+	if len(receivers) <= 0 || len(receivers) > maxEncryptReceiverCount {
 		return ErrBadReceivers
 	}
 
 	// Make sure that each receiver only shows up in the set once.
-	receiversAsSet := make(map[string]bool)
+	receiverSet := make(map[string]bool)
 
-	for _, receiver := range v {
-		// Make sure this key hasn't been used before
+	// Make sure each key hasn't been used before.
+	for _, receiver := range receivers {
 		kid := receiver.ToKID()
 		kidString := string(kid)
-		if receiversAsSet[kidString] {
+		if receiverSet[kidString] {
 			return ErrRepeatedKey(kid)
 		}
-		receiversAsSet[kidString] = true
+		receiverSet[kidString] = true
 	}
 
 	return nil

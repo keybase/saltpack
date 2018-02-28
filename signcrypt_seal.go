@@ -191,7 +191,48 @@ func (r ReceiverSymmetricKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, paylo
 	}
 }
 
-func shuffleSigncryptionReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker {
+// maxSigncryptReceiverCount is the maximum number of receivers
+// allowed for a single signcrypted saltpack message. It is the
+// maximum length of a msgpack array, less the number of fields before
+// the recipient list.
+const maxSigncryptReceiverCount = 0x7ffffff - 5
+
+// checkEncryptReceivers does some sanity checking on the
+// receivers. Check that receivers aren't sent to twice; check that
+// there's at least one receiver and not too many receivers.
+func checkSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) error {
+	receiverCount := len(receiverBoxKeys) + len(receiverSymmetricKeys)
+	if receiverCount <= 0 || receiverCount > maxEncryptReceiverCount {
+		return ErrBadReceivers
+	}
+
+	// Make sure that each receiver only shows up in the set once.
+	receiverSet := make(map[string]bool)
+
+	// Make sure each key hasn't been used before.
+
+	for _, receiver := range receiverBoxKeys {
+		kid := receiver.ToKID()
+		kidString := string(kid)
+		if receiverSet[kidString] {
+			return ErrRepeatedKey(kid)
+		}
+		receiverSet[kidString] = true
+	}
+
+	for _, receiver := range receiverSymmetricKeys {
+		kid := receiver.Identifier
+		kidString := string(kid)
+		if receiverSet[kidString] {
+			return ErrRepeatedKey(kid)
+		}
+		receiverSet[kidString] = true
+	}
+
+	return nil
+}
+
+func shuffleSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker {
 	totalLen := len(receiverBoxKeys) + len(receiverSymmetricKeys)
 	order := randomPerm(totalLen)
 	receivers := make([]receiverKeysMaker, totalLen)
@@ -221,8 +262,8 @@ type signcryptRNG interface {
 func (sss *signcryptSealStream) init(
 	receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey,
 	ephemeralKeyCreator EphemeralKeyCreator, rng signcryptRNG) error {
-	if len(receiverBoxKeys)+len(receiverSymmetricKeys) == 0 {
-		return ErrBadReceivers
+	if err := checkSigncryptReceivers(receiverBoxKeys, receiverSymmetricKeys); err != nil {
+		return err
 	}
 
 	receivers := rng.shuffleReceivers(receiverBoxKeys, receiverSymmetricKeys)
@@ -314,7 +355,7 @@ func (defaultSigncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
 }
 
 func (defaultSigncryptRNG) shuffleReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker {
-	return shuffleSigncryptionReceivers(receiverBoxKeys, receiverSymmetricKeys)
+	return shuffleSigncryptReceivers(receiverBoxKeys, receiverSymmetricKeys)
 }
 
 // NewSigncryptSealStream creates a stream that consumes plaintext data. It

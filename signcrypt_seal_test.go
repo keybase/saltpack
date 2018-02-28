@@ -42,7 +42,7 @@ func TestShuffleSigncryptionReceivers(t *testing.T) {
 		receiverSymmetricKeys = append(receiverSymmetricKeys, k)
 	}
 
-	shuffled := shuffleSigncryptionReceivers(receiverBoxKeys, receiverSymmetricKeys)
+	shuffled := shuffleSigncryptReceivers(receiverBoxKeys, receiverSymmetricKeys)
 
 	shuffledOrder := getSigncryptionReceiverOrder(shuffled)
 	require.True(t, isValidNonTrivialPermutation(receiverCount, shuffledOrder), "shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
