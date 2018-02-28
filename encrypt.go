@@ -356,6 +356,15 @@ func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicK
 	return shuffleEncryptReceivers(receivers)
 }
 
+// receiversToEphemeralKeyCreator retrieves the EphemeralKeyCreator
+// from the first receiver; this is to preserve API behavior.
+func receiversToEphemeralKeyCreator(receivers []BoxPublicKey) (EphemeralKeyCreator, error) {
+	if len(receivers) == 0 {
+		return nil, ErrBadReceivers
+	}
+	return receivers[0], nil
+}
+
 // NewEncryptStream creates a stream that consumes plaintext data.
 // It will write out encrypted data to the io.Writer passed in as ciphertext.
 // The encryption is from the specified sender, and is encrypted for the
@@ -364,7 +373,11 @@ func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicK
 // If initialization succeeds, returns an io.WriteCloser that accepts
 // plaintext data to be encrypted and a nil error. Otherwise, returns
 // nil and the initialization error.
-func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator) (io.WriteCloser, error) {
+func NewEncryptStream(version Version, ciphertext io.Writer, sender BoxSecretKey, receivers []BoxPublicKey) (io.WriteCloser, error) {
+	ephemeralKeyCreator, err := receiversToEphemeralKeyCreator(receivers)
+	if err != nil {
+		return nil, err
+	}
 	return newEncryptStream(version, ciphertext, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{})
 }
 
@@ -385,6 +398,10 @@ func seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []Bo
 
 // Seal a plaintext from the given sender, for the specified receiver groups.
 // Returns a ciphertext, or an error if something bad happened.
-func Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey, ephemeralKeyCreator EphemeralKeyCreator) (out []byte, err error) {
+func Seal(version Version, plaintext []byte, sender BoxSecretKey, receivers []BoxPublicKey) (out []byte, err error) {
+	ephemeralKeyCreator, err := receiversToEphemeralKeyCreator(receivers)
+	if err != nil {
+		return nil, err
+	}
 	return seal(version, plaintext, sender, receivers, ephemeralKeyCreator, defaultEncryptRNG{})
 }
