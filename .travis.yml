@@ -4,7 +4,7 @@ language: go
 go:
   # Earliest and latest versions we support.
   - 1.7
-  - 1.8.1
+  - 1.10.0
 before_install:
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
