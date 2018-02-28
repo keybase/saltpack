@@ -13,7 +13,7 @@ func TestSigncryptArmor62(t *testing.T) {
 	keyring, receiverBoxKeys := makeKeyringWithOneKey(t)
 	sender := makeSigningKey(t, keyring)
 
-	ciphertext, err := SigncryptArmor62Seal(msg, sender, receiverBoxKeys, nil, ourBrand)
+	ciphertext, err := SigncryptArmor62Seal(msg, ephemeralKeyCreator{}, sender, receiverBoxKeys, nil, ourBrand)
 	if err != nil {
 		t.Fatal(err)
 	}

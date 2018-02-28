@@ -60,11 +60,10 @@ func signcryptArmor62Seal(plaintext []byte, sender SigningSecretKey, receiverBox
 
 // SigncryptArmor62Seal is the non-streaming version of NewSigncryptArmor62SealStream, which
 // inputs a plaintext (in bytes) and output a ciphertext (as a string).
-func SigncryptArmor62Seal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (string, error) {
-	ephemeralKeyCreator, err := receiversToEphemeralKeyCreator(receiverBoxKeys)
-	if err != nil {
-		return "", err
-	}
+//
+// ephemeralKeyCreator should be the last argument; it's the 2nd one
+// to preserve the public API.
+func SigncryptArmor62Seal(plaintext []byte, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (string, error) {
 	return signcryptArmor62Seal(plaintext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{}, brand)
 }
 
