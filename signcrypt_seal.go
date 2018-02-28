@@ -322,10 +322,13 @@ func (defaultSigncryptRNG) shuffleReceivers(receiverBoxKeys []BoxPublicKey, rece
 // ciphertext. The encryption is from the specified sender, and is encrypted
 // for the given receivers.
 //
+// ephemeralKeyCreator should be the last argument; it's the 2nd one
+// to preserve the public API.
+//
 // If initialization succeeds, returns an io.WriteCloser that accepts
 // plaintext data to be encrypted and a nil error. Otherwise, returns
 // nil and the initialization error.
-func NewSigncryptSealStream(ciphertext io.Writer, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator) (io.WriteCloser, error) {
+func NewSigncryptSealStream(ciphertext io.Writer, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) (io.WriteCloser, error) {
 	return newSigncryptSealStream(ciphertext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{})
 }
 
@@ -347,6 +350,9 @@ func signcryptSeal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []
 // SigncryptSeal a plaintext from the given sender, for the specified
 // receiver groups.  Returns a ciphertext, or an error if something
 // bad happened.
-func SigncryptSeal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator) (out []byte, err error) {
+//
+// ephemeralKeyCreator should be the last argument; it's the 2nd one
+// to preserve the public API.
+func SigncryptSeal(plaintext []byte, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) (out []byte, err error) {
 	return signcryptSeal(plaintext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{})
 }
