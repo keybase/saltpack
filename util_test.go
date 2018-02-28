@@ -11,6 +11,5 @@ import (
 )
 
 func requireErrSuffix(t *testing.T, err error, suffix string) {
-	t.Helper()
 	require.True(t, strings.HasSuffix(err.Error(), suffix), "err=%v, suffix=%s", err, suffix)
 }

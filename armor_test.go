@@ -27,7 +27,6 @@ func msg(sz int) []byte {
 const ourBrand = "ACME"
 
 func brandCheck(t *testing.T, received string) {
-	t.Helper()
 	require.Equal(t, ourBrand, received)
 }
 

@@ -278,7 +278,6 @@ func getEncryptReceiverOrder(receivers []BoxPublicKey) []int {
 }
 
 func requireValidNonTrivialPermutation(t *testing.T, count int, shuffledOrder []int) {
-	t.Helper()
 	require.True(t, isValidNonTrivialPermutation(count, shuffledOrder), "shuffledOrder == %+v is an invalid or trivial permutation", shuffledOrder)
 }
 
