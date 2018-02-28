@@ -6,7 +6,6 @@ package saltpack
 import (
 	"bytes"
 	"crypto/sha512"
-	"encoding/hex"
 	"fmt"
 	"io"
 
@@ -148,13 +147,16 @@ func checkKnownVersion(version Version) error {
 	return ErrBadVersion{version}
 }
 
+// maxEncryptReceiverCount is the maximum number of receivers allowed
+// for a single saltpack message. It is the maximum length of a
+// msgpack array, less the number of fields before the recipient list.
+const maxEncryptReceiverCount = (1 << 32) - 1
+
 // checkEncryptReceivers does some sanity checking on the
 // receivers. Check that receivers aren't sent to twice; check that
 // there's at least one receiver and not too many receivers.
 func checkEncryptReceivers(v []BoxPublicKey) error {
-	receiverCount := uint64(len(v))
-	// Don't allow more than 2^31-1 receivers.
-	if receiverCount <= 0 || receiverCount > ((1<<32)-1) {
+	if len(v) <= 0 || len(v) > maxEncryptReceiverCount {
 		return ErrBadReceivers
 	}
 
@@ -164,7 +166,7 @@ func checkEncryptReceivers(v []BoxPublicKey) error {
 	for _, receiver := range v {
 		// Make sure this key hasn't been used before
 		kid := receiver.ToKID()
-		kidString := hex.EncodeToString(kid)
+		kidString := string(kid)
 		if receiversAsSet[kidString] {
 			return ErrRepeatedKey(kid)
 		}
