@@ -72,7 +72,7 @@ func testBasicBox(t *testing.T, version saltpack.Version) {
 		t.Fatal(err)
 	}
 	msg := randomMsg(t, 1024)
-	text, err := saltpack.EncryptArmor62Seal(version, msg, k1, []saltpack.BoxPublicKey{k2.GetPublicKey()}, EphemeralKeyCreator{}, "")
+	text, err := saltpack.EncryptArmor62Seal(version, msg, k1, []saltpack.BoxPublicKey{k2.GetPublicKey()}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
