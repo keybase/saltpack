@@ -35,13 +35,17 @@ func newSigncryptArmor62SealStream(ciphertext io.Writer, sender SigningSecretKey
 // If initialization succeeds, returns an io.WriteCloser that accepts
 // plaintext data to be signcrypted and a nil error. Otherwise,
 // returns nil and the initialization error.
-func NewSigncryptArmor62SealStream(ciphertext io.Writer, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator, brand string) (plaintext io.WriteCloser, err error) {
+func NewSigncryptArmor62SealStream(ciphertext io.Writer, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (plaintext io.WriteCloser, err error) {
+	ephemeralKeyCreator, err := receiversToEphemeralKeyCreator(receiverBoxKeys)
+	if err != nil {
+		return nil, err
+	}
 	return newSigncryptArmor62SealStream(ciphertext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{}, brand)
 }
 
-func signcryptArmor62Seal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator, brand string) (string, error) {
+func signcryptArmor62Seal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, ephemeralKeyCreator EphemeralKeyCreator, rng signcryptRNG, brand string) (string, error) {
 	var buf bytes.Buffer
-	enc, err := NewSigncryptArmor62SealStream(&buf, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, brand)
+	enc, err := newSigncryptArmor62SealStream(&buf, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, rng, brand)
 	if err != nil {
 		return "", err
 	}
@@ -56,8 +60,12 @@ func signcryptArmor62Seal(plaintext []byte, sender SigningSecretKey, receiverBox
 
 // SigncryptArmor62Seal is the non-streaming version of NewSigncryptArmor62SealStream, which
 // inputs a plaintext (in bytes) and output a ciphertext (as a string).
-func SigncryptArmor62Seal(plaintext []byte, ephemeralKeyCreator EphemeralKeyCreator, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (string, error) {
-	return signcryptArmor62Seal(plaintext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, brand)
+func SigncryptArmor62Seal(plaintext []byte, sender SigningSecretKey, receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey, brand string) (string, error) {
+	ephemeralKeyCreator, err := receiversToEphemeralKeyCreator(receiverBoxKeys)
+	if err != nil {
+		return "", err
+	}
+	return signcryptArmor62Seal(plaintext, sender, receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{}, brand)
 }
 
 // NewDearmor62SigncryptOpenStream makes a new stream that dearmors and decrypts the given
