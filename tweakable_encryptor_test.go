@@ -126,7 +126,7 @@ func (pes *testEncryptStream) init(
 		return err
 	}
 
-	if err := checkReceivers(receivers); err != nil {
+	if err := checkEncryptReceivers(receivers); err != nil {
 		return err
 	}
 
