@@ -46,6 +46,13 @@ func symmetricKeyFromSlice(slice []byte) (*SymmetricKey, error) {
 	return &result, nil
 }
 
+// EphemeralKeyCreator is an interface for objects that can create
+// random ephemeral keys.
+type EphemeralKeyCreator interface {
+	// CreateEmphemeralKey creates a random ephemeral key.
+	CreateEphemeralKey() (BoxSecretKey, error)
+}
+
 // BasePublicKey types can output a key ID corresponding to the key.
 type BasePublicKey interface {
 	// ToKID outputs the "key ID" that corresponds to this key.
@@ -57,6 +64,8 @@ type BasePublicKey interface {
 // BoxPublicKey is an generic interface to NaCl's public key Box function.
 type BoxPublicKey interface {
 	BasePublicKey
+	// Implement EphemeralKeyCreator to avoid breaking the public API.
+	EphemeralKeyCreator
 
 	// ToRawBoxKeyPointer returns this public key as a *[32]byte,
 	// for use with nacl.box.Seal
@@ -110,17 +119,13 @@ type SigningPublicKey interface {
 	Verify(message []byte, signature []byte) error
 }
 
-// EphemeralKeyCreator is an interface for objects that can create
-// random ephemeral keys.
-type EphemeralKeyCreator interface {
-	// CreateEmphemeralKey creates a random ephemeral key.
-	CreateEphemeralKey() (BoxSecretKey, error)
-}
-
 // Keyring is an interface used with decryption; it is called to
 // recover public or private keys during the decryption process.
 // Calls can block on network action.
 type Keyring interface {
+	// Implement EphemeralKeyCreator to avoid breaking the public API.
+	EphemeralKeyCreator
+
 	// LookupBoxSecretKey looks in the Keyring for the secret key corresponding
 	// to one of the given Key IDs.  Returns the index and the key on success,
 	// or -1 and nil on failure.

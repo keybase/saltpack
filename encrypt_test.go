@@ -18,7 +18,14 @@ import (
 	"golang.org/x/crypto/nacl/box"
 )
 
+type ephemeralKeyCreator struct{}
+
+func (c ephemeralKeyCreator) CreateEphemeralKey() (BoxSecretKey, error) {
+	return createEphemeralKey(false)
+}
+
 type boxPublicKey struct {
+	ephemeralKeyCreator
 	key  RawBoxKey
 	hide bool
 }
@@ -31,6 +38,7 @@ type boxSecretKey struct {
 }
 
 type keyring struct {
+	ephemeralKeyCreator
 	keys      map[string]BoxSecretKey
 	sigKeys   map[string]SigningSecretKey
 	blacklist map[string]struct{}
@@ -99,12 +107,6 @@ func createEphemeralKey(hide bool) (BoxSecretKey, error) {
 	ret.isInit = true
 	ret.hide = hide
 	return ret, nil
-}
-
-type ephemeralKeyCreator struct{}
-
-func (c ephemeralKeyCreator) CreateEphemeralKey() (BoxSecretKey, error) {
-	return createEphemeralKey(false)
 }
 
 func (r *keyring) makeIterable() *keyring {
