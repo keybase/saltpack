@@ -16,6 +16,11 @@ import (
 	"golang.org/x/crypto/poly1305"
 )
 
+// maxReceiverCount is the maximum number of receivers allowed
+// for a single encrypted saltpack message, which is the maximum length
+// of a msgpack array.
+const maxReceiverCount = (1 << 32) - 1
+
 // encryptionBlockNumber describes which block number we're at in the sequence
 // of encrypted blocks. Each encrypted block of course fits into a packet.
 type encryptionBlockNumber uint64

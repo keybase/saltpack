@@ -147,17 +147,11 @@ func checkKnownVersion(version Version) error {
 	return ErrBadVersion{version}
 }
 
-// maxEncryptReceiverCount is the maximum number of receivers allowed
-// for a single encrypted saltpack message. It is the maximum length
-// of a msgpack array, less the number of fields before the recipient
-// list.
-const maxEncryptReceiverCount = (1 << 32) - 1
-
 // checkEncryptReceivers does some sanity checking on the
 // receivers. Check that receivers aren't sent to twice; check that
 // there's at least one receiver and not too many receivers.
 func checkEncryptReceivers(receivers []BoxPublicKey) error {
-	if len(receivers) <= 0 || len(receivers) > maxEncryptReceiverCount {
+	if len(receivers) <= 0 || len(receivers) > maxReceiverCount {
 		return ErrBadReceivers
 	}
 

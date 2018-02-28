@@ -191,18 +191,12 @@ func (r ReceiverSymmetricKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, paylo
 	}
 }
 
-// maxSigncryptReceiverCount is the maximum number of receivers
-// allowed for a single signcrypted saltpack message. It is the
-// maximum length of a msgpack array, less the number of fields before
-// the recipient list.
-const maxSigncryptReceiverCount = 0x7ffffff - 5
-
 // checkEncryptReceivers does some sanity checking on the
 // receivers. Check that receivers aren't sent to twice; check that
 // there's at least one receiver and not too many receivers.
 func checkSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) error {
 	receiverCount := len(receiverBoxKeys) + len(receiverSymmetricKeys)
-	if receiverCount <= 0 || receiverCount > maxEncryptReceiverCount {
+	if receiverCount <= 0 || receiverCount > maxReceiverCount {
 		return ErrBadReceivers
 	}
 
