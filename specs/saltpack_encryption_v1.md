@@ -97,7 +97,8 @@ The header packet is a MessagePack array with these contents:
   sender's long-term public key, encrypted with the **payload key** from below.
 - The **recipients list** contains a recipient pair for each recipient
   key, including an encrypted copy of the **payload key** (see
-  below). Note that a MessagePack array can hold at most 2³² &minus; 1
+  below). Note that a MessagePack array can hold
+  [at most 2³² &minus; 1](https://github.com/msgpack/msgpack/blob/master/spec.md#array-format-family)
   elements, so therefore an encrypted message can have at most 2³² &minus; 1
   recipients.
 
