@@ -164,7 +164,7 @@ func (es *encryptStream) checkReceivers(v []BoxPublicKey) error {
 	}
 
 	// Don't allow more than 2^32-1 receivers.
-	if tot >= 0xffffffff {
+	if tot > ((1 << 32) - 1) {
 		return ErrBadReceivers
 	}
 
