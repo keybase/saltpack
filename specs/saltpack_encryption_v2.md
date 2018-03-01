@@ -62,7 +62,7 @@ a header packet, followed by one or more payload packets, the last of which is
 indicated with a final packet flag.
 
 ### Header Packet
-The header packet is a MessagePack list with these contents:
+The header packet is a MessagePack array with these contents:
 
 ```
 [
@@ -196,7 +196,7 @@ will never open a box that [wasn't intended for
 saltpack](https://sandstorm.io/news/2015-05-01-is-that-ascii-or-protobuf#the-obvious-problem).
 
 ### Payload Packets
-A payload packet is a MessagePack list with these contents:
+A payload packet is a MessagePack array with these contents:
 
 ```
 [

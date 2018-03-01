@@ -57,7 +57,7 @@ a header packet, followed by one or more payload packets, the last of which is
 indicated with a final packet flag.
 
 ### Header Packet
-The header packet is a MessagePack list with these contents:
+The header packet is a MessagePack array with these contents:
 
 ```
 [
@@ -186,7 +186,7 @@ should allow the extra fields and ignore them. That allows us to make future
 additions to the format without breaking backward compatibility.
 
 ### Payload Packets
-A payload packet is a MessagePack list with these contents:
+A payload packet is a MessagePack array with these contents:
 
 ```
 [
