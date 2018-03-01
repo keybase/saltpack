@@ -107,7 +107,7 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 // the same for two different recipients if they claim the same public key.
 func derivedEphemeralKeyFromBoxKeys(public BoxPublicKey, private BoxSecretKey) *SymmetricKey {
 	sharedSecretBox := private.Box(public, nonceForDerivedSharedKey(), make([]byte, 32))
-	derivedKey, err := symmetricKeyFromSlice(sharedSecretBox[len(sharedSecretBox)-32 : len(sharedSecretBox)])
+	derivedKey, err := symmetricKeyFromSlice(sharedSecretBox[len(sharedSecretBox)-32:])
 	if err != nil {
 		panic(err) // should be statically impossible, if the slice above is the right length
 	}
