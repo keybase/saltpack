@@ -1382,6 +1382,14 @@ func decodeSecretKeyString(t *testing.T, s string) boxSecretKey {
 	}
 }
 
+func decodeStringsToPublicKeys(t *testing.T, secretKeyStrings []string) []BoxPublicKey {
+	var publicKeys []BoxPublicKey
+	for _, s := range secretKeyStrings {
+		publicKeys = append(publicKeys, decodeSecretKeyString(t, s).GetPublicKey())
+	}
+	return publicKeys
+}
+
 // makeSymmetricKeyString is a helper function for making a secret key
 // and returning its string representation.
 func makeSymmetricKeyString(t *testing.T) string {
@@ -1395,21 +1403,6 @@ func decodeSymmetricKeyString(t *testing.T, s string) SymmetricKey {
 	require.NoError(t, err)
 	return sliceToByte32(decoded)
 }
-
-const hardcodedV1PlaintextMessage = "hardcoded message v1"
-
-const hardcodedV1SenderSecretKey = "4902237dc127e1cbbd5dbf0b3ce74e751aa6bbfd894f2e1658fb2c7b3b5eb9fc"
-
-const hardcodedV1Receiver0SecretKey = "3833f2e7bbc09b27713d4b43b03a97df784e7a0c9634d9bb1046a7354b5fa84f"
-
-const hardcodedV1Receiver1SecretKey = "82f0c46354c69e360d703525a2e0b92e4cb7a64ae23bcbfbc89978ee2772fbc1"
-
-const hardcodedV1EphemeralSecretKey = "3f292760d9b325b72816d0576023292ae62d1f4190253eb40b7fcefb3b9ad41a"
-
-const hardcodedV1SymmetricKey = "f80645613161cca059b78acda045134c3269376bcdc1b972b2f801f3a2d3d189"
-
-const hardcodedV1EncryptedMessageA = `BEGIN SALTPACK ENCRYPTED MESSAGE. kiOUtMhcc4NXXRb XMxIdgQyljprRuP QOicP26XO1b47ju UJnCDGKawXyE0lE CGP8n3qPII9mSJt qGhWH2upu3qr6yp Hvg24Iw295aGKkh fQhfQLJxJsUDR9x y2Gy6bDdEV5qptY HWjTnA0GcyYppOS SAqj0mnNeiau8bH rHTCSlbZTksMWrW 8yPAIrDuED7aB02 489C1vtaaftIWJ9 KfhuUbBL4YjA9pN YktQHwqX7zfJuEd wRhljkatr95Iiu3 1mvalHpDLlweQfd LriDGPdID6Lxy9e GXDznAHzhmHRA3p AtSuyQnPP1qGqgW Xb1gDgazh3C6Ohj 3ztzvuZdrAcGnzd IYFMr9qbtViG8v8 VWYqGIIFKdJtg8A 1MEiLMYzHd32FzH gKv6IvviDpoxpKu Cy5UKSEYxrSD9Pf lxlb8oKKg8j2App 17N21SwbQMpIWAC 56Fez3XmFCMBLp1 F25s8IysZvfRsoo K03mFwSY1s8WJNg utLmu3zfPNLWKBK ij06OwpUtfVVJMe MxNlq1XOsKFTPlD QnPpYyzQXQk5MKW hNiIRfSLuf6Emx0 zw28V3JItBtHGfv A0uYkuXwLVf6g5v 7yedpNQ04RDIWQ1 PDVSJ2z3nCEZALl DBBEo3zVk7Jx56z w8rMGGPP1mVIocY e8wc4dib0sAvfFS 7pW09TVId3jQidj xSOMMoHtCxBPRX9 lHAK4fcoKukg2Oo oizaPpY90MnJaY6 NrzVjAh2fNa7MXd RNzOJiWTLN9lnKz ZYWZ7QxkG790wQ5 8ju5Q2z5EOx1dDV dXAvS7V2HwJFsRI tPSXP84378LucSD oQqfPSz5qg. END SALTPACK ENCRYPTED MESSAGE.
-`
 
 type constantEphemeralKeyCreator struct {
 	k boxSecretKey
@@ -1437,23 +1430,48 @@ func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPubl
 	return shuffled
 }
 
-func TestHardcodedEncryptMessageV1(t *testing.T) {
-	sender := decodeSecretKeyString(t, hardcodedV1SenderSecretKey)
-	receiver0 := decodeSecretKeyString(t, hardcodedV1Receiver0SecretKey)
-	receiver1 := decodeSecretKeyString(t, hardcodedV1Receiver1SecretKey)
-	ephemeral := decodeSecretKeyString(t, hardcodedV1EphemeralSecretKey)
-	symmetric := decodeSymmetricKeyString(t, hardcodedV1SymmetricKey)
+type hardcodedEncryptMessage struct {
+	version           Version
+	plaintext         string
+	sender            string
+	receivers         []string
+	ephemeralKey      string
+	payloadKey        string
+	armoredCiphertext string
+}
 
-	allReceivers := []BoxPublicKey{
-		sender.GetPublicKey(),
-		receiver0.GetPublicKey(),
-		receiver1.GetPublicKey(),
-	}
-
-	ciphertext, err := encryptArmor62Seal(Version1(), []byte(hardcodedV1PlaintextMessage), sender, allReceivers, constantEphemeralKeyCreator{ephemeral}, constantEncryptRNG{symmetric}, "")
+func testHardcodedEncrypt(t *testing.T, message hardcodedEncryptMessage) {
+	ciphertext, err := encryptArmor62Seal(
+		message.version,
+		[]byte(message.plaintext),
+		decodeSecretKeyString(t, message.sender),
+		decodeStringsToPublicKeys(t, message.receivers),
+		constantEphemeralKeyCreator{decodeSecretKeyString(t, message.ephemeralKey)},
+		constantEncryptRNG{decodeSymmetricKeyString(t, message.payloadKey)},
+		"")
 	require.NoError(t, err)
 
-	require.Equal(t, hardcodedV1EncryptedMessageA, ciphertext)
+	require.Equal(t, message.armoredCiphertext, ciphertext)
+}
+
+var v1Message = hardcodedEncryptMessage{
+	version:   Version1(),
+	plaintext: "hardcoded message v1",
+	sender:    "4902237dc127e1cbbd5dbf0b3ce74e751aa6bbfd894f2e1658fb2c7b3b5eb9fc",
+	receivers: []string{
+		// sender.
+		"4902237dc127e1cbbd5dbf0b3ce74e751aa6bbfd894f2e1658fb2c7b3b5eb9fc",
+		"3833f2e7bbc09b27713d4b43b03a97df784e7a0c9634d9bb1046a7354b5fa84f",
+		"82f0c46354c69e360d703525a2e0b92e4cb7a64ae23bcbfbc89978ee2772fbc1",
+	},
+	ephemeralKey: "3f292760d9b325b72816d0576023292ae62d1f4190253eb40b7fcefb3b9ad41a",
+	payloadKey:   "f80645613161cca059b78acda045134c3269376bcdc1b972b2f801f3a2d3d189",
+	armoredCiphertext: `BEGIN SALTPACK ENCRYPTED MESSAGE. kiOUtMhcc4NXXRb XMxIdgQyljprRuP QOicP26XO1b47ju UJnCDGKawXyE0lE CGP8n3qPII9mSJt qGhWH2upu3qr6yp Hvg24Iw295aGKkh fQhfQLJxJsUDR9x y2Gy6bDdEV5qptY HWjTnA0GcyYppOS SAqj0mnNeiau8bH rHTCSlbZTksMWrW 8yPAIrDuED7aB02 489C1vtaaftIWJ9 KfhuUbBL4YjA9pN YktQHwqX7zfJuEd wRhljkatr95Iiu3 1mvalHpDLlweQfd LriDGPdID6Lxy9e GXDznAHzhmHRA3p AtSuyQnPP1qGqgW Xb1gDgazh3C6Ohj 3ztzvuZdrAcGnzd IYFMr9qbtViG8v8 VWYqGIIFKdJtg8A 1MEiLMYzHd32FzH gKv6IvviDpoxpKu Cy5UKSEYxrSD9Pf lxlb8oKKg8j2App 17N21SwbQMpIWAC 56Fez3XmFCMBLp1 F25s8IysZvfRsoo K03mFwSY1s8WJNg utLmu3zfPNLWKBK ij06OwpUtfVVJMe MxNlq1XOsKFTPlD QnPpYyzQXQk5MKW hNiIRfSLuf6Emx0 zw28V3JItBtHGfv A0uYkuXwLVf6g5v 7yedpNQ04RDIWQ1 PDVSJ2z3nCEZALl DBBEo3zVk7Jx56z w8rMGGPP1mVIocY e8wc4dib0sAvfFS 7pW09TVId3jQidj xSOMMoHtCxBPRX9 lHAK4fcoKukg2Oo oizaPpY90MnJaY6 NrzVjAh2fNa7MXd RNzOJiWTLN9lnKz ZYWZ7QxkG790wQ5 8ju5Q2z5EOx1dDV dXAvS7V2HwJFsRI tPSXP84378LucSD oQqfPSz5qg. END SALTPACK ENCRYPTED MESSAGE.
+`,
+}
+
+func TestHardcodedEncryptMessageV1(t *testing.T) {
+	testHardcodedEncrypt(t, v1Message)
 }
 
 const hardcodedV2PlaintextMessage = "hardcoded message v2"
