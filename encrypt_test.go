@@ -1444,12 +1444,16 @@ func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPubl
 // encryptArmor62Seal call, including any random state.
 type hardcodedEncryptMessage struct {
 	// Normal input parameters to encryptArmor62Seal.
+
 	version   Version
 	plaintext string
 	sender    string
 	receivers []string
 
 	// Random state.
+
+	// The convention for permutation is that the ith shuffled
+	// receiver is set to the permutation[i]th entry of receivers.
 	permutation  []int
 	ephemeralKey string
 	payloadKey   string
