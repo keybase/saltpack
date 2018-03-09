@@ -245,13 +245,8 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 	return res, nil
 }
 
-func isValidNonTrivialPermutation(n int, a []int) bool {
+func isValidPermutation(n int, a []int) bool {
 	if len(a) != n {
-		return false
-	}
-	// Technically this check is flaky, but the flake probability
-	// is 1/n!, which is very small for n ~ 20.
-	if sort.IntsAreSorted(a) {
 		return false
 	}
 
@@ -262,6 +257,20 @@ func isValidNonTrivialPermutation(n int, a []int) bool {
 		if aCopy[i] != i {
 			return false
 		}
+	}
+
+	return true
+}
+
+func isValidNonTrivialPermutation(n int, a []int) bool {
+	if !isValidPermutation(n, a) {
+		return false
+	}
+
+	// Technically this check is flaky, but the flake probability
+	// is 1/n!, which is very small for n ~ 20.
+	if sort.IntsAreSorted(a) {
+		return false
 	}
 
 	return true
@@ -1413,7 +1422,9 @@ func (c constantEphemeralKeyCreator) CreateEphemeralKey() (BoxSecretKey, error) 
 }
 
 type constantEncryptRNG struct {
+	t *testing.T
 	k SymmetricKey
+	p []int
 }
 
 func (c constantEncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
@@ -1421,11 +1432,10 @@ func (c constantEncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
 }
 
 func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
-	// Move every element to the previous index, wrapping around the
-	// first element.
+	require.True(c.t, isValidPermutation(len(receivers), c.p))
 	shuffled := make([]BoxPublicKey, len(receivers))
 	for i := 0; i < len(receivers); i++ {
-		shuffled[i] = receivers[(i+1)%len(receivers)]
+		shuffled[i] = receivers[c.p[i]]
 	}
 	return shuffled
 }
@@ -1435,6 +1445,7 @@ type hardcodedEncryptMessage struct {
 	plaintext         string
 	sender            string
 	receivers         []string
+	permutation       []int
 	ephemeralKey      string
 	payloadKey        string
 	armoredCiphertext string
@@ -1447,7 +1458,7 @@ func testHardcodedEncrypt(t *testing.T, message hardcodedEncryptMessage) {
 		decodeSecretKeyString(t, message.sender),
 		decodeStringsToPublicKeys(t, message.receivers),
 		constantEphemeralKeyCreator{decodeSecretKeyString(t, message.ephemeralKey)},
-		constantEncryptRNG{decodeSymmetricKeyString(t, message.payloadKey)},
+		constantEncryptRNG{t, decodeSymmetricKeyString(t, message.payloadKey), message.permutation},
 		"")
 	require.NoError(t, err)
 
@@ -1464,6 +1475,7 @@ var v1Message = hardcodedEncryptMessage{
 		"3833f2e7bbc09b27713d4b43b03a97df784e7a0c9634d9bb1046a7354b5fa84f",
 		"82f0c46354c69e360d703525a2e0b92e4cb7a64ae23bcbfbc89978ee2772fbc1",
 	},
+	permutation:  []int{1, 2, 0},
 	ephemeralKey: "3f292760d9b325b72816d0576023292ae62d1f4190253eb40b7fcefb3b9ad41a",
 	payloadKey:   "f80645613161cca059b78acda045134c3269376bcdc1b972b2f801f3a2d3d189",
 	armoredCiphertext: `BEGIN SALTPACK ENCRYPTED MESSAGE. kiOUtMhcc4NXXRb XMxIdgQyljprRuP QOicP26XO1b47ju UJnCDGKawXyE0lE CGP8n3qPII9mSJt qGhWH2upu3qr6yp Hvg24Iw295aGKkh fQhfQLJxJsUDR9x y2Gy6bDdEV5qptY HWjTnA0GcyYppOS SAqj0mnNeiau8bH rHTCSlbZTksMWrW 8yPAIrDuED7aB02 489C1vtaaftIWJ9 KfhuUbBL4YjA9pN YktQHwqX7zfJuEd wRhljkatr95Iiu3 1mvalHpDLlweQfd LriDGPdID6Lxy9e GXDznAHzhmHRA3p AtSuyQnPP1qGqgW Xb1gDgazh3C6Ohj 3ztzvuZdrAcGnzd IYFMr9qbtViG8v8 VWYqGIIFKdJtg8A 1MEiLMYzHd32FzH gKv6IvviDpoxpKu Cy5UKSEYxrSD9Pf lxlb8oKKg8j2App 17N21SwbQMpIWAC 56Fez3XmFCMBLp1 F25s8IysZvfRsoo K03mFwSY1s8WJNg utLmu3zfPNLWKBK ij06OwpUtfVVJMe MxNlq1XOsKFTPlD QnPpYyzQXQk5MKW hNiIRfSLuf6Emx0 zw28V3JItBtHGfv A0uYkuXwLVf6g5v 7yedpNQ04RDIWQ1 PDVSJ2z3nCEZALl DBBEo3zVk7Jx56z w8rMGGPP1mVIocY e8wc4dib0sAvfFS 7pW09TVId3jQidj xSOMMoHtCxBPRX9 lHAK4fcoKukg2Oo oizaPpY90MnJaY6 NrzVjAh2fNa7MXd RNzOJiWTLN9lnKz ZYWZ7QxkG790wQ5 8ju5Q2z5EOx1dDV dXAvS7V2HwJFsRI tPSXP84378LucSD oQqfPSz5qg. END SALTPACK ENCRYPTED MESSAGE.
@@ -1502,7 +1514,7 @@ func TestHardcodedEncryptMessageV2(t *testing.T) {
 		receiver1.GetPublicKey(),
 	}
 
-	ciphertext, err := encryptArmor62Seal(Version2(), []byte(hardcodedV2PlaintextMessage), sender, allReceivers, constantEphemeralKeyCreator{ephemeral}, constantEncryptRNG{symmetric}, "")
+	ciphertext, err := encryptArmor62Seal(Version2(), []byte(hardcodedV2PlaintextMessage), sender, allReceivers, constantEphemeralKeyCreator{ephemeral}, constantEncryptRNG{t, symmetric, []int{1, 2, 0}}, "")
 	require.NoError(t, err)
 
 	require.Equal(t, hardcodedV2EncryptedMessageA, ciphertext)
