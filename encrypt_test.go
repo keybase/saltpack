@@ -1440,16 +1440,21 @@ func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPubl
 	return shuffled
 }
 
+// hardcodedEncryptMessage encapsulates a single instance of an
+// encryptArmor62Seal call, including any random state.
 type hardcodedEncryptMessage struct {
+	// Normal input parameters to encryptArmor62Seal.
 	version   Version
 	plaintext string
 	sender    string
 	receivers []string
 
+	// Random state.
 	permutation  []int
 	ephemeralKey string
 	payloadKey   string
 
+	// Output.
 	armoredCiphertext string
 }
 
