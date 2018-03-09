@@ -1441,13 +1441,15 @@ func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPubl
 }
 
 type hardcodedEncryptMessage struct {
-	version           Version
-	plaintext         string
-	sender            string
-	receivers         []string
-	permutation       []int
-	ephemeralKey      string
-	payloadKey        string
+	version   Version
+	plaintext string
+	sender    string
+	receivers []string
+
+	permutation  []int
+	ephemeralKey string
+	payloadKey   string
+
 	armoredCiphertext string
 }
 
