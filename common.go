@@ -39,7 +39,11 @@ var _ mathrand.Source = cryptoSource{}
 
 func (s cryptoSource) Int63() int64 {
 	var buf [8]byte
-	cryptorand.Read(buf[:])
+	_, err := cryptorand.Read(buf[:])
+	if err != nil {
+		// TODO: Fix.
+		panic(err)
+	}
 	return int64(binary.BigEndian.Uint64(buf[:]) >> 1)
 }
 

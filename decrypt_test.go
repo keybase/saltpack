@@ -87,6 +87,7 @@ func TestDecrypt(t *testing.T) {
 	runTestsOverVersions(t, "testDecrypt", tests)
 }
 
+/*
 const hardcodedV1EncryptedMessage = `
 BEGIN KEYBASE SALTPACK ENCRYPTED MESSAGE. kiPgBwdlv6bV9N8 dSkCbjKrku5ZO7I
 sQfGHBd7ZxroT7P 1oooGf4WjNkflSq ujGii7s89UFEybr MCxPEHJ7oOvWtnu Hos4mnLWEggEbcO
@@ -123,3 +124,4 @@ func TestHardcodedEncryptedMessageV2(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, hardcodedV2PlaintextMessage, string(plaintext))
 }
+*/
