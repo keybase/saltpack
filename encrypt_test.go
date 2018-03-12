@@ -298,7 +298,8 @@ func TestShuffleEncryptReceivers(t *testing.T) {
 		receivers = append(receivers, k)
 	}
 
-	shuffled := shuffleEncryptReceivers(receivers)
+	shuffled, err := shuffleEncryptReceivers(receivers)
+	require.NoError(t, err)
 
 	shuffledOrder := getEncryptReceiverOrder(shuffled)
 	requireValidNonTrivialPermutation(t, receiverCount, shuffledOrder)
@@ -1455,13 +1456,15 @@ func (c constantEncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
 	return &c.k, nil
 }
 
-func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
-	require.True(c.t, isValidPermutation(len(receivers), c.p))
+func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) ([]BoxPublicKey, error) {
+	if !isValidPermutation(len(receivers), c.p) {
+		return nil, fmt.Errorf("invalid permutation for length %d: %+v", len(receivers), c.p)
+	}
 	shuffled := make([]BoxPublicKey, len(receivers))
 	for i := 0; i < len(receivers); i++ {
 		shuffled[i] = receivers[c.p[i]]
 	}
-	return shuffled
+	return shuffled, nil
 }
 
 // hardcodedEncryptArmor62SealInput encapsulates all the inputs to an
@@ -1491,6 +1494,10 @@ func newRandomHardcodedEncryptArmor62SealInput(version Version, plaintext string
 	if err != nil {
 		return hardcodedEncryptArmor62SealInput{}, err
 	}
+	permutation, err := randomPerm(receiverCount)
+	if err != nil {
+		return hardcodedEncryptArmor62SealInput{}, err
+	}
 	ephemeralKey, err := newRandomSecretKeyString()
 	if err != nil {
 		return hardcodedEncryptArmor62SealInput{}, err
@@ -1503,7 +1510,7 @@ func newRandomHardcodedEncryptArmor62SealInput(version Version, plaintext string
 		version:      version,
 		plaintext:    plaintext,
 		receivers:    receivers,
-		permutation:  randomPerm(receiverCount),
+		permutation:  permutation,
 		ephemeralKey: ephemeralKey,
 		payloadKey:   payloadKey,
 	}, nil

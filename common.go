@@ -53,9 +53,10 @@ func (s cryptoSource) Seed(seed int64) {
 
 // TODO: Use go 1.10's random.Shuffle instead, which removes a source
 // of bias.
-func randomPerm(n int) []int {
+func randomPerm(n int) ([]int, error) {
+	// TODO: Fix.
 	rnd := mathrand.New(cryptoSource{})
-	return rnd.Perm(n)
+	return rnd.Perm(n), nil
 }
 
 func (e encryptionBlockNumber) check() error {

@@ -226,9 +226,13 @@ func checkSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKe
 	return nil
 }
 
-func shuffleSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker {
+func shuffleSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) ([]receiverKeysMaker, error) {
 	totalLen := len(receiverBoxKeys) + len(receiverSymmetricKeys)
-	order := randomPerm(totalLen)
+	order, err := randomPerm(totalLen)
+	if err != nil {
+		return nil, err
+	}
+
 	receivers := make([]receiverKeysMaker, totalLen)
 	for i, r := range receiverBoxKeys {
 		receivers[order[i]] = receiverBoxKey{r}
@@ -237,7 +241,7 @@ func shuffleSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetric
 	for i, r := range receiverSymmetricKeys {
 		receivers[order[len(receiverBoxKeys)+i]] = r
 	}
-	return receivers
+	return receivers, nil
 }
 
 // signcryptRNG is an interface encapsulating all the randomness
@@ -246,7 +250,7 @@ func shuffleSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetric
 // deterministic.
 type signcryptRNG interface {
 	createSymmetricKey() (*SymmetricKey, error)
-	shuffleReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker
+	shuffleReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) ([]receiverKeysMaker, error)
 }
 
 // This generates the payload key, and encrypts it for all the different
@@ -260,7 +264,10 @@ func (sss *signcryptSealStream) init(
 		return err
 	}
 
-	receivers := rng.shuffleReceivers(receiverBoxKeys, receiverSymmetricKeys)
+	receivers, err := rng.shuffleReceivers(receiverBoxKeys, receiverSymmetricKeys)
+	if err != nil {
+		return err
+	}
 
 	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
@@ -348,7 +355,7 @@ func (defaultSigncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
 	return newRandomSymmetricKey()
 }
 
-func (defaultSigncryptRNG) shuffleReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) []receiverKeysMaker {
+func (defaultSigncryptRNG) shuffleReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) ([]receiverKeysMaker, error) {
 	return shuffleSigncryptReceivers(receiverBoxKeys, receiverSymmetricKeys)
 }
 

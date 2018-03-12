@@ -130,7 +130,10 @@ func (pes *testEncryptStream) init(
 		return err
 	}
 
-	receivers = rng.shuffleReceivers(receivers)
+	receivers, err := rng.shuffleReceivers(receivers)
+	if err != nil {
+		return err
+	}
 
 	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
@@ -278,8 +281,8 @@ func (noShuffleRNG) createSymmetricKey() (*SymmetricKey, error) {
 	return newRandomSymmetricKey()
 }
 
-func (noShuffleRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
-	return receivers
+func (noShuffleRNG) shuffleReceivers(receivers []BoxPublicKey) ([]BoxPublicKey, error) {
+	return receivers, nil
 }
 
 // Options are available mainly for testing.  Can't think of a good reason for

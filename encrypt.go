@@ -171,13 +171,16 @@ func checkEncryptReceivers(receivers []BoxPublicKey) error {
 	return nil
 }
 
-func shuffleEncryptReceivers(receivers []BoxPublicKey) []BoxPublicKey {
-	order := randomPerm(len(receivers))
+func shuffleEncryptReceivers(receivers []BoxPublicKey) ([]BoxPublicKey, error) {
+	order, err := randomPerm(len(receivers))
+	if err != nil {
+		return nil, err
+	}
 	shuffled := make([]BoxPublicKey, len(receivers))
 	for i := 0; i < len(receivers); i++ {
 		shuffled[i] = receivers[order[i]]
 	}
-	return shuffled
+	return shuffled, nil
 }
 
 // encryptRNG is an interface encapsulating all the randomness (aside
@@ -185,7 +188,7 @@ func shuffleEncryptReceivers(receivers []BoxPublicKey) []BoxPublicKey {
 // encryption. Tests can override it to make encryption deterministic.
 type encryptRNG interface {
 	createSymmetricKey() (*SymmetricKey, error)
-	shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey
+	shuffleReceivers(receivers []BoxPublicKey) ([]BoxPublicKey, error)
 }
 
 func (es *encryptStream) init(
@@ -199,7 +202,10 @@ func (es *encryptStream) init(
 		return err
 	}
 
-	receivers = rng.shuffleReceivers(receivers)
+	receivers, err := rng.shuffleReceivers(receivers)
+	if err != nil {
+		return err
+	}
 
 	ephemeralKey, err := ephemeralKeyCreator.CreateEphemeralKey()
 	if err != nil {
@@ -343,7 +349,7 @@ func (defaultEncryptRNG) createSymmetricKey() (*SymmetricKey, error) {
 	return newRandomSymmetricKey()
 }
 
-func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) []BoxPublicKey {
+func (defaultEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) ([]BoxPublicKey, error) {
 	return shuffleEncryptReceivers(receivers)
 }
 
