@@ -87,7 +87,6 @@ func TestDecrypt(t *testing.T) {
 	runTestsOverVersions(t, "testDecrypt", tests)
 }
 
-/*
 const hardcodedV1EncryptedMessage = `
 BEGIN KEYBASE SALTPACK ENCRYPTED MESSAGE. kiPgBwdlv6bV9N8 dSkCbjKrku5ZO7I
 sQfGHBd7ZxroT7P 1oooGf4WjNkflSq ujGii7s89UFEybr MCxPEHJ7oOvWtnu Hos4mnLWEggEbcO
@@ -108,20 +107,11 @@ FuHsCazBwbC8RMw mK04rfrmwew. END KEYBASE SALTPACK ENCRYPTED MESSAGE.
 const hardcodedV1DecryptionKey = "1fcf32dbefa43c1af55f1387b5e30117657a6eb9ef1bbbd4e95b3f1436fc3310"
 
 func TestHardcodedEncryptedMessageV1(t *testing.T) {
-	key := decodeSecretKeyString(t, hardcodedV1DecryptionKey)
+	key, err := secretKeyString(hardcodedV1DecryptionKey).toSecretKey()
+	require.NoError(t, err)
 	keyring := newKeyring()
 	keyring.insert(key)
 	_, plaintext, _, err := Dearmor62DecryptOpen(SingleVersionValidator(Version1()), hardcodedV1EncryptedMessage, keyring)
 	require.NoError(t, err)
 	require.Equal(t, "test message!", string(plaintext))
 }
-
-func TestHardcodedEncryptedMessageV2(t *testing.T) {
-	key := decodeSecretKeyString(t, hardcodedV2Receiver0SecretKey)
-	keyring := newKeyring()
-	keyring.insert(key)
-	_, plaintext, _, err := Dearmor62DecryptOpen(SingleVersionValidator(Version2()), hardcodedV2EncryptedMessageA, keyring)
-	require.NoError(t, err)
-	require.Equal(t, hardcodedV2PlaintextMessage, string(plaintext))
-}
-*/
