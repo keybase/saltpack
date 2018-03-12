@@ -1593,39 +1593,24 @@ func TestHardcodedEncryptMessageV1(t *testing.T) {
 	testHardcodedEncrypt(t, v1EncryptArmor62SealResult)
 }
 
-const hardcodedV2PlaintextMessage = "hardcoded message v2"
+var v2EncryptArmor62SealResult = hardcodedEncryptArmor62SealResult{
+	hardcodedEncryptArmor62SealInput: hardcodedEncryptArmor62SealInput{
+		version:   Version2(),
+		plaintext: "hardcoded message v2",
+		receivers: []secretKeyString{
+			"16c22cb65728ded9214c8e4525decc20f6ad95fd43a503deaecdfbcd79d39d15",
+			"fceb2cb2c77b22d47a779461c7a963a11759a3f98a437d542e3cdde5d0c9bea6",
+			"293d2a95a4f6ea3ed0c5213bd9b28b28ecff5c023ad488025e2a789abb773aa5",
+		},
+		permutation:  []int{1, 2, 0},
+		ephemeralKey: "0a3550f22ff82ca7e923ca3363d1556416d8c1df19cc372caf2661ce255f6da0",
+		payloadKey:   "bf5e8f5b61c40895b53d6fa8976c22501a5b6369282e7875e528accc5e9fa70a",
+	},
 
-const hardcodedV2SenderSecretKey = "16c22cb65728ded9214c8e4525decc20f6ad95fd43a503deaecdfbcd79d39d15"
-
-const hardcodedV2Receiver0SecretKey = "fceb2cb2c77b22d47a779461c7a963a11759a3f98a437d542e3cdde5d0c9bea6"
-
-const hardcodedV2Receiver1SecretKey = "293d2a95a4f6ea3ed0c5213bd9b28b28ecff5c023ad488025e2a789abb773aa5"
-
-const hardcodedV2EphemeralSecretKey = "0a3550f22ff82ca7e923ca3363d1556416d8c1df19cc372caf2661ce255f6da0"
-
-const hardcodedV2SymmetricKey = "bf5e8f5b61c40895b53d6fa8976c22501a5b6369282e7875e528accc5e9fa70a"
-
-const hardcodedV2EncryptedMessageA = `BEGIN SALTPACK ENCRYPTED MESSAGE. kiOUtMhcc4NXXRb XMxIeCbZQsbcx3v DdVJWmdycVgmGAf 0xYSQcw1m5OoJyK bv2fcF6c2IRWvj3 2JrBxsm7P7i0fsI THRJY7du7UnaVzU FdePmD6qEnkJFFy 4NLGYijRmF4uUtE 8vE81Q7wztDuu0g sWpz2gBJWNh0Kz9 JaIgCTaNnkQFtPk hnCev1j9GycswXb DxuJkD6CtlXyWB5 PNLre4awLY5rHcS 8koY3JdVpvse9Y1 RCLRuaEqQkDTHlB XzgjHiZGmuqMwi0 eHWegV3oFvgGXiT CW6EBw7qek9cKZZ ANTpL4vBjcOoi0F elmMolRMkQmEmuX 9EsFVIPjetlyQr8 p2AWoWV12ZWddZe 4u1afhjsQc9BE4e rAWrMjfLKoAoIye QSQuQPDQXsY5mcb vxrZx938UrCewuC hj6kNpfq995o9Zl p35SMAW5K0lzaDh 0Gds5hZft2g94Xf jl7gJWhOkOUkbAs 4PvlKRJS82s5pwo U3qFzsKz2ZJOSrU qbnrr87ppb9ufW9 o36H7hC10tP3nIQ 3elSB3uAammMXAP BduZO4l8LmiwKBt TP1v52Em9ZkJARO pkXTjR8s9mmzjwG 0ZYtt7FN9A1WG1Q d2pHnh2t1X2Kwsb Tb4OBi4mohpNecR ENT3z738L4blLNA JGKR2N73nchK. END SALTPACK ENCRYPTED MESSAGE.
-`
-
-/*
-func TestHardcodedEncryptMessageV2(t *testing.T) {
-	sender := decodeSecretKeyString(t, hardcodedV2SenderSecretKey)
-	receiver0 := decodeSecretKeyString(t, hardcodedV2Receiver0SecretKey)
-	receiver1 := decodeSecretKeyString(t, hardcodedV2Receiver1SecretKey)
-	ephemeral := decodeSecretKeyString(t, hardcodedV2EphemeralSecretKey)
-	symmetric := decodeSymmetricKeyString(t, hardcodedV2SymmetricKey)
-
-	allReceivers := []BoxPublicKey{
-		sender.GetPublicKey(),
-		receiver0.GetPublicKey(),
-		receiver1.GetPublicKey(),
-	}
-
-	ciphertext, err := encryptArmor62Seal(Version2(), []byte(hardcodedV2PlaintextMessage), sender, allReceivers, constantEphemeralKeyCreator{ephemeral}, constantEncryptRNG{t, symmetric, []int{1, 2, 0}}, "")
-	require.NoError(t, err)
-
-	require.Equal(t, hardcodedV2EncryptedMessageA, ciphertext)
+	armoredCiphertext: `BEGIN SALTPACK ENCRYPTED MESSAGE. kiOUtMhcc4NXXRb XMxIeCbZQsbcx3v DdVJWmdycVgmGAf 0xYSQcw1m5OoJyK bv2fcF6c2IRWvj3 2JrBxsm7P7i0fsI THRJY7du7UnaVzU FdePmD6qEnkJFFy 4NLGYijRmF4uUtE 8vE81Q7wztDuu0g sWpz2gBJWNh0Kz9 JaIgCTaNnkQFtPk hnCev1j9GycswXb DxuJkD6CtlXyWB5 PNLre4awLY5rHcS 8koY3JdVpvse9Y1 RCLRuaEqQkDTHlB XzgjHiZGmuqMwi0 eHWegV3oFvgGXiT CW6EBw7qek9cKZZ ANTpL4vBjcOoi0F elmMolRMkQmEmuX 9EsFVIPjetlyQr8 p2AWoWV12ZWddZe 4u1afhjsQc9BE4e rAWrMjfLKoAoIye QSQuQPDQXsY5mcb vxrZx938UrCewuC hj6kNpfq995o9Zl p35SMAW5K0lzaDh 0Gds5hZft2g94Xf jl7gJWhOkOUkbAs 4PvlKRJS82s5pwo U3qFzsKz2ZJOSrU qbnrr87ppb9ufW9 o36H7hC10tP3nIQ 3elSB3uAammMXAP BduZO4l8LmiwKBt TP1v52Em9ZkJARO pkXTjR8s9mmzjwG 0ZYtt7FN9A1WG1Q d2pHnh2t1X2Kwsb Tb4OBi4mohpNecR ENT3z738L4blLNA JGKR2N73nchK. END SALTPACK ENCRYPTED MESSAGE.
+`,
 }
 
-*/
+func TestHardcodedEncryptMessageV2(t *testing.T) {
+	testHardcodedEncrypt(t, v2EncryptArmor62SealResult)
+}
