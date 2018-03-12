@@ -1473,7 +1473,7 @@ type encryptArmor62SealInput struct {
 
 	version   Version
 	plaintext string
-	// The first receiver is assumed to be the sender.
+	sender    secretKeyString
 	receivers []secretKeyString
 	brand     string
 
@@ -1507,8 +1507,10 @@ func newRandomEncryptArmor62SealInput(
 		return encryptArmor62SealInput{}, err
 	}
 	return encryptArmor62SealInput{
-		version:      version,
-		plaintext:    plaintext,
+		version:   version,
+		plaintext: plaintext,
+		// Set the sender to the first receiver for now.
+		sender:       receivers[0],
 		receivers:    receivers,
 		permutation:  permutation,
 		ephemeralKey: ephemeralKey,
@@ -1517,7 +1519,7 @@ func newRandomEncryptArmor62SealInput(
 }
 
 func (i encryptArmor62SealInput) call() (string, error) {
-	sender, err := i.receivers[0].toSecretKey()
+	sender, err := i.sender.toSecretKey()
 	if err != nil {
 		return "", err
 	}
@@ -1582,7 +1584,9 @@ var v1EncryptArmor62SealResult = encryptArmor62SealResult{
 	encryptArmor62SealInput: encryptArmor62SealInput{
 		version:   Version1(),
 		plaintext: "hardcoded message v1",
+		sender:    "4902237dc127e1cbbd5dbf0b3ce74e751aa6bbfd894f2e1658fb2c7b3b5eb9fc",
 		receivers: []secretKeyString{
+			// sender.
 			"4902237dc127e1cbbd5dbf0b3ce74e751aa6bbfd894f2e1658fb2c7b3b5eb9fc",
 			"3833f2e7bbc09b27713d4b43b03a97df784e7a0c9634d9bb1046a7354b5fa84f",
 			"82f0c46354c69e360d703525a2e0b92e4cb7a64ae23bcbfbc89978ee2772fbc1",
@@ -1604,7 +1608,9 @@ var v2EncryptArmor62SealResult = encryptArmor62SealResult{
 	encryptArmor62SealInput: encryptArmor62SealInput{
 		version:   Version2(),
 		plaintext: "hardcoded message v2",
+		sender:    "16c22cb65728ded9214c8e4525decc20f6ad95fd43a503deaecdfbcd79d39d15",
 		receivers: []secretKeyString{
+			// sender.
 			"16c22cb65728ded9214c8e4525decc20f6ad95fd43a503deaecdfbcd79d39d15",
 			"fceb2cb2c77b22d47a779461c7a963a11759a3f98a437d542e3cdde5d0c9bea6",
 			"293d2a95a4f6ea3ed0c5213bd9b28b28ecff5c023ad488025e2a789abb773aa5",
