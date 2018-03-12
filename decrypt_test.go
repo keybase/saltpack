@@ -120,10 +120,16 @@ func TestHardcodedEncryptedMessageV1(t *testing.T) {
 	requireDearmor62DecryptOpenTo(t, "test message!", Version1(), hardcodedV1DecryptionKey, hardcodedV1EncryptedMessage)
 }
 
+func testEncryptArmor62SealResultOpen(t *testing.T, result encryptArmor62SealResult) {
+	for _, receiver := range result.receivers {
+		requireDearmor62DecryptOpenTo(t, result.plaintext, result.version, receiver, result.armoredCiphertext)
+	}
+}
+
 func TestOpenHardcodedEncryptMessageV1(t *testing.T) {
-	requireDearmor62DecryptOpenTo(t, v1EncryptArmor62SealResult.plaintext, Version1(), v1EncryptArmor62SealResult.receivers[1], v1EncryptArmor62SealResult.armoredCiphertext)
+	testEncryptArmor62SealResultOpen(t, v1EncryptArmor62SealResult)
 }
 
 func TestOpenHardcodedEncryptMessageV2(t *testing.T) {
-	requireDearmor62DecryptOpenTo(t, v2EncryptArmor62SealResult.plaintext, Version2(), v2EncryptArmor62SealResult.receivers[1], v2EncryptArmor62SealResult.armoredCiphertext)
+	testEncryptArmor62SealResultOpen(t, v2EncryptArmor62SealResult)
 }
