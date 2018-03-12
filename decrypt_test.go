@@ -119,3 +119,11 @@ func requireDearmor62DecryptOpenTo(t *testing.T, expectedPlaintext string, versi
 func TestHardcodedEncryptedMessageV1(t *testing.T) {
 	requireDearmor62DecryptOpenTo(t, "test message!", Version1(), hardcodedV1DecryptionKey, hardcodedV1EncryptedMessage)
 }
+
+func TestOpenHardcodedEncryptMessageV1(t *testing.T) {
+	requireDearmor62DecryptOpenTo(t, v1EncryptArmor62SealResult.plaintext, Version1(), v1EncryptArmor62SealResult.receivers[1], v1EncryptArmor62SealResult.armoredCiphertext)
+}
+
+func TestOpenHardcodedEncryptMessageV2(t *testing.T) {
+	requireDearmor62DecryptOpenTo(t, v2EncryptArmor62SealResult.plaintext, Version2(), v2EncryptArmor62SealResult.receivers[1], v2EncryptArmor62SealResult.armoredCiphertext)
+}

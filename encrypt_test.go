@@ -1596,7 +1596,7 @@ var v1EncryptArmor62SealResult = encryptArmor62SealResult{
 `,
 }
 
-func TestHardcodedEncryptMessageV1(t *testing.T) {
+func TestSealHardcodedEncryptMessageV1(t *testing.T) {
 	testEncryptArmor62SealResultSeal(t, v1EncryptArmor62SealResult)
 }
 
@@ -1618,6 +1618,6 @@ var v2EncryptArmor62SealResult = encryptArmor62SealResult{
 `,
 }
 
-func TestHardcodedEncryptMessageV2(t *testing.T) {
+func TestSealHardcodedEncryptMessageV2(t *testing.T) {
 	testEncryptArmor62SealResultSeal(t, v2EncryptArmor62SealResult)
 }
