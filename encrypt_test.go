@@ -1466,9 +1466,9 @@ func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) ([]BoxPub
 	return shuffled, nil
 }
 
-// hardcodedEncryptArmor62SealInput encapsulates all the inputs to an
+// encryptArmor62SealInput encapsulates all the inputs to an
 // encryptArmor62Seal call, including any random state.
-type hardcodedEncryptArmor62SealInput struct {
+type encryptArmor62SealInput struct {
 	// Normal input parameters to encryptArmor62Seal.
 
 	version   Version
@@ -1486,26 +1486,27 @@ type hardcodedEncryptArmor62SealInput struct {
 	payloadKey   symmetricKeyString
 }
 
-func newRandomHardcodedEncryptArmor62SealInput(version Version, plaintext string) (hardcodedEncryptArmor62SealInput, error) {
+func newRandomEncryptArmor62SealInput(
+	version Version, plaintext string) (encryptArmor62SealInput, error) {
 	// Hardcoded for now.
 	receiverCount := 3
 	receivers, err := newRandomSecretKeyStrings(receiverCount)
 	if err != nil {
-		return hardcodedEncryptArmor62SealInput{}, err
+		return encryptArmor62SealInput{}, err
 	}
 	permutation, err := randomPerm(receiverCount)
 	if err != nil {
-		return hardcodedEncryptArmor62SealInput{}, err
+		return encryptArmor62SealInput{}, err
 	}
 	ephemeralKey, err := newRandomSecretKeyString()
 	if err != nil {
-		return hardcodedEncryptArmor62SealInput{}, err
+		return encryptArmor62SealInput{}, err
 	}
 	payloadKey, err := newRandomSymmetricKeyString()
 	if err != nil {
-		return hardcodedEncryptArmor62SealInput{}, err
+		return encryptArmor62SealInput{}, err
 	}
-	return hardcodedEncryptArmor62SealInput{
+	return encryptArmor62SealInput{
 		version:      version,
 		plaintext:    plaintext,
 		receivers:    receivers,
@@ -1515,7 +1516,7 @@ func newRandomHardcodedEncryptArmor62SealInput(version Version, plaintext string
 	}, nil
 }
 
-func (i hardcodedEncryptArmor62SealInput) call() (string, error) {
+func (i encryptArmor62SealInput) call() (string, error) {
 	sender, err := i.receivers[0].toSecretKey()
 	if err != nil {
 		return "", err
@@ -1539,46 +1540,46 @@ func (i hardcodedEncryptArmor62SealInput) call() (string, error) {
 		i.brand)
 }
 
-// hardcodedEncryptArmor62SealInput encapsulates all the inputs and
-// outputs of an encryptArmor62Seal call, including any random state.
-type hardcodedEncryptArmor62SealResult struct {
-	hardcodedEncryptArmor62SealInput
+// encryptArmor62SealResult encapsulates all the inputs and outputs of
+// an encryptArmor62Seal call, including any random state.
+type encryptArmor62SealResult struct {
+	encryptArmor62SealInput
 
 	// Output.
 	armoredCiphertext string
 }
 
-func newRandomHardcodedEncryptArmor62SealResult(version Version, plaintext string) (hardcodedEncryptArmor62SealResult, error) {
-	input, err := newRandomHardcodedEncryptArmor62SealInput(version, plaintext)
+func newRandomEncryptArmor62SealResult(version Version, plaintext string) (encryptArmor62SealResult, error) {
+	input, err := newRandomEncryptArmor62SealInput(version, plaintext)
 	if err != nil {
-		return hardcodedEncryptArmor62SealResult{}, err
+		return encryptArmor62SealResult{}, err
 	}
 	armoredCiphertext, err := input.call()
 	if err != nil {
-		return hardcodedEncryptArmor62SealResult{}, err
+		return encryptArmor62SealResult{}, err
 	}
-	return hardcodedEncryptArmor62SealResult{
-		hardcodedEncryptArmor62SealInput: input,
-		armoredCiphertext:                armoredCiphertext,
+	return encryptArmor62SealResult{
+		encryptArmor62SealInput: input,
+		armoredCiphertext:       armoredCiphertext,
 	}, nil
 }
 
-func testHardcodedEncrypt(t *testing.T, result hardcodedEncryptArmor62SealResult) {
-	armoredCiphertext, err := result.hardcodedEncryptArmor62SealInput.call()
+func testHardcodedEncrypt(t *testing.T, result encryptArmor62SealResult) {
+	armoredCiphertext, err := result.encryptArmor62SealInput.call()
 	require.NoError(t, err)
 	require.Equal(t, result.armoredCiphertext, armoredCiphertext)
 }
 
 func TestRandomHardcodedEncrypt(t *testing.T) {
 	runTestOverVersions(t, func(t *testing.T, version Version) {
-		result, err := newRandomHardcodedEncryptArmor62SealResult(Version1(), "some plaintext")
+		result, err := newRandomEncryptArmor62SealResult(Version1(), "some plaintext")
 		require.NoError(t, err)
 		testHardcodedEncrypt(t, result)
 	})
 }
 
-var v1EncryptArmor62SealResult = hardcodedEncryptArmor62SealResult{
-	hardcodedEncryptArmor62SealInput: hardcodedEncryptArmor62SealInput{
+var v1EncryptArmor62SealResult = encryptArmor62SealResult{
+	encryptArmor62SealInput: encryptArmor62SealInput{
 		version:   Version1(),
 		plaintext: "hardcoded message v1",
 		receivers: []secretKeyString{
@@ -1599,8 +1600,8 @@ func TestHardcodedEncryptMessageV1(t *testing.T) {
 	testHardcodedEncrypt(t, v1EncryptArmor62SealResult)
 }
 
-var v2EncryptArmor62SealResult = hardcodedEncryptArmor62SealResult{
-	hardcodedEncryptArmor62SealInput: hardcodedEncryptArmor62SealInput{
+var v2EncryptArmor62SealResult = encryptArmor62SealResult{
+	encryptArmor62SealInput: encryptArmor62SealInput{
 		version:   Version2(),
 		plaintext: "hardcoded message v2",
 		receivers: []secretKeyString{
