@@ -1564,17 +1564,17 @@ func newRandomEncryptArmor62SealResult(version Version, plaintext string) (encry
 	}, nil
 }
 
-func testHardcodedEncrypt(t *testing.T, result encryptArmor62SealResult) {
+func testEncryptArmor62SealResultSeal(t *testing.T, result encryptArmor62SealResult) {
 	armoredCiphertext, err := result.encryptArmor62SealInput.call()
 	require.NoError(t, err)
 	require.Equal(t, result.armoredCiphertext, armoredCiphertext)
 }
 
-func TestRandomHardcodedEncrypt(t *testing.T) {
+func TestRandomEncryptArmor62Seal(t *testing.T) {
 	runTestOverVersions(t, func(t *testing.T, version Version) {
 		result, err := newRandomEncryptArmor62SealResult(Version1(), "some plaintext")
 		require.NoError(t, err)
-		testHardcodedEncrypt(t, result)
+		testEncryptArmor62SealResultSeal(t, result)
 	})
 }
 
@@ -1597,7 +1597,7 @@ var v1EncryptArmor62SealResult = encryptArmor62SealResult{
 }
 
 func TestHardcodedEncryptMessageV1(t *testing.T) {
-	testHardcodedEncrypt(t, v1EncryptArmor62SealResult)
+	testEncryptArmor62SealResultSeal(t, v1EncryptArmor62SealResult)
 }
 
 var v2EncryptArmor62SealResult = encryptArmor62SealResult{
@@ -1619,5 +1619,5 @@ var v2EncryptArmor62SealResult = encryptArmor62SealResult{
 }
 
 func TestHardcodedEncryptMessageV2(t *testing.T) {
-	testHardcodedEncrypt(t, v2EncryptArmor62SealResult)
+	testEncryptArmor62SealResultSeal(t, v2EncryptArmor62SealResult)
 }

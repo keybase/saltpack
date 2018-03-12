@@ -106,12 +106,16 @@ FuHsCazBwbC8RMw mK04rfrmwew. END KEYBASE SALTPACK ENCRYPTED MESSAGE.
 `
 const hardcodedV1DecryptionKey = "1fcf32dbefa43c1af55f1387b5e30117657a6eb9ef1bbbd4e95b3f1436fc3310"
 
-func TestHardcodedEncryptedMessageV1(t *testing.T) {
-	key, err := secretKeyString(hardcodedV1DecryptionKey).toSecretKey()
+func requireDearmor62DecryptOpenTo(t *testing.T, expectedPlaintext string, version Version, secretKeyString secretKeyString, armoredCiphertext string) {
+	key, err := secretKeyString.toSecretKey()
 	require.NoError(t, err)
 	keyring := newKeyring()
 	keyring.insert(key)
-	_, plaintext, _, err := Dearmor62DecryptOpen(SingleVersionValidator(Version1()), hardcodedV1EncryptedMessage, keyring)
+	_, plaintext, _, err := Dearmor62DecryptOpen(SingleVersionValidator(version), armoredCiphertext, keyring)
 	require.NoError(t, err)
-	require.Equal(t, "test message!", string(plaintext))
+	require.Equal(t, expectedPlaintext, string(plaintext))
+}
+
+func TestHardcodedEncryptedMessageV1(t *testing.T) {
+	requireDearmor62DecryptOpenTo(t, "test message!", Version1(), hardcodedV1DecryptionKey, hardcodedV1EncryptedMessage)
 }
