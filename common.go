@@ -9,6 +9,7 @@ import (
 	cryptorand "crypto/rand"
 	"crypto/sha512"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	mathrand "math/rand"
 
@@ -31,32 +32,46 @@ func codecHandle() *codec.MsgpackHandle {
 	return &mh
 }
 
-type cryptoSource struct{}
+type cryptoSource struct {
+	lastErr error
+}
 
-var _ mathrand.Source = cryptoSource{}
+var _ mathrand.Source = (*cryptoSource)(nil)
 
 // No need to implement Source64, since mathrand.Rand.Perm() doesn't use it.
 
-func (s cryptoSource) Int63() int64 {
-	var buf [8]byte
-	_, err := cryptorand.Read(buf[:])
-	if err != nil {
-		// TODO: Fix.
-		panic(err)
+func (s *cryptoSource) Int63() int64 {
+	if s.lastErr != nil {
+		return 0
 	}
+
+	var buf [8]byte
+	n, err := cryptorand.Read(buf[:])
+	if err == nil && n != 8 {
+		err = fmt.Errorf("Expected n=8, got n=%d", n)
+	}
+	if err != nil {
+		s.lastErr = err
+		return 0
+	}
+
 	return int64(binary.BigEndian.Uint64(buf[:]) >> 1)
 }
 
 func (s cryptoSource) Seed(seed int64) {
-	panic("cryptoSource.Seed() called unexpectedly")
+	s.lastErr = errors.New("cryptoSource.Seed() called unexpectedly")
 }
 
 // TODO: Use go 1.10's random.Shuffle instead, which removes a source
 // of bias.
 func randomPerm(n int) ([]int, error) {
-	// TODO: Fix.
-	rnd := mathrand.New(cryptoSource{})
-	return rnd.Perm(n), nil
+	var source cryptoSource
+	rnd := mathrand.New(&source)
+	perm := rnd.Perm(n)
+	if source.lastErr != nil {
+		return nil, source.lastErr
+	}
+	return perm, nil
 }
 
 func (e encryptionBlockNumber) check() error {
