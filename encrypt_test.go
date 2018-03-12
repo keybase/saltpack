@@ -1447,7 +1447,6 @@ func (c constantEphemeralKeyCreator) CreateEphemeralKey() (BoxSecretKey, error) 
 }
 
 type constantEncryptRNG struct {
-	t *testing.T
 	k SymmetricKey
 	p []int
 }
@@ -1516,7 +1515,7 @@ func newRandomHardcodedEncryptArmor62SealInput(version Version, plaintext string
 	}, nil
 }
 
-func (i hardcodedEncryptArmor62SealInput) call(t *testing.T) (string, error) {
+func (i hardcodedEncryptArmor62SealInput) call() (string, error) {
 	sender, err := i.receivers[0].toSecretKey()
 	if err != nil {
 		return "", err
@@ -1536,7 +1535,7 @@ func (i hardcodedEncryptArmor62SealInput) call(t *testing.T) (string, error) {
 		sender,
 		receivers,
 		constantEphemeralKeyCreator{ephemeralKey},
-		constantEncryptRNG{t, payloadKey, i.permutation},
+		constantEncryptRNG{payloadKey, i.permutation},
 		i.brand)
 }
 
@@ -1549,12 +1548,12 @@ type hardcodedEncryptArmor62SealResult struct {
 	armoredCiphertext string
 }
 
-func newRandomHardcodedEncryptArmor62SealResult(t *testing.T, version Version, plaintext string) (hardcodedEncryptArmor62SealResult, error) {
+func newRandomHardcodedEncryptArmor62SealResult(version Version, plaintext string) (hardcodedEncryptArmor62SealResult, error) {
 	input, err := newRandomHardcodedEncryptArmor62SealInput(version, plaintext)
 	if err != nil {
 		return hardcodedEncryptArmor62SealResult{}, err
 	}
-	armoredCiphertext, err := input.call(t)
+	armoredCiphertext, err := input.call()
 	if err != nil {
 		return hardcodedEncryptArmor62SealResult{}, err
 	}
@@ -1565,14 +1564,14 @@ func newRandomHardcodedEncryptArmor62SealResult(t *testing.T, version Version, p
 }
 
 func testHardcodedEncrypt(t *testing.T, result hardcodedEncryptArmor62SealResult) {
-	armoredCiphertext, err := result.hardcodedEncryptArmor62SealInput.call(t)
+	armoredCiphertext, err := result.hardcodedEncryptArmor62SealInput.call()
 	require.NoError(t, err)
 	require.Equal(t, result.armoredCiphertext, armoredCiphertext)
 }
 
 func TestRandomHardcodedEncrypt(t *testing.T) {
 	runTestOverVersions(t, func(t *testing.T, version Version) {
-		result, err := newRandomHardcodedEncryptArmor62SealResult(t, Version1(), "some plaintext")
+		result, err := newRandomHardcodedEncryptArmor62SealResult(Version1(), "some plaintext")
 		require.NoError(t, err)
 		testHardcodedEncrypt(t, result)
 	})
