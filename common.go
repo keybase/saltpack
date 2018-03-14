@@ -42,7 +42,7 @@ var _ mathrand.Source = (*cryptoSource)(nil)
 
 func (s *cryptoSource) Int63() int64 {
 	if s.lastErr != nil {
-		return 0
+		panic("lastErr != nil")
 	}
 
 	var buf [8]byte
@@ -59,6 +59,10 @@ func (s *cryptoSource) Int63() int64 {
 }
 
 func (s cryptoSource) Seed(seed int64) {
+	if s.lastErr != nil {
+		panic("lastErr != nil")
+	}
+
 	s.lastErr = errors.New("cryptoSource.Seed() called unexpectedly")
 }
 
