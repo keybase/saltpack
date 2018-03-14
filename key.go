@@ -5,7 +5,6 @@ package saltpack
 
 import (
 	"crypto/hmac"
-	cryptorand "crypto/rand"
 )
 
 // RawBoxKey is the raw byte-representation of what a box key should
@@ -27,12 +26,9 @@ type SymmetricKey [32]byte
 
 func newRandomSymmetricKey() (*SymmetricKey, error) {
 	var s SymmetricKey
-	n, err := cryptorand.Read(s[:])
+	err := cryptorandRead(s[:])
 	if err != nil {
 		return nil, err
-	}
-	if n != len(s) {
-		return nil, ErrInsufficientRandomness
 	}
 	return &s, nil
 }

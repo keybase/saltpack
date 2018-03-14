@@ -220,7 +220,7 @@ func newBoxKeyBlacklistPublic(t *testing.T) BoxSecretKey {
 
 func randomMsg(t *testing.T, sz int) []byte {
 	out := make([]byte, sz)
-	_, err := rand.Read(out)
+	err := cryptorandRead(out)
 	require.NoError(t, err)
 	return out
 }
@@ -380,21 +380,21 @@ func testSmallEncryptionOneReceiver(t *testing.T, version Version) {
 
 func testMediumEncryptionOneReceiver(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
-	_, err := rand.Read(buf)
+	err := cryptorandRead(buf)
 	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, nil)
 }
 
 func testBiggishEncryptionOneReceiver(t *testing.T, version Version) {
 	buf := make([]byte, 1024*100)
-	_, err := rand.Read(buf)
+	err := cryptorandRead(buf)
 	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, nil)
 }
 
 func testRealEncryptor(t *testing.T, version Version, sz int) {
 	msg := make([]byte, sz)
-	_, err := rand.Read(msg)
+	err := cryptorandRead(msg)
 	require.NoError(t, err)
 	sndr := newBoxKey(t)
 	var ciphertext bytes.Buffer
@@ -426,7 +426,7 @@ func testRealEncryptorBig(t *testing.T, version Version) {
 
 func testRoundTripMedium6Receivers(t *testing.T, version Version) {
 	msg := make([]byte, 1024*3)
-	_, err := rand.Read(msg)
+	err := cryptorandRead(msg)
 	require.NoError(t, err)
 	receivers := []BoxPublicKey{
 		newBoxKeyNoInsert(t).GetPublicKey(),
@@ -441,7 +441,7 @@ func testRoundTripMedium6Receivers(t *testing.T, version Version) {
 
 func testRoundTripSmall6Receivers(t *testing.T, version Version) {
 	msg := []byte("hoppy halloween")
-	_, err := rand.Read(msg)
+	err := cryptorandRead(msg)
 	require.NoError(t, err)
 	receivers := []BoxPublicKey{
 		newBoxKeyNoInsert(t).GetPublicKey(),
@@ -499,21 +499,21 @@ func testTruncation(t *testing.T, version Version) {
 
 func testMediumEncryptionOneReceiverSmallReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
-	_, err := rand.Read(buf)
+	err := cryptorandRead(buf)
 	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, &options{readSize: 1})
 }
 
 func testMediumEncryptionOneReceiverSmallishReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
-	_, err := rand.Read(buf)
+	err := cryptorandRead(buf)
 	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, &options{readSize: 7})
 }
 
 func testMediumEncryptionOneReceiverMediumReads(t *testing.T, version Version) {
 	buf := make([]byte, 1024*10)
-	_, err := rand.Read(buf)
+	err := cryptorandRead(buf)
 	require.NoError(t, err)
 	testRoundTrip(t, version, buf, nil, &options{readSize: 79})
 }
@@ -522,7 +522,7 @@ func testSealAndOpen(t *testing.T, version Version, sz int) {
 	sender := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
 	plaintext := make([]byte, sz)
-	_, err := rand.Read(plaintext)
+	err := cryptorandRead(plaintext)
 	require.NoError(t, err)
 	ciphertext, err := Seal(version, plaintext, sender, receivers)
 	require.NoError(t, err)
@@ -546,7 +546,7 @@ func testSealAndOpenTwoReceivers(t *testing.T, version Version) {
 		newBoxKey(t).GetPublicKey(),
 	}
 	plaintext := make([]byte, 1024*10)
-	_, err := rand.Read(plaintext)
+	err := cryptorandRead(plaintext)
 	require.NoError(t, err)
 	ciphertext, err := Seal(version, plaintext, sender, receivers)
 	require.NoError(t, err)

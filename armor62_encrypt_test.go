@@ -4,7 +4,6 @@
 package saltpack
 
 import (
-	"crypto/rand"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -15,7 +14,7 @@ import (
 
 func encryptArmor62RandomData(t *testing.T, version Version, sz int) ([]byte, string) {
 	msg := randomMsg(t, sz)
-	_, err := rand.Read(msg)
+	err := cryptorandRead(msg)
 	require.NoError(t, err)
 	sndr := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
@@ -36,7 +35,7 @@ func testEncryptArmor62(t *testing.T, version Version) {
 func testDearmor62DecryptSlowReader(t *testing.T, version Version) {
 	sz := 1024*16 + 3
 	msg := randomMsg(t, sz)
-	_, err := rand.Read(msg)
+	err := cryptorandRead(msg)
 	require.NoError(t, err)
 	sndr := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}

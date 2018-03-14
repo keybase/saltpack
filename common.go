@@ -32,6 +32,19 @@ func codecHandle() *codec.MsgpackHandle {
 	return &mh
 }
 
+// cryptorandRead is a thin wrapper around crypto/rand.Read that also
+// (paranoidly) checks the length.
+func cryptorandRead(b []byte) error {
+	n, err := cryptorand.Read(b)
+	if err != nil {
+		return err
+	}
+	if n != len(b) {
+		return ErrInsufficientRandomness
+	}
+	return nil
+}
+
 type cryptoSource struct {
 	lastErr error
 }
@@ -46,10 +59,7 @@ func (s *cryptoSource) Int63() int64 {
 	}
 
 	var buf [8]byte
-	n, err := cryptorand.Read(buf[:])
-	if err == nil && n != 8 {
-		err = fmt.Errorf("Expected n=8, got n=%d", n)
-	}
+	err := cryptorandRead(buf[:])
 	if err != nil {
 		s.lastErr = err
 		return 0

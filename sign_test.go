@@ -322,7 +322,7 @@ func testSignAttachedVerifyDetached(t *testing.T, version Version) {
 
 func testSignBadKey(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
-	rand.Read(key.private[:])
+	cryptorandRead(key.private[:])
 	msg := randomMsg(t, 128)
 	smsg, err := Sign(version, msg, key)
 	if err != nil {
