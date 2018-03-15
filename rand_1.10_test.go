@@ -17,16 +17,33 @@ import (
 func TestCSPRNGUint32nFastPath(t *testing.T) {
 	var buf [4]byte
 	binary.BigEndian.PutUint32(buf[:], 0xdeadbeef)
-	n, err := csprngUint32n(bytes.NewReader(buf[:]), 100)
+	r := bytes.NewReader(buf[:])
+	n, err := csprngUint32n(r, 100)
 	require.NoError(t, err)
-	//   (0xdeadbeef * 100) % 0xffffffff = 4225668530 > 100,
+	//   (0xdeadbeef * 100) % 0x100000000 = 422566844 >= 96,
 	//
-	// so the if statement is skipped, and the quotient
+	// so the first sample is accepted, and the quotient
 	//
-	//   (0xdeadbeef * 100) / 0xffffffff = 86
+	//   (0xdeadbeef * 100) / 0x100000000 = 86
 	//
 	// is returned.
 	require.Equal(t, uint32(86), n)
+	require.Equal(t, 0, r.Len())
+}
+
+func TestCSPRNGUint32nSlowPath(t *testing.T) {
+	var buf [8]byte
+	binary.BigEndian.PutUint32(buf[:], 0xdeadbeef+692989)
+	binary.BigEndian.PutUint32(buf[4:], 0xdeadbeef)
+	r := bytes.NewReader(buf[:])
+	n, err := csprngUint32n(r, 100)
+	require.NoError(t, err)
+	//   ((0xdeadbeef + 692989) * 100) % 0x100000000 = 48 < 96,
+	//
+	// so the first sample is rejected, and the second sample is
+	// accepted (by the same reasoning as above).
+	require.Equal(t, uint32(86), n)
+	require.Equal(t, 0, r.Len())
 }
 
 type testReaderSource struct {
@@ -84,10 +101,11 @@ func TestCSPRNGShuffle(t *testing.T) {
 			expectedOutput[j], expectedOutput[i]
 	})
 
-	read := bytes.NewReader(sourceExpected.read)
-	csprngShuffle(read, len(output), func(i, j int) {
+	r := bytes.NewReader(sourceExpected.read)
+	csprngShuffle(r, len(output), func(i, j int) {
 		output[i], output[j] = output[j], output[i]
 	})
 
 	require.Equal(t, expectedOutput, output)
+	require.Equal(t, 0, r.Len())
 }
