@@ -38,7 +38,11 @@ func (s testReaderSource) Seed(seed int64) {
 }
 
 func TestShuffle(t *testing.T) {
-	input := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+	count := 100000
+	var input []int
+	for i := 0; i < count; i++ {
+		input = append(input, i)
+	}
 
 	expectedOutput := make([]int, len(input))
 	output := make([]int, len(input))
