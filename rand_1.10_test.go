@@ -5,26 +5,28 @@ package saltpack
 
 import (
 	cryptorand "crypto/rand"
+	"io"
 	mathrand "math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-type testCryptoSource struct {
+type testReaderSource struct {
 	t *testing.T
+	r io.Reader
 }
 
-var _ mathrand.Source = testCryptoSource{}
+var _ mathrand.Source = testReaderSource{}
 
-func (s testCryptoSource) Int63() int64 {
+func (s testReaderSource) Int63() int64 {
 	n, err := cryptorandUint32(cryptorand.Reader)
 	require.NoError(s.t, err)
 	return int64(n)
 }
 
-func (s testCryptoSource) Seed(seed int64) {
-	s.t.Fatal("testCryptoSource.Seed() called unexpectedly")
+func (s testReaderSource) Seed(seed int64) {
+	s.t.Fatal("testReaderSource.Seed() called unexpectedly")
 }
 
 func TestShuffle(t *testing.T) {
@@ -36,7 +38,7 @@ func TestShuffle(t *testing.T) {
 	copy(expectedOutput, input)
 	copy(output, input)
 
-	rnd := mathrand.New(testCryptoSource{t})
+	rnd := mathrand.New(testReaderSource{t, cryptorand.Reader})
 	rnd.Shuffle(len(expectedOutput), func(i, j int) {
 		expectedOutput[i], expectedOutput[j] =
 			expectedOutput[j], expectedOutput[i]
