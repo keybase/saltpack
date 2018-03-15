@@ -14,6 +14,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCSPRNGUint32nFastPath(t *testing.T) {
+	var buf [4]byte
+	binary.BigEndian.PutUint32(buf[:], 0xdeadbeef)
+	n, err := csprngUint32n(bytes.NewReader(buf[:]), 100)
+	require.NoError(t, err)
+	//   (0xdeadbeef * 100) % 0xffffffff = 4225668530 > 100,
+	//
+	// so the if statement is skipped, and the quotient
+	//
+	//   (0xdeadbeef * 100) / 0xffffffff = 86
+	//
+	// is returned.
+	require.Equal(t, uint32(86), n)
+}
+
 type testReaderSource struct {
 	t *testing.T
 	r io.Reader
@@ -45,11 +60,11 @@ func (s testReaderSource) Seed(seed int64) {
 	s.t.Fatal("testReaderSource.Seed() called unexpectedly")
 }
 
-// TestShuffle tests that our shuffle matches exactly
+// TestCSPRNGShuffle tests that csprngShuffle exactly matches
 // math/rand.Shuffle for sizes < 2³¹. This is a robust test, since
 // go's backwards compatibility guarantee also applies to the behavior
-// of math/rand.Rand.
-func TestShuffle(t *testing.T) {
+// of math/rand.Rand for a given seed.
+func TestCSPRNGShuffle(t *testing.T) {
 	count := 100000
 	var input []int
 	for i := 0; i < count; i++ {
@@ -69,7 +84,7 @@ func TestShuffle(t *testing.T) {
 			expectedOutput[j], expectedOutput[i]
 	})
 
-	read := bytes.NewBuffer(sourceExpected.read)
+	read := bytes.NewReader(sourceExpected.read)
 	csprngShuffle(read, len(output), func(i, j int) {
 		output[i], output[j] = output[j], output[i]
 	})
