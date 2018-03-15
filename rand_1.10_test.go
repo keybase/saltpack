@@ -7,10 +7,13 @@ import (
 	"bytes"
 	cryptorand "crypto/rand"
 	"encoding/binary"
+	"flag"
+	"fmt"
 	"io"
 	mathrand "math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,6 +47,35 @@ func TestCSPRNGUint32nSlowPath(t *testing.T) {
 	// accepted (by the same reasoning as above).
 	require.Equal(t, uint32(86), n)
 	require.Equal(t, 0, r.Len())
+}
+
+var long = flag.Bool("long", false, "whether to run long-running tests")
+
+func TestCSPRNGUint32nUniform(t *testing.T) {
+	if !*long {
+		t.Skip()
+	}
+
+	var buckets [100]uint64
+	var buf [4]byte
+	r := bytes.NewReader(buf[:])
+	for i := uint64(0); uint64(i) < (1 << 32); i++ {
+		if i%10000000 == 0 {
+			fmt.Printf("%.2f%% done\n", float64(i)*100/(1<<32))
+		}
+
+		binary.BigEndian.PutUint32(buf[:], uint32(i))
+		r.Seek(0, io.SeekStart)
+		n, err := csprngUint32n(r, 100)
+		if err != nil {
+			require.Equal(t, io.EOF, err)
+		}
+		buckets[n]++
+	}
+
+	for i := 0; i < 100; i++ {
+		assert.Equal(t, (1<<32)/100, buckets[i], "i=%d", i)
+	}
 }
 
 type testReaderSource struct {
