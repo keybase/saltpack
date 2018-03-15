@@ -20,7 +20,7 @@ type testReaderSource struct {
 var _ mathrand.Source = testReaderSource{}
 
 func (s testReaderSource) Int63() int64 {
-	n, err := cryptorandUint32(cryptorand.Reader)
+	n, err := cryptorandUint32(s.r)
 	require.NoError(s.t, err)
 	return int64(n)
 }
