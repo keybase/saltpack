@@ -15,8 +15,9 @@ import (
 )
 
 type testReaderSource struct {
-	t    *testing.T
-	r    io.Reader
+	t *testing.T
+	r io.Reader
+	// Stores the bytes read from r for later playback.
 	read []byte
 }
 
@@ -25,11 +26,18 @@ var _ mathrand.Source = (*testReaderSource)(nil)
 func (s *testReaderSource) Int63() int64 {
 	uint32, err := cryptorandUint32(s.r)
 	require.NoError(s.t, err)
+
+	// math/rand.Shuffle calls r.Uint32(), which returns
+	// uint32(r.src.Int63() >> 31), so we only need to fill in the
+	// top 32 bits after the sign bit.
 	n := int64(uint32) << 31
-	s.t.Logf("(1) read %x", n)
+
+	// Assumes that cryptorandUint32 uses big endian. (This way,
+	// we can test cryptorandUint32, too).
 	var buf [4]byte
 	binary.BigEndian.PutUint32(buf[:], uint32)
 	s.read = append(s.read, buf[:]...)
+
 	return n
 }
 
@@ -53,15 +61,13 @@ func TestShuffle(t *testing.T) {
 	sourceExpected := testReaderSource{t, cryptorand.Reader, nil}
 	rnd := mathrand.New(&sourceExpected)
 	rnd.Shuffle(len(expectedOutput), func(i, j int) {
-		t.Logf("(1) swap(%d, %d)", i, j)
 		expectedOutput[i], expectedOutput[j] =
 			expectedOutput[j], expectedOutput[i]
 	})
 
-	shuffle(bytes.NewBuffer(sourceExpected.read), len(output), func(i, j int) {
-		t.Logf("(2) swap(%d, %d)", i, j)
-		output[i], output[j] =
-			output[j], output[i]
+	read := bytes.NewBuffer(sourceExpected.read)
+	shuffle(read, len(output), func(i, j int) {
+		output[i], output[j] = output[j], output[i]
 	})
 
 	require.Equal(t, expectedOutput, output)
