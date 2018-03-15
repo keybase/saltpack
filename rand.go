@@ -3,13 +3,16 @@
 
 package saltpack
 
-import "encoding/binary"
-import cryptorand "crypto/rand"
+import (
+	cryptorand "crypto/rand"
+	"encoding/binary"
+	"io"
+)
 
-// cryptorandRead is a thin wrapper around crypto/rand.Read that also
-// (paranoidly) checks the length.
-func cryptorandRead(b []byte) error {
-	n, err := cryptorand.Read(b)
+// cryptorandReadFull is a thin wrapper around io.ReadFull on a given
+// CSPRNG that also (paranoidly) checks the length.
+func cryptorandReadFull(csprng io.Reader, b []byte) error {
+	n, err := io.ReadFull(csprng, b)
 	if err != nil {
 		return err
 	}
@@ -19,9 +22,15 @@ func cryptorandRead(b []byte) error {
 	return nil
 }
 
-func cryptorandUint32() (uint32, error) {
+// cryptorandRead is like crypto/rand.Read, except it uses
+// cryptorandReadFull instead of io.ReadFull.
+func cryptorandRead(b []byte) error {
+	return cryptorandReadFull(cryptorand.Reader, b)
+}
+
+func cryptorandUint32(csprng io.Reader) (uint32, error) {
 	var buf [4]byte
-	err := cryptorandRead(buf[:])
+	err := cryptorandReadFull(csprng, buf[:])
 	if err != nil {
 		return 0, err
 	}
@@ -35,8 +44,8 @@ func cryptorandUint32() (uint32, error) {
 // For implementation details, see:
 // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction
 // https://lemire.me/blog/2016/06/30/fast-random-shuffling
-func uint32n(n uint32) (uint32, error) {
-	v, err := cryptorandUint32()
+func uint32n(csprng io.Reader, n uint32) (uint32, error) {
+	v, err := cryptorandUint32(csprng)
 	if err != nil {
 		return 0, err
 	}
@@ -45,7 +54,7 @@ func uint32n(n uint32) (uint32, error) {
 	if low < n {
 		thresh := -n % n
 		for low < thresh {
-			v, err = cryptorandUint32()
+			v, err = cryptorandUint32(csprng)
 			if err != nil {
 				return 0, err
 			}
@@ -61,13 +70,13 @@ func uint32n(n uint32) (uint32, error) {
 // indexes i and j.
 //
 // shuffle is adapted from math/rand.Shuffle from go 1.10.
-func shuffle(n int, swap func(i, j int)) error {
+func shuffle(csprng io.Reader, n int, swap func(i, j int)) error {
 	if n < 0 || n > ((1<<31)-1) {
 		panic("invalid argument to Shuffle")
 	}
 
 	for i := n - 1; i > 0; i-- {
-		j, err := uint32n(uint32(i + 1))
+		j, err := uint32n(csprng, uint32(i+1))
 		if err != nil {
 			return err
 		}
