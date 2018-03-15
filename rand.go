@@ -65,14 +65,19 @@ func uint32n(csprng io.Reader, n uint32) (uint32, error) {
 	return uint32(prod >> 32), err
 }
 
-// shuffle pseudo-randomizes the order of elements.  n is the number
-// of elements. Shuffle panics if n < 0.  swap swaps the elements with
-// indexes i and j.
+// csprngShuffle randomizes the order of elements given a CSPRNG. n is
+// the number of elements, which must be >= 0 and < 2³¹. swap swaps
+// the elements with indexes i and j.
 //
-// shuffle is adapted from math/rand.Shuffle from go 1.10.
-func shuffle(csprng io.Reader, n int, swap func(i, j int)) error {
-	if n < 0 || n > ((1<<31)-1) {
-		panic("invalid argument to Shuffle")
+// This function implements
+// https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle , and is
+// adapted from math/rand.Shuffle from go 1.10.
+func csprngShuffle(csprng io.Reader, n int, swap func(i, j int)) error {
+	if n < 0 {
+		panic("csprngShuffle: n < 0")
+	}
+	if n > ((1 << 31) - 1) {
+		panic("csprngShuffle: n >= 2³¹")
 	}
 
 	for i := n - 1; i > 0; i-- {
