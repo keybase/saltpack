@@ -4,7 +4,9 @@
 package saltpack
 
 import (
+	"bytes"
 	cryptorand "crypto/rand"
+	"encoding/binary"
 	"io"
 	mathrand "math/rand"
 	"testing"
@@ -13,16 +15,22 @@ import (
 )
 
 type testReaderSource struct {
-	t *testing.T
-	r io.Reader
+	t    *testing.T
+	r    io.Reader
+	read []byte
 }
 
-var _ mathrand.Source = testReaderSource{}
+var _ mathrand.Source = (*testReaderSource)(nil)
 
-func (s testReaderSource) Int63() int64 {
-	n, err := cryptorandUint32(s.r)
+func (s *testReaderSource) Int63() int64 {
+	uint32, err := cryptorandUint32(s.r)
 	require.NoError(s.t, err)
-	return int64(n)
+	n := int64(uint32) << 31
+	s.t.Logf("(1) read %x", n)
+	var buf [4]byte
+	binary.BigEndian.PutUint32(buf[:], uint32)
+	s.read = append(s.read, buf[:]...)
+	return n
 }
 
 func (s testReaderSource) Seed(seed int64) {
@@ -38,13 +46,16 @@ func TestShuffle(t *testing.T) {
 	copy(expectedOutput, input)
 	copy(output, input)
 
-	rnd := mathrand.New(testReaderSource{t, cryptorand.Reader})
+	sourceExpected := testReaderSource{t, cryptorand.Reader, nil}
+	rnd := mathrand.New(&sourceExpected)
 	rnd.Shuffle(len(expectedOutput), func(i, j int) {
+		t.Logf("(1) swap(%d, %d)", i, j)
 		expectedOutput[i], expectedOutput[j] =
 			expectedOutput[j], expectedOutput[i]
 	})
 
-	shuffle(cryptorand.Reader, len(output), func(i, j int) {
+	shuffle(bytes.NewBuffer(sourceExpected.read), len(output), func(i, j int) {
+		t.Logf("(2) swap(%d, %d)", i, j)
 		output[i], output[j] =
 			output[j], output[i]
 	})
