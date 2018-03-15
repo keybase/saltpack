@@ -45,6 +45,9 @@ func (s testReaderSource) Seed(seed int64) {
 	s.t.Fatal("testReaderSource.Seed() called unexpectedly")
 }
 
+// Test that our shuffle matches exactly math/rand.Shuffle for sizes <
+// 2³¹. This is a robust test, since go's backwards compatibility
+// guarantee also applies to the behavior of math/rand.Rand.
 func TestShuffle(t *testing.T) {
 	count := 100000
 	var input []int
