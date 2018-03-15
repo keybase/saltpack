@@ -38,13 +38,13 @@ func cryptorandUint32(csprng io.Reader) (uint32, error) {
 	return binary.BigEndian.Uint32(buf[:]), nil
 }
 
-// uint32n returns, as a uint32, a non-negative pseudo-random number
-// in [0,n).  It is adapted from math/rand.int31n from go 1.10.
+// csprngUint32n returns, as a uint32, a non-negative pseudo-random
+// number in [0,n).  It is adapted from math/rand.int31n from go 1.10.
 //
 // For implementation details, see:
 // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction
 // https://lemire.me/blog/2016/06/30/fast-random-shuffling
-func uint32n(csprng io.Reader, n uint32) (uint32, error) {
+func csprngUint32n(csprng io.Reader, n uint32) (uint32, error) {
 	v, err := cryptorandUint32(csprng)
 	if err != nil {
 		return 0, err
@@ -81,7 +81,7 @@ func csprngShuffle(csprng io.Reader, n int, swap func(i, j int)) error {
 	}
 
 	for i := n - 1; i > 0; i-- {
-		j, err := uint32n(csprng, uint32(i+1))
+		j, err := csprngUint32n(csprng, uint32(i+1))
 		if err != nil {
 			return err
 		}

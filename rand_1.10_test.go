@@ -70,7 +70,7 @@ func TestShuffle(t *testing.T) {
 	})
 
 	read := bytes.NewBuffer(sourceExpected.read)
-	shuffle(read, len(output), func(i, j int) {
+	csprngShuffle(read, len(output), func(i, j int) {
 		output[i], output[j] = output[j], output[i]
 	})
 
