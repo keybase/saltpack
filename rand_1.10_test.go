@@ -3,8 +3,49 @@
 
 package saltpack
 
-import "testing"
+import (
+	cryptorand "crypto/rand"
+	mathrand "math/rand"
+	"testing"
 
-func TestCryptoRandUint32(t *testing.T) {
+	"github.com/stretchr/testify/require"
+)
 
+type testCryptoSource struct {
+	t *testing.T
+}
+
+var _ mathrand.Source = testCryptoSource{}
+
+func (s testCryptoSource) Int63() int64 {
+	n, err := cryptorandUint32(cryptorand.Reader)
+	require.NoError(s.t, err)
+	return int64(n)
+}
+
+func (s testCryptoSource) Seed(seed int64) {
+	s.t.Fatal("testCryptoSource.Seed() called unexpectedly")
+}
+
+func TestShuffle(t *testing.T) {
+	input := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+	expectedOutput := make([]int, len(input))
+	output := make([]int, len(input))
+
+	copy(expectedOutput, input)
+	copy(output, input)
+
+	rnd := mathrand.New(testCryptoSource{t})
+	rnd.Shuffle(len(expectedOutput), func(i, j int) {
+		expectedOutput[i], expectedOutput[j] =
+			expectedOutput[j], expectedOutput[i]
+	})
+
+	shuffle(cryptorand.Reader, len(output), func(i, j int) {
+		output[i], output[j] =
+			output[j], output[i]
+	})
+
+	require.Equal(t, expectedOutput, output)
 }
