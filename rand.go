@@ -62,7 +62,7 @@ func uint32n(csprng io.Reader, n uint32) (uint32, error) {
 			low = uint32(prod)
 		}
 	}
-	return uint32(prod >> 32), err
+	return uint32(prod >> 32), nil
 }
 
 // csprngShuffle randomizes the order of elements given a CSPRNG. n is
