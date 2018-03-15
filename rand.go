@@ -38,8 +38,9 @@ func cryptorandUint32(csprng io.Reader) (uint32, error) {
 	return binary.BigEndian.Uint32(buf[:]), nil
 }
 
-// csprngUint32n returns, as a uint32, a non-negative pseudo-random
-// number in [0,n).  It is adapted from math/rand.int31n from go 1.10.
+// csprngUint32n, given a CSPRNG, returns, as a uint32, a uniformly
+// distributed random number in [0, n). It is adapted from
+// math/rand.int31n from go 1.10.
 //
 // For implementation details, see:
 // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction
