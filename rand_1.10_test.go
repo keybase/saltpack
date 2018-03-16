@@ -67,6 +67,8 @@ func TestCSPRNGUint32nSlowPath(t *testing.T) {
 	require.Equal(t, 0, r.Len())
 }
 
+// A flag controlling whether to run long-running tests that is false
+// by default.
 var long = flag.Bool("long", false, "whether to run long-running tests")
 
 func TestCSPRNGUint32nUniform(t *testing.T) {
