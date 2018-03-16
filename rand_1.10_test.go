@@ -71,13 +71,16 @@ func TestCSPRNGUint32nSlowPath(t *testing.T) {
 // by default.
 var long = flag.Bool("long", false, "whether to run long-running tests")
 
-func TestCSPRNGUint32nUniform(t *testing.T) {
+func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 	if !*long {
 		t.Skip()
 	}
 
 	workerCount := runtime.NumCPU()
-	workerBuckets := make([][100]uint64, workerCount)
+	workerBuckets := make([][]uint64, workerCount)
+	for i := 0; i < workerCount; i++ {
+		workerBuckets[i] = make([]uint64, n)
+	}
 
 	var w sync.WaitGroup
 	w.Add(workerCount)
@@ -92,7 +95,7 @@ func TestCSPRNGUint32nUniform(t *testing.T) {
 		if end > (1 << 32) {
 			end = 1 << 32
 		}
-		go func(workerNum int, start, end uint64, bucket *[100]uint64) {
+		go func(workerNum int, start, end uint64, bucket *[]uint64) {
 			defer w.Done()
 
 			var buf [4]byte
@@ -104,11 +107,11 @@ func TestCSPRNGUint32nUniform(t *testing.T) {
 
 				binary.BigEndian.PutUint32(buf[:], uint32(j))
 				r.Seek(0, io.SeekStart)
-				n, err := csprngUint32n(r, 100)
+				m, err := csprngUint32n(r, n)
 				if err != nil {
 					require.Equal(t, io.EOF, err)
 				} else {
-					(*bucket)[n]++
+					(*bucket)[m]++
 				}
 			}
 		}(i, start, end, &workerBuckets[i])
@@ -116,16 +119,28 @@ func TestCSPRNGUint32nUniform(t *testing.T) {
 
 	w.Wait()
 
-	var buckets [100]uint64
+	buckets := make([]uint64, n)
 	for i := 0; i < 100; i++ {
 		for j := 0; j < workerCount; j++ {
 			buckets[i] += workerBuckets[j][i]
 		}
 	}
 
-	for i := 0; i < 100; i++ {
-		assert.Equal(t, uint64((1<<32)/100), buckets[i], "i=%d", i)
+	for i := uint32(0); i < n; i++ {
+		assert.Equal(t, uint64((1<<32)/uint64(n)), buckets[i], "i=%d", i)
 	}
+}
+
+func TestCSPRNGUint32nUniform49(t *testing.T) {
+	testCSPRNGUint32nUniform(t, 49)
+}
+
+func TestCSPRNGUint32nUniform100(t *testing.T) {
+	testCSPRNGUint32nUniform(t, 100)
+}
+
+func TestCSPRNGUint32nUniform65536(t *testing.T) {
+	testCSPRNGUint32nUniform(t, 65536)
 }
 
 type testReaderSource struct {
