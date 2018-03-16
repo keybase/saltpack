@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"io"
 	mathrand "math/rand"
+	"runtime"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -56,21 +58,50 @@ func TestCSPRNGUint32nUniform(t *testing.T) {
 		t.Skip()
 	}
 
-	var buckets [100]uint64
-	var buf [4]byte
-	r := bytes.NewReader(buf[:])
-	for i := uint64(0); uint64(i) < (1 << 32); i++ {
-		if i%10000000 == 0 {
-			fmt.Printf("%.2f%% done\n", float64(i)*100/(1<<32))
-		}
+	workerCount := runtime.NumCPU()
+	workerBuckets := make([][100]uint64, workerCount)
 
-		binary.BigEndian.PutUint32(buf[:], uint32(i))
-		r.Seek(0, io.SeekStart)
-		n, err := csprngUint32n(r, 100)
-		if err != nil {
-			require.Equal(t, io.EOF, err)
-		} else {
-			buckets[n]++
+	var w sync.WaitGroup
+	w.Add(workerCount)
+
+	rangeSize := uint64(1<<32) / uint64(workerCount)
+
+	for i := 0; i < workerCount; i++ {
+		// Capture range variable.
+		i := i
+		start := uint64(i) * rangeSize
+		end := uint64(i+1) * rangeSize
+		if end > (1 << 32) {
+			end = 1 << 32
+		}
+		go func(workerNum int, start, end uint64, bucket *[100]uint64) {
+			defer w.Done()
+
+			var buf [4]byte
+			r := bytes.NewReader(buf[:])
+			for j := start; j < end; j++ {
+				if j%10000000 == 0 {
+					fmt.Printf("worker %d/%d: %.2f%% done\n", i+1, workerCount, float64(j-start)*100/float64(end-start))
+				}
+
+				binary.BigEndian.PutUint32(buf[:], uint32(j))
+				r.Seek(0, io.SeekStart)
+				n, err := csprngUint32n(r, 100)
+				if err != nil {
+					require.Equal(t, io.EOF, err)
+				} else {
+					(*bucket)[n]++
+				}
+			}
+		}(i, start, end, &workerBuckets[i])
+	}
+
+	w.Wait()
+
+	var buckets [100]uint64
+	for i := 0; i < 100; i++ {
+		for j := 0; j < workerCount; j++ {
+			buckets[i] += workerBuckets[j][i]
 		}
 	}
 
