@@ -183,15 +183,15 @@ func (s testReaderSource) Seed(seed int64) {
 	s.t.Fatal("testReaderSource.Seed() called unexpectedly")
 }
 
-// TestCSPRNGShuffle tests that csprngShuffle exactly matches
-// math/rand.Shuffle for sizes < 2³¹. This is a robust test, since
-// go's backwards compatibility guarantee also applies to the behavior
-// of math/rand.Rand for a given seed.
-func TestCSPRNGShuffle(t *testing.T) {
-	count := 100000
+// testCSPRNGShuffle tests that csprngShuffle exactly matches
+// math/rand.Shuffle for the given size, which must be less than
+// 2³¹. This is a robust test, since go's backwards compatibility
+// guarantee also applies to the behavior of math/rand.Rand for a
+// given seed.
+func testCSPRNGShuffle(t *testing.T, size int) {
 	var input []int
-	for i := 0; i < count; i++ {
-		input = append(input, i)
+	for i := 0; i < size; i++ {
+		input = append(input, size)
 	}
 
 	expectedOutput := make([]int, len(input))
@@ -214,4 +214,20 @@ func TestCSPRNGShuffle(t *testing.T) {
 
 	require.Equal(t, expectedOutput, output)
 	require.Equal(t, 0, r.Len())
+}
+
+func TestCSPRNGShuffle100(t *testing.T) {
+	testCSPRNGShuffle(t, 100)
+}
+
+func TestCSPRNGShuffle1000(t *testing.T) {
+	testCSPRNGShuffle(t, 1000)
+}
+
+func TestCSPRNGShuffle10000(t *testing.T) {
+	testCSPRNGShuffle(t, 10000)
+}
+
+func TestCSPRNGShuffle100000(t *testing.T) {
+	testCSPRNGShuffle(t, 100000)
 }
