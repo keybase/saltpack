@@ -69,8 +69,9 @@ func TestCSPRNGUint32nUniform(t *testing.T) {
 		n, err := csprngUint32n(r, 100)
 		if err != nil {
 			require.Equal(t, io.EOF, err)
+		} else {
+			buckets[n]++
 		}
-		buckets[n]++
 	}
 
 	for i := 0; i < 100; i++ {
