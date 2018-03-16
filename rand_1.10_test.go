@@ -139,14 +139,17 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 }
 
 func TestCSPRNGUint32nUniform49(t *testing.T) {
+	// 49 is coprime to 2³².
 	testCSPRNGUint32nUniform(t, 49)
 }
 
 func TestCSPRNGUint32nUniform100(t *testing.T) {
+	// 100 shares a factor with 2³².
 	testCSPRNGUint32nUniform(t, 100)
 }
 
 func TestCSPRNGUint32nUniform65536(t *testing.T) {
+	// 65536 divides 2³².
 	testCSPRNGUint32nUniform(t, 65536)
 }
 
