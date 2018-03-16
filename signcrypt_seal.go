@@ -203,14 +203,14 @@ func checkSigncryptReceiverCount(receiverBoxKeyCount, receiverSymmetricKeyCount 
 	}
 	// Handle possible (but unlikely) overflow when adding
 	// together the two sizes.
-	if uint64(receiverBoxKeyCount) > maxReceiverCount {
+	if c1 > maxReceiverCount {
 		return ErrBadReceivers
 	}
-	if uint64(receiverSymmetricKeyCount) > maxReceiverCount {
+	if c2 > maxReceiverCount {
 		return ErrBadReceivers
 	}
-	receiverCount := uint64(receiverBoxKeyCount) + uint64(receiverSymmetricKeyCount)
-	if receiverCount <= 0 || receiverCount > maxReceiverCount {
+	c := c1 + c2
+	if c <= 0 || c > maxReceiverCount {
 		return ErrBadReceivers
 	}
 
