@@ -6,6 +6,7 @@ package saltpack
 import (
 	"bytes"
 	"crypto/hmac"
+	cryptorand "crypto/rand"
 	"crypto/sha512"
 	"fmt"
 	"io"
@@ -236,20 +237,20 @@ func checkSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKe
 
 func shuffleSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) ([]receiverKeysMaker, error) {
 	totalLen := len(receiverBoxKeys) + len(receiverSymmetricKeys)
-	order, err := randomPerm(totalLen)
+	shuffled := make([]receiverKeysMaker, totalLen)
+	for i, r := range receiverBoxKeys {
+		shuffled[i] = receiverBoxKey{r}
+	}
+	for i, r := range receiverSymmetricKeys {
+		shuffled[i+len(receiverBoxKeys)] = r
+	}
+	err := csprngShuffle(cryptorand.Reader, len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	receivers := make([]receiverKeysMaker, totalLen)
-	for i, r := range receiverBoxKeys {
-		receivers[order[i]] = receiverBoxKey{r}
-	}
-
-	for i, r := range receiverSymmetricKeys {
-		receivers[order[len(receiverBoxKeys)+i]] = r
-	}
-	return receivers, nil
+	return shuffled, nil
 }
 
 // signcryptRNG is an interface encapsulating all the randomness
