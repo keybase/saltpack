@@ -151,7 +151,7 @@ func checkKnownVersion(version Version) error {
 // receivers. Check that receivers aren't sent to twice; check that
 // there's at least one receiver and not too many receivers.
 func checkEncryptReceivers(receivers []BoxPublicKey) error {
-	if len(receivers) <= 0 || len(receivers) > maxReceiverCount {
+	if len(receivers) <= 0 || uint32(len(receivers)) > maxReceiverCount {
 		return ErrBadReceivers
 	}
 
