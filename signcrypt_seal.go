@@ -192,21 +192,30 @@ func (r ReceiverSymmetricKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, paylo
 	}
 }
 
+func checkSigncryptReceiverCount(receiverBoxKeyCount, receiverSymmetricKeyCount int) error {
+	// Handle possible (but unlikely) overflow when adding
+	// together the two sizes.
+	if uint64(receiverBoxKeyCount) > maxReceiverCount {
+		return ErrBadReceivers
+	}
+	if uint64(receiverSymmetricKeyCount) > maxReceiverCount {
+		return ErrBadReceivers
+	}
+	receiverCount := uint64(receiverBoxKeyCount) + uint64(receiverSymmetricKeyCount)
+	if receiverCount <= 0 || receiverCount > maxReceiverCount {
+		return ErrBadReceivers
+	}
+
+	return nil
+}
+
 // checkEncryptReceivers does some sanity checking on the
 // receivers. Check that receivers aren't sent to twice; check that
 // there's at least one receiver and not too many receivers.
 func checkSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) error {
-	// Handle possible (but unlikely) overflow when adding
-	// together the two sizes.
-	if uint64(len(receiverBoxKeys)) > maxReceiverCount {
-		return ErrBadReceivers
-	}
-	if uint64(len(receiverSymmetricKeys)) > maxReceiverCount {
-		return ErrBadReceivers
-	}
-	receiverCount := uint64(len(receiverBoxKeys)) + uint64(len(receiverSymmetricKeys))
-	if receiverCount <= 0 || receiverCount > maxReceiverCount {
-		return ErrBadReceivers
+	err := checkSigncryptReceiverCount(len(receiverBoxKeys), len(receiverSymmetricKeys))
+	if err != nil {
+		return err
 	}
 
 	// Make sure that each receiver only shows up in the set once.
