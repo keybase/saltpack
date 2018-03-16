@@ -88,7 +88,7 @@ type sigNonce [16]byte
 // newSigNonce creates a sigNonce with random bytes.
 func newSigNonce() (sigNonce, error) {
 	var n sigNonce
-	if err := cryptorandRead(n[:]); err != nil {
+	if err := csprngRead(n[:]); err != nil {
 		return sigNonce{}, err
 	}
 	return n, nil

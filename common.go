@@ -45,7 +45,7 @@ func (s *cryptoSource) Int63() int64 {
 	}
 
 	var buf [8]byte
-	err := cryptorandRead(buf[:])
+	err := csprngRead(buf[:])
 	if err != nil {
 		s.lastErr = err
 		return 0

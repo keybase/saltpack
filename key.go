@@ -26,7 +26,7 @@ type SymmetricKey [32]byte
 
 func newRandomSymmetricKey() (*SymmetricKey, error) {
 	var s SymmetricKey
-	err := cryptorandRead(s[:])
+	err := csprngRead(s[:])
 	if err != nil {
 		return nil, err
 	}

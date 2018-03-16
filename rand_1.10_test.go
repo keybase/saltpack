@@ -19,6 +19,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCSPRNGUint32(t *testing.T) {
+	var buf [4]byte
+	binary.BigEndian.PutUint32(buf[:], 0xdeadbeef)
+	r := bytes.NewReader(buf[:])
+	n, err := csprngUint32(r)
+	require.NoError(t, err)
+	require.Equal(t, uint32(0xdeadbeef), n)
+}
+
 func TestCSPRNGUint32nFastPath(t *testing.T) {
 	var buf [4]byte
 	binary.BigEndian.PutUint32(buf[:], 0xdeadbeef)
@@ -120,7 +129,7 @@ type testReaderSource struct {
 var _ mathrand.Source = (*testReaderSource)(nil)
 
 func (s *testReaderSource) Int63() int64 {
-	uint32, err := cryptorandUint32(s.r)
+	uint32, err := csprngUint32(s.r)
 	require.NoError(s.t, err)
 
 	// math/rand.Shuffle calls r.Uint32(), which returns

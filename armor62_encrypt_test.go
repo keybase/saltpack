@@ -14,7 +14,7 @@ import (
 
 func encryptArmor62RandomData(t *testing.T, version Version, sz int) ([]byte, string) {
 	msg := randomMsg(t, sz)
-	err := cryptorandRead(msg)
+	err := csprngRead(msg)
 	require.NoError(t, err)
 	sndr := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
@@ -35,7 +35,7 @@ func testEncryptArmor62(t *testing.T, version Version) {
 func testDearmor62DecryptSlowReader(t *testing.T, version Version) {
 	sz := 1024*16 + 3
 	msg := randomMsg(t, sz)
-	err := cryptorandRead(msg)
+	err := csprngRead(msg)
 	require.NoError(t, err)
 	sndr := newBoxKey(t)
 	receivers := []BoxPublicKey{newBoxKey(t).GetPublicKey()}
