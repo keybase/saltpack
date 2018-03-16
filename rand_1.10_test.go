@@ -28,6 +28,13 @@ func TestCSPRNGUint32(t *testing.T) {
 	require.Equal(t, uint32(0xdeadbeef), n)
 }
 
+func TestCSPRNGUint32Error(t *testing.T) {
+	var buf [3]byte
+	r := bytes.NewReader(buf[:])
+	_, err := csprngUint32(r)
+	require.Equal(t, io.ErrUnexpectedEOF, err)
+}
+
 func TestCSPRNGUint32nFastPath(t *testing.T) {
 	var buf [4]byte
 	binary.BigEndian.PutUint32(buf[:], 0xdeadbeef)
