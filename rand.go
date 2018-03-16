@@ -9,9 +9,9 @@ import (
 	"io"
 )
 
-// cryptorandReadFull is a thin wrapper around io.ReadFull on a given
+// csprngReadFull is a thin wrapper around io.ReadFull on a given
 // CSPRNG that also (paranoidly) checks the length.
-func cryptorandReadFull(csprng io.Reader, b []byte) error {
+func csprngReadFull(csprng io.Reader, b []byte) error {
 	n, err := io.ReadFull(csprng, b)
 	if err != nil {
 		return err
@@ -22,15 +22,17 @@ func cryptorandReadFull(csprng io.Reader, b []byte) error {
 	return nil
 }
 
-// cryptorandRead is like crypto/rand.Read, except it uses
-// cryptorandReadFull instead of io.ReadFull.
-func cryptorandRead(b []byte) error {
-	return cryptorandReadFull(cryptorand.Reader, b)
+// csprngRead is like crypto/rand.Read, except it uses csprngReadFull
+// instead of io.ReadFull.
+func csprngRead(b []byte) error {
+	return csprngReadFull(cryptorand.Reader, b)
 }
 
-func cryptorandUint32(csprng io.Reader) (uint32, error) {
+// csprngUint32, given a CSPRNG, returns a uniformly distributed
+// random number in [0, 2³²).
+func csprngUint32(csprng io.Reader) (uint32, error) {
 	var buf [4]byte
-	err := cryptorandReadFull(csprng, buf[:])
+	err := csprngReadFull(csprng, buf[:])
 	if err != nil {
 		return 0, err
 	}
@@ -46,7 +48,7 @@ func cryptorandUint32(csprng io.Reader) (uint32, error) {
 // https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction
 // https://lemire.me/blog/2016/06/30/fast-random-shuffling
 func csprngUint32n(csprng io.Reader, n uint32) (uint32, error) {
-	v, err := cryptorandUint32(csprng)
+	v, err := csprngUint32(csprng)
 	if err != nil {
 		return 0, err
 	}
@@ -55,7 +57,7 @@ func csprngUint32n(csprng io.Reader, n uint32) (uint32, error) {
 	if low < n {
 		thresh := -n % n
 		for low < thresh {
-			v, err = cryptorandUint32(csprng)
+			v, err = csprngUint32(csprng)
 			if err != nil {
 				return 0, err
 			}
