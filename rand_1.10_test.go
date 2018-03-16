@@ -74,7 +74,7 @@ func TestCSPRNGUint32nUniform(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		assert.Equal(t, (1<<32)/100, buckets[i], "i=%d", i)
+		assert.Equal(t, uint64((1<<32)/100), buckets[i], "i=%d", i)
 	}
 }
 
