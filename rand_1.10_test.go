@@ -106,6 +106,9 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 			r := bytes.NewReader(buf[:])
 			for j := start; j < end; j++ {
 				if j%10000000 == 0 {
+					// Use fmt.Printf instead of
+					// t.Log so that it prints as
+					// the test is running.
 					fmt.Printf("worker %d/%d: %.2f%% done\n", i+1, workerCount, float64(j-start)*100/float64(end-start))
 				}
 
