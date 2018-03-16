@@ -26,15 +26,6 @@ func TestCheckSigncryptReceiverCount(t *testing.T) {
 	require.Panics(t, func() {
 		checkSigncryptReceiverCount(0, -1)
 	})
-
-	err = checkSigncryptReceiverCount(maxReceiverCount, 1)
-	require.Equal(t, ErrBadReceivers, err)
-
-	err = checkSigncryptReceiverCount(1, maxReceiverCount)
-	require.Equal(t, ErrBadReceivers, err)
-
-	err = checkSigncryptReceiverCount(maxReceiverCount, maxReceiverCount)
-	require.Equal(t, ErrBadReceivers, err)
 }
 
 func getSigncryptionReceiverOrder(receivers []receiverKeysMaker) []int {
