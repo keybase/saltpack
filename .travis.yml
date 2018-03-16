@@ -8,9 +8,12 @@ go:
 before_install:
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
+  - go get golang.org/x/lint/golint
   - go get github.com/axw/gocov/gocov
   - go get github.com/modocache/gover
 script:
+  - go vet ./...
+  - golint ./...
   - go test -coverprofile=basic.coverprofile ./basic
   - go test -coverprofile=basex.coverprofile ./encoding/basex
   - go test -coverprofile=main.coverprofile
