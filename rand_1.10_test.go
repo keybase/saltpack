@@ -171,8 +171,7 @@ func (s *testReaderSource) Int63() int64 {
 	// top 32 bits after the sign bit.
 	n := int64(uint32) << 31
 
-	// Assumes that cryptorandUint32 uses big endian. (This way,
-	// we can test cryptorandUint32, too).
+	// Assumes that cryptorandUint32 uses big endian.
 	var buf [4]byte
 	binary.BigEndian.PutUint32(buf[:], uint32)
 	s.read = append(s.read, buf[:]...)
