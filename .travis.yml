@@ -17,6 +17,7 @@ script:
   - go test -coverprofile=basic.coverprofile ./basic
   - go test -coverprofile=basex.coverprofile ./encoding/basex
   - go test -coverprofile=main.coverprofile
+  - env GOARCH=386 go test ./...
   - $HOME/gopath/bin/gover
   - $HOME/gopath/bin/goveralls -coverprofile=gover.coverprofile -service=travis-ci
 notifications:
