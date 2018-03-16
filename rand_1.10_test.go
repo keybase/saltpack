@@ -138,19 +138,19 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 	}
 }
 
-func TestCSPRNGUint32nUniform49(t *testing.T) {
+func TestCSPRNGUint32nUniform(t *testing.T) {
 	// 49 is coprime to 2³².
-	testCSPRNGUint32nUniform(t, 49)
-}
-
-func TestCSPRNGUint32nUniform100(t *testing.T) {
+	t.Run("49", func(t *testing.T) {
+		testCSPRNGUint32nUniform(t, 49)
+	})
 	// 100 shares a factor with 2³².
-	testCSPRNGUint32nUniform(t, 100)
-}
-
-func TestCSPRNGUint32nUniform65536(t *testing.T) {
+	t.Run("100", func(t *testing.T) {
+		testCSPRNGUint32nUniform(t, 100)
+	})
 	// 65536 divides 2³².
-	testCSPRNGUint32nUniform(t, 65536)
+	t.Run("65536", func(t *testing.T) {
+		testCSPRNGUint32nUniform(t, 65536)
+	})
 }
 
 type testReaderSource struct {
@@ -216,18 +216,17 @@ func testCSPRNGShuffle(t *testing.T, size int) {
 	require.Equal(t, 0, r.Len())
 }
 
-func TestCSPRNGShuffle100(t *testing.T) {
-	testCSPRNGShuffle(t, 100)
-}
-
-func TestCSPRNGShuffle1000(t *testing.T) {
-	testCSPRNGShuffle(t, 1000)
-}
-
-func TestCSPRNGShuffle10000(t *testing.T) {
-	testCSPRNGShuffle(t, 10000)
-}
-
-func TestCSPRNGShuffle100000(t *testing.T) {
-	testCSPRNGShuffle(t, 100000)
+func TestCSPRNGShuffle(t *testing.T) {
+	for _, size := range []int{
+		100,
+		16807, // 7⁵
+		65536,
+		100000,
+	} {
+		// Capture range variable.
+		size := size
+		t.Run(fmt.Sprintf("%d", size), func(t *testing.T) {
+			testCSPRNGShuffle(t, size)
+		})
+	}
 }
