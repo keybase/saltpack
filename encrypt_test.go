@@ -1494,7 +1494,13 @@ func newRandomEncryptArmor62SealInput(
 	if err != nil {
 		return encryptArmor62SealInput{}, err
 	}
-	permutation, err := randomPerm(receiverCount)
+	permutation := make([]int, receiverCount)
+	for i := 0; i < receiverCount; i++ {
+		permutation[i] = i
+	}
+	err = csprngShuffle(rand.Reader, receiverCount, func(i, j int) {
+		permutation[i], permutation[j] = permutation[j], permutation[i]
+	})
 	if err != nil {
 		return encryptArmor62SealInput{}, err
 	}
