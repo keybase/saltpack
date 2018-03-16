@@ -76,6 +76,10 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 		t.Skip()
 	}
 
+	// Split the 32-bit range into roughly equal ranges for each
+	// worker and have each worker keep a count of how many times
+	// each number is returned.
+
 	workerCount := runtime.NumCPU()
 	workerBuckets := make([][]uint64, workerCount)
 	for i := 0; i < workerCount; i++ {
@@ -119,8 +123,11 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 
 	w.Wait()
 
+	// Then add together all the counts. Each number should appear
+	// exactly floor(2³²/n) times.
+
 	buckets := make([]uint64, n)
-	for i := 0; i < 100; i++ {
+	for i := uint32(0); i < n; i++ {
 		for j := 0; j < workerCount; j++ {
 			buckets[i] += workerBuckets[j][i]
 		}
