@@ -139,18 +139,17 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 }
 
 func TestCSPRNGUint32nUniform(t *testing.T) {
-	// 49 is coprime to 2³².
-	t.Run("49", func(t *testing.T) {
-		testCSPRNGUint32nUniform(t, 49)
-	})
-	// 100 shares a factor with 2³².
-	t.Run("100", func(t *testing.T) {
-		testCSPRNGUint32nUniform(t, 100)
-	})
-	// 65536 divides 2³².
-	t.Run("65536", func(t *testing.T) {
-		testCSPRNGUint32nUniform(t, 65536)
-	})
+	for _, n := range []uint32{
+		49,    // coprime to 2³²
+		100,   // shares factors with 2³²
+		65536, // divides 2³²
+	} {
+		// Capture range variable.
+		n := n
+		t.Run(fmt.Sprintf("%d", n), func(t *testing.T) {
+			testCSPRNGUint32nUniform(t, n)
+		})
+	}
 }
 
 type testReaderSource struct {
