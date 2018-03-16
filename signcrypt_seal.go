@@ -195,8 +195,16 @@ func (r ReceiverSymmetricKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, paylo
 // receivers. Check that receivers aren't sent to twice; check that
 // there's at least one receiver and not too many receivers.
 func checkSigncryptReceivers(receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey) error {
-	receiverCount := len(receiverBoxKeys) + len(receiverSymmetricKeys)
-	if receiverCount <= 0 || uint32(receiverCount) > maxReceiverCount {
+	// Handle possible (but unlikely) overflow when adding
+	// together the two sizes.
+	if uint32(len(receiverBoxKeys)) > maxReceiverCount {
+		return ErrBadReceivers
+	}
+	if uint32(len(receiverSymmetricKeys)) > maxReceiverCount {
+		return ErrBadReceivers
+	}
+	receiverCount := uint64(len(receiverBoxKeys)) + uint64(len(receiverSymmetricKeys))
+	if receiverCount <= 0 || receiverCount > maxReceiverCount {
 		return ErrBadReceivers
 	}
 
