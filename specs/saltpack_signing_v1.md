@@ -48,9 +48,11 @@ header packet is a MessagePack array that looks like this:
 ```
 
 - **format name** is the string "saltpack".
-- **version** is a list of the major and minor versions, currently `[1, 0]`.
-- **mode** is the number 1, for attached signing. (0 is encryption, and 2 is
-  detached signing.)
+- **version** is a list of the major and minor versions, currently `[1, 0]`, both encoded as
+  [positive fixnums](https://github.com/msgpack/msgpack/blob/master/spec.md#int-format-family).
+- **mode** is the number 1, for attached signing, encoded as a
+[positive fixnum](https://github.com/msgpack/msgpack/blob/master/spec.md#int-format-family).
+  (0 is encryption, and 2 is detached signing.)
 - **sender public key** is the sender's long-term NaCl signing public key, 32 bytes.
 - **nonce** is 32 random bytes.
 
