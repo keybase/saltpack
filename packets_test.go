@@ -10,6 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Test that ints in headers are encoded as positive fixnums.
+func TestHeaderHardcoded(t *testing.T) {
+	header := EncryptionHeader{
+		Version: Version2(),
+		Type:    MessageTypeDetachedSignature,
+	}
+
+	expectedBytes := []byte{0x96, 0xa0, 0x92, 0x2, 0x0, 0x2, 0xc0, 0xc0, 0xc0}
+	bytes, err := encodeToBytes(header)
+	require.NoError(t, err)
+	require.Equal(t, expectedBytes, bytes)
+}
+
 // Test that encryptionBlockV2 encodes and decodes properly.
 func TestEncryptionBlockV2RoundTrip(t *testing.T) {
 	isFinal := false
