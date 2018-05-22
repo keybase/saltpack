@@ -23,6 +23,11 @@ func encodeToBytes(i interface{}) ([]byte, error) {
 	return encoded, err
 }
 
+// If p has type {Encryption,Signcryption,Signature}Header, then
+// decodeFromBytes would succeed even if the version numbers or mode
+// aren't encoded as positive fixnums. Ideally, it would reject those
+// as malformed, but there's no easy way to do that.
+
 func decodeFromBytes(p interface{}, b []byte) error {
 	return codec.NewDecoderBytes(b, codecHandle()).Decode(p)
 }
