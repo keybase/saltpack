@@ -23,6 +23,51 @@ func TestHeaderHardcoded(t *testing.T) {
 	require.Equal(t, expectedBytes, bytes)
 }
 
+// Test that strings are encoded with the fewest number of bytes.
+func TestEncodedStringLength(t *testing.T) {
+	s := string(make([]byte, 31))
+	bytes, err := encodeToBytes(s)
+	require.NoError(t, err)
+	require.Equal(t, 31+1, len(bytes))
+
+	s = string(make([]byte, 255))
+	bytes, err = encodeToBytes(s)
+	require.NoError(t, err)
+	require.Equal(t, 255+2, len(bytes))
+
+	s = string(make([]byte, 65535))
+	bytes, err = encodeToBytes(s)
+	require.NoError(t, err)
+	require.Equal(t, 65535+3, len(bytes))
+}
+
+// Test that byte arrays are encoded with the fewest number of bytes.
+func TestEncodedByteArrayLength(t *testing.T) {
+	b := make([]byte, 255)
+	bytes, err := encodeToBytes(b)
+	require.NoError(t, err)
+	require.Equal(t, 255+2, len(bytes))
+
+	b = make([]byte, 65535)
+	bytes, err = encodeToBytes(b)
+	require.NoError(t, err)
+	require.Equal(t, 65535+3, len(bytes))
+}
+
+// Test that generic arrays are encoded with the fewest number of bytes.
+func TestEncodedArrayLength(t *testing.T) {
+	// A [1]bool should encode as two bytes.
+	b := make([][1]bool, 15)
+	bytes, err := encodeToBytes(b)
+	require.NoError(t, err)
+	require.Equal(t, 2*15+1, len(bytes))
+
+	b = make([][1]bool, 65535)
+	bytes, err = encodeToBytes(b)
+	require.NoError(t, err)
+	require.Equal(t, 65535*2+3, len(bytes))
+}
+
 // Test that encryptionBlockV2 encodes and decodes properly.
 func TestEncryptionBlockV2RoundTrip(t *testing.T) {
 	isFinal := false
