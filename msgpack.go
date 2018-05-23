@@ -27,6 +27,10 @@ func encodeToBytes(i interface{}) ([]byte, error) {
 // decodeFromBytes would succeed even if the version numbers or mode
 // aren't encoded as positive fixnums. Ideally, it would reject those
 // as malformed, but there's no easy way to do that.
+//
+// Similarly, we'd ideally reject strings, byte arrays, or arrays that
+// aren't minimally encoded, but there's no easy way to check that
+// either.
 
 func decodeFromBytes(p interface{}, b []byte) error {
 	return codec.NewDecoderBytes(b, codecHandle()).Decode(p)
