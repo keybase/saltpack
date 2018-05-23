@@ -56,6 +56,9 @@ objects](https://github.com/msgpack/msgpack/blob/master/spec.md). The first is
 a header packet, followed by one or more payload packets, the last of which is
 indicated with a final packet flag.
 
+When encoding strings, byte arrays, or arrays, pick the MessagePack
+encoding that will use the fewest number of bytes.
+
 ### Header Packet
 The header packet is a MessagePack array with these contents:
 

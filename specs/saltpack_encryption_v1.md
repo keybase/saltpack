@@ -70,6 +70,9 @@ An encrypted message is a series of concatenated MessagePack objects. The first
 is a header packet, followed by any number of non-empty payload packets, and
 finally an empty payload packet.
 
+When encoding strings, byte arrays, or arrays, pick the MessagePack
+encoding that will use the fewest number of bytes.
+
 ### Header Packet
 The header packet is a MessagePack array with these contents:
 

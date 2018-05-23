@@ -28,6 +28,9 @@ attacker could predict in advance.
 
 ## Attached Implementation
 
+When encoding strings, byte arrays, or arrays, pick the MessagePack
+encoding that will use the fewest number of bytes.
+
 An attached signature is a header packet, followed by any number of non-empty
 payload packets, followed by an empty payload packet. An attached signing
 header packet is a [MessagePack
