@@ -13,3 +13,7 @@ import (
 func requireErrSuffix(t *testing.T, err error, suffix string) {
 	require.True(t, strings.HasSuffix(err.Error(), suffix), "err=%v, suffix=%s", err, suffix)
 }
+
+func requireErrContains(t *testing.T, err error, substr string) {
+	require.True(t, strings.Contains(err.Error(), substr), "err=%v, substr=%s", err, substr)
+}

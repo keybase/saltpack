@@ -81,7 +81,7 @@ func testBadArmor62(t *testing.T, version Version) {
 	l := len(ciphertext)
 	bad3 := ciphertext[0:(l-8)] + "z" + ciphertext[(l-7):]
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad3, kr)
-	require.IsType(t, ErrBadFrame{}, err)
+	requireErrContains(t, err, (ErrBadFrame{}).Error())
 
 	bad4 := ciphertext + "䁕"
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad4, kr)
