@@ -5,11 +5,11 @@ package saltpack
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"io/ioutil"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -72,7 +72,7 @@ func testDecryptErrorAtEOF(t *testing.T, version Version) {
 	require.NoError(t, err)
 
 	msg, err := ioutil.ReadAll(stream)
-	requireErrSuffix(t, err, errAtEOF.Error())
+	require.Equal(t, errAtEOF, errors.Cause(err))
 
 	// Since the bytes are still authenticated, the decrypted
 	// message should still compare equal to the original input.

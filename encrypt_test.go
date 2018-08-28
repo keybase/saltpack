@@ -14,6 +14,7 @@ import (
 	"sort"
 	"testing"
 
+	pkgErrors "github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/curve25519"
 	"golang.org/x/crypto/nacl/box"
@@ -947,7 +948,7 @@ func testCorruptHeader(t *testing.T, version Version) {
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	requireErrSuffix(t, err, "only encoded map or array can be decoded into a struct")
+	require.Equal(t, errors.New("only encoded map or array can be decoded into a struct"), pkgErrors.Cause(err))
 }
 
 func testNoSenderKey(t *testing.T, version Version) {

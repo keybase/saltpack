@@ -86,7 +86,8 @@ func testBadArmor62(t *testing.T, version Version) {
 
 	bad4 := ciphertext + "䁕"
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad4, kr)
-	requireErrSuffix(t, err, ErrTrailingGarbage.Error())
+
+	require.Equal(t, ErrTrailingGarbage, errors.Cause(err))
 
 	bad5 := ciphertext[0:(l-8)] + "䁕" + ciphertext[(l-7):]
 	_, _, _, err = Armor62Open(bad5)

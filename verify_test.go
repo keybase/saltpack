@@ -6,12 +6,12 @@ package saltpack
 import (
 	"bytes"
 	"encoding/hex"
-	"errors"
 	"io"
 	"io/ioutil"
 	"sync"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -118,7 +118,7 @@ func testVerifyErrorAtEOF(t *testing.T, version Version) {
 	require.NoError(t, err)
 
 	msg, err := ioutil.ReadAll(stream)
-	requireErrSuffix(t, err, errAtEOF.Error())
+	require.Equal(t, errAtEOF, errors.Cause(err))
 
 	// Since the bytes are still verified, the verified message
 	// should still compare equal to the original input.
