@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/keybase/saltpack/encoding/basex"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,7 +82,7 @@ func testBadArmor62(t *testing.T, version Version) {
 	l := len(ciphertext)
 	bad3 := ciphertext[0:(l-8)] + "z" + ciphertext[(l-7):]
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad3, kr)
-	requireErrContains(t, err, (ErrBadFrame{}).Error())
+	require.IsType(t, ErrBadFrame{}, errors.Cause(err))
 
 	bad4 := ciphertext + "䁕"
 	_, _, _, err = Dearmor62DecryptOpen(SingleVersionValidator(version), bad4, kr)
