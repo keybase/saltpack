@@ -173,6 +173,7 @@ func (b boxSecretKey) Box(receiver BoxPublicKey, nonce Nonce, msg []byte) []byte
 	return ret
 }
 
+// TODO: Use types for these.
 var errPublicKeyDecryptionFailed = errors.New("public key decryption failed")
 var errPublicKeyEncryptionFailed = errors.New("public key encryption failed")
 
