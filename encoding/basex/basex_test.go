@@ -6,6 +6,7 @@ package basex
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"sync"
 	"testing"
 )
 
@@ -106,4 +107,28 @@ func BenchmarkDecodeBase62(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Base62StdEncoding.DecodeString(data)
 	}
+}
+
+func TestConcurrent(t *testing.T) {
+	encoder := Base62StdEncodingStrict
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		for i := 0; i < 2000; i++ {
+			s := encoder.EncodeToString([]byte("testing"))
+			_, decodeErr := encoder.DecodeString(s)
+			if decodeErr != nil {
+				t.Fatalf("%+v", decodeErr)
+			}
+		}
+		wg.Done()
+	}()
+	for i := 0; i < 2000; i++ {
+		s := encoder.EncodeToString([]byte("testing"))
+		_, decodeErr := encoder.DecodeString(s)
+		if decodeErr != nil {
+			t.Fatalf("%+v", decodeErr)
+		}
+	}
+	wg.Wait()
 }
