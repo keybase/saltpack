@@ -67,7 +67,11 @@ func (r *keyring) LookupBoxPublicKey(kid []byte) BoxPublicKey {
 	if _, found := r.blacklist[hex.EncodeToString(kid)]; found {
 		return nil
 	}
-	ret := boxPublicKey{key: sliceToByte32(kid)}
+	key, err := rawBoxKeyFromSlice(kid)
+	if err != nil {
+		return nil
+	}
+	ret := boxPublicKey{key: *key}
 	return &ret
 }
 
@@ -761,7 +765,7 @@ func testCorruptSenderSecretboxPlaintext(t *testing.T, version Version) {
 	ciphertext, err = testSeal(version, msg, sender, receivers, teo)
 	require.NoError(t, err)
 	_, _, err = Open(SingleVersionValidator(version), ciphertext, kr)
-	require.Equal(t, ErrBadBoxKey, err)
+	require.EqualError(t, err, "no sender key found for message")
 }
 
 func testCorruptSenderSecretboxCiphertext(t *testing.T, version Version) {

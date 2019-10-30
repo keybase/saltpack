@@ -19,7 +19,7 @@ type decryptStream struct {
 	ring             Keyring
 	mps              *msgpackStream
 	payloadKey       *SymmetricKey
-	senderKey        *RawBoxKey
+	senderKID        []byte
 	headerHash       headerHash
 	macKey           macKey
 	position         int
@@ -215,19 +215,16 @@ func (ds *decryptStream) processHeader(hdr *EncryptionHeader) error {
 	if !ok {
 		return ErrBadSenderKeySecretbox
 	}
-	ds.senderKey, err = rawBoxKeyFromSlice(senderKeySlice)
-	if err != nil {
-		return err
-	}
+	ds.senderKID = senderKeySlice
 
 	// Lookup the sender's public key in our keyring, and import
 	// it for use. However, if the sender key is the same as the ephemeral
 	// key, then assume "anonymous mode", so use the already imported anonymous
 	// key.
-	if !hmac.Equal(hdr.Ephemeral, ds.senderKey[:]) {
-		longLivedSenderKey := ds.ring.LookupBoxPublicKey(ds.senderKey[:])
+	if !hmac.Equal(hdr.Ephemeral, ds.senderKID[:]) {
+		longLivedSenderKey := ds.ring.LookupBoxPublicKey(ds.senderKID[:])
 		if longLivedSenderKey == nil {
-			return ErrNoSenderKey{Sender: ds.senderKey[:]}
+			return ErrNoSenderKey{Sender: ds.senderKID[:]}
 		}
 		ds.mki.SenderKey = longLivedSenderKey
 	} else {
