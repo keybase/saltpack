@@ -18,8 +18,9 @@ We start with some simplifying decisions:
 - We'll use [MessagePack](http://msgpack.org/index.html) for all the binary
   formatting.
 
-Thus, "saltpack". The spec is in three parts:
+Thus, "saltpack". The spec is in four parts:
 
-- [a binary encryption format](saltpack_encryption.md)
-- [a binary signing format](saltpack_signing.md)
+- [a binary encryption format](saltpack_encryption_v2.md)
+- [a binary signcryption format](saltpack_signcryption_v2.md)
+- [a binary signing format](saltpack_signing_v2.md)
 - [an ASCII armor scheme](saltpack_armor.md)
