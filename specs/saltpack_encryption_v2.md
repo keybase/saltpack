@@ -299,6 +299,8 @@ constructions.
 
 # payload packet
 [
+  # final flag
+  True,
   # authenticators list
   [
     # the first recipient's authenticator
@@ -307,7 +309,5 @@ constructions.
   ],
   # payload secretbox
   f991dbe030e2cfa00a640376f956c68b2d113ec6384441a1834e455acbb046ead9389826e92cb7f91cc7ab30c3d4d38ef5e84d12617f37,
-  # final flag
-  True,
 ]
 ```
