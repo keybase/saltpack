@@ -152,7 +152,7 @@ header:
     with the recipient's public key, the sender's long-term private key, and
     the nonce from the previous step.
 12. Modify the nonce from step 10 by setting the least significant bit of byte
-    15. That is: `nonce[15] |= 0x01`.
+    15, i.e: `nonce[15] |= 0x01`.
 13. Encrypt 32 zero bytes again, as in step 11, but using the ephemeral private
     key rather than the sender's long term private key.
 14. Concatenate the last 32 bytes each box from steps 11 and 13. Take the
