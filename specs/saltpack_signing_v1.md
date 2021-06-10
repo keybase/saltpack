@@ -73,7 +73,8 @@ Payload packets are MessagePack arrays that look like this:
 ```
 
 - **signature** is a detached NaCl signature, 64 bytes.
-- **payload chunk** is a chunk of the plaintext bytes, max size 1 MB.
+- **payload chunk** is a chunk of the plaintext bytes, max size 1 MiB (= 2^20
+  bytes).
 
 To make each signature, the sender first takes the SHA512 hash of the
 concatenation of three values:

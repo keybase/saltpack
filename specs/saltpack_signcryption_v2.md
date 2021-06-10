@@ -24,10 +24,10 @@ shared with all recipients. The recipients may be either public Curve25519
 encryption keys, or long-term 32-byte symmetric secrets. It is then signed with
 a long-term signing key belonging to the sender.
 
-The message is chunked into 1MB chunks. A sequential nonce used for the
-encryption and MAC's ensures that the 1MB chunks cannot be reordered. The end
-of the message is marked with an authenticated flag to prevent truncation
-attacks.
+The message is chunked into 1MiB (= 2^20 bytes) chunks. A sequential nonce used
+for the encryption and MAC's ensures that the 1MiB chunks cannot be reordered.
+The end of the message is marked with an authenticated flag to prevent
+truncation attacks.
 
 As in the encryption mode, each encrypted copy of the message encryption key is
 given a recipient identifier. Unlike the encryption mode, signcryption doesn't
@@ -205,13 +205,13 @@ A payload packet is a MessagePack array with these contents:
 ]
 ```
 
-- The **signcrypted chunk** is a chunk of plaintext bytes, max size 1 MB,
+- The **signcrypted chunk** is a chunk of plaintext bytes, max size 1 MiB,
   signed by the **sender signing key** and encrypted with the **payload key**.
 - The **final flag** is a boolean, true for the final payload packet, and false
   for all other payload packets.
 
 The sender creates the **signcrypted chunk** with the following steps. For
-each 1 MB chunk of plaintext:
+each 1 MiB chunk of plaintext:
 
 1. Compute the **packet nonce**. Take the first 16 bytes of the **header
    hash**. If this is the final packet, set the least significant bit of the

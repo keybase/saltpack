@@ -45,10 +45,10 @@ maliciously altering the message. For example, if Alice is sending to Bob and
 Charlie, Bob should not be able to rewrite the message and pass it to Charlie
 without Charlie detecting the attack.
 
-The message is chunked into 1MB chunks. A sequential nonce used for the
-encryption and MAC's ensures that the 1MB chunks cannot be reordered. The end
-of the message is marked with an empty chunk — encrypted and MAC'ed the same
-way — to prevent truncation attacks.
+The message is chunked into 1MiB (= 2^20 bytes) chunks. A sequential nonce used
+for the encryption and MAC's ensures that the 1MiB chunks cannot be reordered.
+The end of the message is marked with an empty chunk — encrypted and MAC'ed the
+same way — to prevent truncation attacks.
 
 Though the scheme is designed with the intent of having multiple per-device
 keys for each recipient, the implementation treats all recipient keys
@@ -228,7 +228,7 @@ A payload packet is a MessagePack array with these contents:
   message header. These are computed with the **MAC keys** derived from the
   header. See below.
 - The **payload secretbox** is a NaCl secretbox containing a chunk of the
-  plaintext bytes, max size 1 MB. It's encrypted with the **payload key**. The
+  plaintext bytes, max size 1 MiB. It's encrypted with the **payload key**. The
   nonce is `saltpack_ploadsbNNNNNNNN` where `NNNNNNNN` is the packet number as
   an 8-byte big-endian unsigned integer. The first payload packet is number 0.
 
