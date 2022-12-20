@@ -6,7 +6,6 @@ package saltpack
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 )
 
 var (
@@ -104,7 +103,7 @@ func Dearmor62SigncryptOpen(ciphertext string, keyring SigncryptKeyring, resolve
 	if err != nil {
 		return mki, nil, "", err
 	}
-	out, err := ioutil.ReadAll(s)
+	out, err := io.ReadAll(s)
 	if err != nil {
 		return mki, nil, "", err
 	}

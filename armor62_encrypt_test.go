@@ -4,7 +4,7 @@
 package saltpack
 
 import (
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 
@@ -47,7 +47,7 @@ func testDearmor62DecryptSlowReader(t *testing.T, version Version) {
 	require.NoError(t, err)
 	brandCheck(t, brand)
 
-	plaintext, err := ioutil.ReadAll(dec)
+	plaintext, err := io.ReadAll(dec)
 	require.NoError(t, err)
 
 	require.Equal(t, msg, plaintext)

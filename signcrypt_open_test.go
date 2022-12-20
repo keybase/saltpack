@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -28,14 +27,13 @@ func TestDecryptErrorAtEOF(t *testing.T) {
 	_, stream, err := NewSigncryptOpenStream(reader, keyring, nil)
 	require.NoError(t, err)
 
-	msg, err := ioutil.ReadAll(stream)
+	msg, err := io.ReadAll(stream)
 	requireErrSuffix(t, err, errAtEOF.Error())
 
 	// Since the bytes are still authenticated, the decrypted
 	// message should still compare equal to the original input.
 	require.Equal(t, plaintext, msg)
 }
-
 
 func TestDecryptNoKey(t *testing.T) {
 	plaintext := randomMsg(t, 128)

@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"io/ioutil"
 	"sync"
 	"testing"
 
@@ -117,7 +116,7 @@ func testVerifyErrorAtEOF(t *testing.T, version Version) {
 	_, stream, err := NewVerifyStream(SingleVersionValidator(version), reader, kr)
 	require.NoError(t, err)
 
-	msg, err := ioutil.ReadAll(stream)
+	msg, err := io.ReadAll(stream)
 	requireErrSuffix(t, err, errAtEOF.Error())
 
 	// Since the bytes are still verified, the verified message

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -116,7 +115,7 @@ func Example_stream() {
 	mps := newMsgpackStream(bytes.NewReader(encoded))
 	r := newChunkReader(newExampleChunker(mps))
 
-	decoded, err := ioutil.ReadAll(r)
+	decoded, err := io.ReadAll(r)
 	if err != nil {
 		panic(err)
 	}

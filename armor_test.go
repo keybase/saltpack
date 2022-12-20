@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"testing"
@@ -102,7 +101,7 @@ func TestSlowReader(t *testing.T) {
 	sr.buf = []byte(a)
 	dec, frame, err := NewArmor62DecoderStream(&sr, nil, nil)
 	require.NoError(t, err)
-	m2, err := ioutil.ReadAll(dec)
+	m2, err := io.ReadAll(dec)
 	require.NoError(t, err)
 	require.Equal(t, m, m2)
 	hdr2, err := frame.GetHeader()

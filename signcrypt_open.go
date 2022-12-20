@@ -8,7 +8,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"io"
-	"io/ioutil"
 
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -247,7 +246,6 @@ func (sos *signcryptOpenStream) processBlock(payloadCiphertext []byte, isFinal b
 //
 // Note that the caller has an opportunity not to ingest the plaintext if he
 // doesn't trust the sender revealed in the MessageKeyInfo.
-//
 func NewSigncryptOpenStream(r io.Reader, keyring SigncryptKeyring, resolver SymmetricKeyResolver) (senderPub SigningPublicKey, plaintext io.Reader, err error) {
 	sos := &signcryptOpenStream{
 		mps:      newMsgpackStream(r),
@@ -277,7 +275,7 @@ func SigncryptOpen(ciphertext []byte, keyring SigncryptKeyring, resolver Symmetr
 	if err != nil {
 		return senderPub, nil, err
 	}
-	ret, err := ioutil.ReadAll(plaintextStream)
+	ret, err := io.ReadAll(plaintextStream)
 	if err != nil {
 		return nil, nil, err
 	}

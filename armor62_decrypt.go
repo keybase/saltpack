@@ -6,7 +6,6 @@ package saltpack
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 )
 
 var (
@@ -50,7 +49,7 @@ func Dearmor62DecryptOpen(versionValidator VersionValidator, ciphertext string, 
 	if err != nil {
 		return mki, nil, "", err
 	}
-	out, err := ioutil.ReadAll(s)
+	out, err := io.ReadAll(s)
 	if err != nil {
 		return mki, nil, "", err
 	}
