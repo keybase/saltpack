@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"sort"
 	"testing"
 
@@ -361,7 +360,7 @@ func testRoundTrip(t *testing.T, version Version, msg []byte, receivers []BoxPub
 	if opts != nil && opts.readSize != 0 {
 		plaintext, err = slowRead(plaintextStream, opts.readSize)
 	} else {
-		plaintext, err = ioutil.ReadAll(plaintextStream)
+		plaintext, err = io.ReadAll(plaintextStream)
 	}
 	require.NoError(t, err)
 	require.Equal(t, msg, plaintext)

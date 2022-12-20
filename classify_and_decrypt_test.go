@@ -6,7 +6,7 @@ package saltpack
 import (
 	"bufio"
 	"bytes"
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 
@@ -344,7 +344,7 @@ func TestClassifyEncryptedStreamAndMakeDecoder(t *testing.T) {
 
 	plainSource, msgType, mki, senderPublic, isArmored, brand, ver, err := ClassifyEncryptedStreamAndMakeDecoder(bytes.NewReader(sealed), keyring, nil)
 	require.NoError(t, err)
-	plainString, err := ioutil.ReadAll(plainSource)
+	plainString, err := io.ReadAll(plainSource)
 	require.NoError(t, err)
 	require.Equal(t, msg, plainString)
 	require.Equal(t, MessageTypeSigncryption, msgType)
@@ -359,7 +359,7 @@ func TestClassifyEncryptedStreamAndMakeDecoder(t *testing.T) {
 
 	plainSource, msgType, mki, senderPublic, isArmored, brand, ver, err = ClassifyEncryptedStreamAndMakeDecoder(bytes.NewReader([]byte(sealedStr)), keyring, nil)
 	require.NoError(t, err)
-	plainString, err = ioutil.ReadAll(plainSource)
+	plainString, err = io.ReadAll(plainSource)
 	require.NoError(t, err)
 	require.Equal(t, msg, plainString)
 	require.Equal(t, MessageTypeSigncryption, msgType)
@@ -376,7 +376,7 @@ func TestClassifyEncryptedStreamAndMakeDecoder(t *testing.T) {
 
 	plainSource, msgType, mki, senderPublic, isArmored, brand, ver, err = ClassifyEncryptedStreamAndMakeDecoder(bytes.NewReader(ciphertext), keyring, nil)
 	require.NoError(t, err)
-	plainString, err = ioutil.ReadAll(plainSource)
+	plainString, err = io.ReadAll(plainSource)
 	require.NoError(t, err)
 	require.Equal(t, msg, plainString)
 	require.Equal(t, MessageTypeEncryption, msgType)
@@ -395,7 +395,7 @@ func TestClassifyEncryptedStreamAndMakeDecoder(t *testing.T) {
 
 	plainSource, msgType, mki, senderPublic, isArmored, brand, ver, err = ClassifyEncryptedStreamAndMakeDecoder(strings.NewReader(ciphertextStr), keyring, nil)
 	require.NoError(t, err)
-	plainString, err = ioutil.ReadAll(plainSource)
+	plainString, err = io.ReadAll(plainSource)
 	require.NoError(t, err)
 	require.Equal(t, msg, plainString)
 	require.Equal(t, MessageTypeEncryption, msgType)

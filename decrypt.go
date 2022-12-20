@@ -8,7 +8,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"io"
-	"io/ioutil"
 
 	"golang.org/x/crypto/nacl/secretbox"
 )
@@ -298,7 +297,6 @@ func (ds *decryptStream) processBlock(ciphertext []byte, authenticators []payloa
 //
 // Note that the caller has an opportunity not to ingest the plaintext if he
 // doesn't trust the sender revealed in the MessageKeyInfo.
-//
 func NewDecryptStream(versionValidator VersionValidator, r io.Reader, keyring Keyring) (mki *MessageKeyInfo, plaintext io.Reader, err error) {
 	ds := &decryptStream{
 		versionValidator: versionValidator,
@@ -323,7 +321,7 @@ func Open(versionValidator VersionValidator, ciphertext []byte, keyring Keyring)
 	if err != nil {
 		return mki, nil, err
 	}
-	ret, err := ioutil.ReadAll(plaintextStream)
+	ret, err := io.ReadAll(plaintextStream)
 	if err != nil {
 		return nil, nil, err
 	}

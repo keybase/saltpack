@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/keybase/saltpack/encoding/basex"
@@ -333,7 +332,7 @@ func armorOpen(msg string, params armorParams, headerChecker HeaderChecker, fram
 	if err != nil {
 		return
 	}
-	body, err = ioutil.ReadAll(dec)
+	body, err = io.ReadAll(dec)
 	if err != nil {
 		return
 	}

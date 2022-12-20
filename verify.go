@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"io"
-	"io/ioutil"
 )
 
 // NewVerifyStream creates a stream that consumes data from reader
@@ -35,7 +34,7 @@ func Verify(versionValidator VersionValidator, signedMsg []byte, keyring SigKeyr
 		return nil, nil, err
 	}
 
-	verifiedMsg, err = ioutil.ReadAll(stream)
+	verifiedMsg, err = io.ReadAll(stream)
 	if err != nil {
 		return nil, nil, err
 	}

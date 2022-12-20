@@ -8,7 +8,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -395,11 +394,11 @@ func TestSigncryptionStreamWithError(t *testing.T) {
 	require.NoError(t, err)
 
 	// Try to read the whole thing. This should return an error.
-	_, err = ioutil.ReadAll(reader)
+	_, err = io.ReadAll(reader)
 	require.Equal(t, ErrBadCiphertext(1), err)
 
 	// Do it again. Should get the same error.
-	_, err = ioutil.ReadAll(reader)
+	_, err = io.ReadAll(reader)
 	require.Equal(t, ErrBadCiphertext(1), err)
 }
 

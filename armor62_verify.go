@@ -6,7 +6,6 @@ package saltpack
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 )
 
 var (
@@ -53,7 +52,7 @@ func Dearmor62Verify(versionValidator VersionValidator, signedMsg string, keyrin
 		return nil, nil, "", err
 	}
 
-	verifiedMsg, err = ioutil.ReadAll(stream)
+	verifiedMsg, err = io.ReadAll(stream)
 	if err != nil {
 		return nil, nil, "", err
 	}

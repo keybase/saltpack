@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -71,7 +70,7 @@ func testDecryptErrorAtEOF(t *testing.T, version Version) {
 	_, stream, err := NewDecryptStream(SingleVersionValidator(version), reader, kr)
 	require.NoError(t, err)
 
-	msg, err := ioutil.ReadAll(stream)
+	msg, err := io.ReadAll(stream)
 	requireErrSuffix(t, err, errAtEOF.Error())
 
 	// Since the bytes are still authenticated, the decrypted

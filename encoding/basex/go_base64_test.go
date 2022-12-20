@@ -11,7 +11,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 
 	// "reflect"
 	"strings"
@@ -185,9 +184,9 @@ func TestBig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Encoder.Close() = %v want nil", err)
 	}
-	decoded, err := ioutil.ReadAll(NewDecoder(Base58StdEncoding, encoded))
+	decoded, err := io.ReadAll(NewDecoder(Base58StdEncoding, encoded))
 	if err != nil {
-		t.Fatalf("ioutil.ReadAll(NewDecoder(...)): %v", err)
+		t.Fatalf("io.ReadAll(NewDecoder(...)): %v", err)
 	}
 
 	if !bytes.Equal(raw, decoded) {
@@ -261,7 +260,7 @@ func TestDecoderIssue3577(t *testing.T) {
 	})
 	errc := make(chan error)
 	go func() {
-		_, err := ioutil.ReadAll(d)
+		_, err := io.ReadAll(d)
 		errc <- err
 	}()
 	select {
@@ -297,14 +296,14 @@ QMbQoToAuRpfmWvM4FH
 	encodedShort := strings.Replace(encoded, "\n", "", -1)
 
 	dec := NewDecoder(Base58StdEncoding, strings.NewReader(encoded))
-	res1, err := ioutil.ReadAll(dec)
+	res1, err := io.ReadAll(dec)
 	if err != nil {
 		t.Errorf("ReadAll failed: %v", err)
 	}
 
 	dec = NewDecoder(Base58StdEncoding, strings.NewReader(encodedShort))
 	var res2 []byte
-	res2, err = ioutil.ReadAll(dec)
+	res2, err = io.ReadAll(dec)
 	if err != nil {
 		t.Errorf("ReadAll failed: %v", err)
 	}
