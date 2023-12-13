@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/chacha20poly1305"
 	"golang.org/x/crypto/ed25519"
-	"golang.org/x/crypto/poly1305"
 )
 
 type testConstResolver struct {
@@ -198,7 +198,7 @@ func getPayloadPacketLen(plaintextLen int) int {
 	}
 	listOverhead := 1 // fixarray
 	boolOverhead := 1 // for IsFinal flag
-	return plaintextLen + ed25519.SignatureSize + poly1305.TagSize + bytesOverhead + listOverhead + boolOverhead
+	return plaintextLen + ed25519.SignatureSize + chacha20poly1305.Overhead + bytesOverhead + listOverhead + boolOverhead
 }
 
 func TestSigncryptionPacketSwappingWithinMessage(t *testing.T) {

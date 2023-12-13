@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	"github.com/keybase/go-codec/codec"
-	"golang.org/x/crypto/poly1305"
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 // maxReceiverCount is the maximum number of receivers allowed
@@ -151,7 +151,7 @@ func computePayloadAuthenticator(macKey macKey, payloadHash payloadHash) payload
 
 func computeMACKeySingle(secret BoxSecretKey, public BoxPublicKey, nonce Nonce) macKey {
 	macKeyBox := secret.Box(public, nonce, make([]byte, cryptoAuthKeyBytes))
-	return sliceToByte32(macKeyBox[poly1305.TagSize : poly1305.TagSize+cryptoAuthKeyBytes])
+	return sliceToByte32(macKeyBox[chacha20poly1305.Overhead : chacha20poly1305.Overhead+cryptoAuthKeyBytes])
 }
 
 func sum512Truncate256(in []byte) [32]byte {
