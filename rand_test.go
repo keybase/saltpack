@@ -1,6 +1,7 @@
 // Copyright 2018 Keybase, Inc. All rights reserved. Use of
 // this source code is governed by the included BSD license.
 
+//go:build go1.10
 // +build go1.10
 
 package saltpack
@@ -101,7 +102,7 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 		if end > (1 << 32) {
 			end = 1 << 32
 		}
-		go func(workerNum int, start, end uint64, bucket *[]uint64) {
+		go func(start, end uint64, bucket *[]uint64) {
 			defer w.Done()
 
 			var buf [4]byte
@@ -124,7 +125,7 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 					(*bucket)[m]++
 				}
 			}
-		}(i, start, end, &workerBuckets[i])
+		}(start, end, &workerBuckets[i])
 	}
 
 	w.Wait()
@@ -140,7 +141,7 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 	}
 
 	for i := uint32(0); i < n; i++ {
-		assert.Equal(t, uint64((1<<32)/uint64(n)), buckets[i], "i=%d", i)
+		assert.Equal(t, (1<<32)/uint64(n), buckets[i], "i=%d", i)
 	}
 }
 
@@ -168,23 +169,23 @@ type testReaderSource struct {
 var _ mathrand.Source = (*testReaderSource)(nil)
 
 func (s *testReaderSource) Int63() int64 {
-	uint32, err := csprngUint32(s.r)
+	randN, err := csprngUint32(s.r)
 	require.NoError(s.t, err)
 
 	// math/rand.Shuffle calls r.Uint32(), which returns
 	// uint32(r.src.Int63() >> 31), so we only need to fill in the
 	// top 32 bits after the sign bit.
-	n := int64(uint32) << 31
+	n := int64(randN) << 31
 
 	// Assumes that cryptorandUint32 uses big endian.
 	var buf [4]byte
-	binary.BigEndian.PutUint32(buf[:], uint32)
+	binary.BigEndian.PutUint32(buf[:], randN)
 	s.read = append(s.read, buf[:]...)
 
 	return n
 }
 
-func (s testReaderSource) Seed(seed int64) {
+func (s testReaderSource) Seed(_ int64) {
 	s.t.Fatal("testReaderSource.Seed() called unexpectedly")
 }
 

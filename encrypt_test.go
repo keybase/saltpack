@@ -573,7 +573,7 @@ func testEmptyReceivers(t *testing.T, version Version) {
 func testCorruptHeaderNonce(t *testing.T, version Version) {
 	msg := randomMsg(t, 129)
 	teo := testEncryptionOptions{
-		corruptKeysNonce: func(n Nonce, rid int) Nonce {
+		corruptKeysNonce: func(n Nonce, _ int) Nonce {
 			ret := n
 			ret[4] ^= 1
 			return ret
@@ -703,7 +703,7 @@ func testCorruptPayloadKeyPlaintext(t *testing.T, version Version) {
 	// Also try truncating the payload key. This should fail with a different
 	// error.
 	teo = testEncryptionOptions{
-		corruptPayloadKey: func(pk *[]byte, rid int) {
+		corruptPayloadKey: func(pk *[]byte, _ int) {
 			var shortKey [31]byte
 			*pk = shortKey[:]
 		},
@@ -1063,7 +1063,7 @@ func testEmptyReceiverKID(t *testing.T, version Version) {
 	}
 	plaintext := randomMsg(t, 1024*3)
 	teo := testEncryptionOptions{
-		corruptReceiverKeys: func(keys *receiverKeys, rid int) {
+		corruptReceiverKeys: func(keys *receiverKeys, _ int) {
 			keys.ReceiverKID = []byte{}
 		},
 	}
@@ -1581,7 +1581,7 @@ func testEncryptArmor62SealResultSeal(t *testing.T, result encryptArmor62SealRes
 }
 
 func TestRandomEncryptArmor62Seal(t *testing.T) {
-	runTestOverVersions(t, func(t *testing.T, version Version) {
+	runTestOverVersions(t, func(t *testing.T, _ Version) {
 		result, err := newRandomEncryptArmor62SealResult(Version1(), "some plaintext")
 		require.NoError(t, err)
 		testEncryptArmor62SealResultSeal(t, result)

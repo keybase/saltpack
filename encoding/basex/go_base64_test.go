@@ -293,7 +293,7 @@ AxA1fEUSk9Rq7izcR2mS8fKZHQP2jk55hHkrY9QMGyYFnQhDJq2LhAiJDfzu
 XcAFA8jRXbNy8Ja6VVrzxttgesfK16STCZBYzT7SYVA1LhfmbX5SZ84JgqdE
 QMbQoToAuRpfmWvM4FH
 `
-	encodedShort := strings.Replace(encoded, "\n", "", -1)
+	encodedShort := strings.ReplaceAll(encoded, "\n", "")
 
 	dec := NewDecoder(Base58StdEncoding, strings.NewReader(encoded))
 	res1, err := io.ReadAll(dec)

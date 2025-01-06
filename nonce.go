@@ -18,7 +18,7 @@ func nonceForPayloadKeyBoxV2(recip uint64) Nonce {
 	var n Nonce
 	off := len(n) - 8
 	copyEqualSizeStr(n[:off], "saltpack_recipsb")
-	binary.BigEndian.PutUint64(n[off:], uint64(recip))
+	binary.BigEndian.PutUint64(n[off:], recip)
 	return n
 }
 
@@ -55,7 +55,7 @@ func nonceForMACKeyBoxV2(headerHash headerHash, ephemeral bool, recip uint64) No
 	if ephemeral {
 		n[off-1] |= 1
 	}
-	binary.BigEndian.PutUint64(n[off:], uint64(recip))
+	binary.BigEndian.PutUint64(n[off:], recip)
 	return n
 }
 

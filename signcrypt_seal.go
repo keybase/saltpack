@@ -77,7 +77,8 @@ func (sss *signcryptSealStream) signcryptBlock(isFinal bool) error {
 		}
 	}
 
-	attachedSig := append(detachedSig, plaintext...)
+	attachedSig := detachedSig
+	attachedSig = append(attachedSig, plaintext...)
 
 	ciphertext := secretbox.Seal([]byte{}, attachedSig, (*[24]byte)(&nonce), (*[32]byte)(&sss.encryptionKey))
 
@@ -365,7 +366,7 @@ func newSigncryptSealStream(ciphertext io.Writer, sender SigningSecretKey, recei
 		encoder:    newEncoder(ciphertext),
 		signingKey: sender,
 	}
-	err := sss.init(receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, defaultSigncryptRNG{})
+	err := sss.init(receiverBoxKeys, receiverSymmetricKeys, ephemeralKeyCreator, rng)
 	if err != nil {
 		return nil, err
 	}

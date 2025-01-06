@@ -82,7 +82,7 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 
 type emptySigKeyring struct{}
 
-func (k emptySigKeyring) LookupSigningPublicKey(kid []byte) SigningPublicKey { return nil }
+func (k emptySigKeyring) LookupSigningPublicKey(_ []byte) SigningPublicKey { return nil }
 
 func testVerifyEmptyKeyring(t *testing.T, version Version) {
 	in := randomMsg(t, 128)
