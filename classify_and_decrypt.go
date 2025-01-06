@@ -148,7 +148,7 @@ func IsSaltpackArmoredPrefix(pref string) (brand string, messageType MessageType
 
 		switch len(strs) {
 		case 1:
-			if strings.HasPrefix(strs[0], string(headerMarker)) {
+			if strings.HasPrefix(string(headerMarker), strs[0]) { // nolint
 				return "", MessageTypeUnknown, Version{}, ErrShortSliceOrBuffer
 			}
 			return "", MessageTypeUnknown, Version{}, ErrNotASaltpackMessage
@@ -169,12 +169,12 @@ func IsSaltpackArmoredPrefix(pref string) (brand string, messageType MessageType
 		signedPrefix := fmt.Sprintf("%s %s", headerPrefix, SignedArmorString)
 		detachedSigPrefix := fmt.Sprintf("%s %s", headerPrefix, DetachedSignatureArmorString)
 
-		if strings.HasPrefix(headerWithoutBrand, encryptionPrefix) ||
-			strings.HasPrefix(headerWithoutBrand, signedPrefix) ||
-			strings.HasPrefix(headerWithoutBrand, detachedSigPrefix) ||
-			strings.HasPrefix(s, encryptionPrefix) ||
-			strings.HasPrefix(s, signedPrefix) ||
-			strings.HasPrefix(s, detachedSigPrefix) {
+		if strings.HasPrefix(encryptionPrefix, headerWithoutBrand) ||
+			strings.HasPrefix(signedPrefix, headerWithoutBrand) ||
+			strings.HasPrefix(detachedSigPrefix, headerWithoutBrand) ||
+			strings.HasPrefix(encryptionPrefix, s) ||
+			strings.HasPrefix(signedPrefix, s) ||
+			strings.HasPrefix(detachedSigPrefix, s) {
 			return "", MessageTypeUnknown, Version{}, ErrShortSliceOrBuffer
 		}
 		return "", MessageTypeUnknown, Version{}, ErrNotASaltpackMessage
