@@ -73,7 +73,7 @@ func (s *armorEncoderStream) Close() (err error) {
 		return err
 	}
 	lst := s.buf.Bytes()
-	if _, err := s.encoded.Write([]byte(lst)); err != nil {
+	if _, err := s.encoded.Write(lst); err != nil {
 		return err
 	}
 	s.nWords++

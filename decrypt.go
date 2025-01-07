@@ -65,7 +65,7 @@ func (ds *decryptStream) getNextChunk() ([]byte, error) {
 	return chunk, nil
 }
 
-func (ds *decryptStream) readHeader(rawReader io.Reader) error {
+func (ds *decryptStream) readHeader(_ io.Reader) error {
 	// Read the header bytes.
 	headerBytes := []byte{}
 	_, err := ds.mps.Read(&headerBytes)

@@ -1,6 +1,7 @@
 // Copyright 2018 Keybase, Inc. All rights reserved. Use of
 // this source code is governed by the included BSD license.
 
+//go:build amd64
 // +build amd64
 
 package saltpack

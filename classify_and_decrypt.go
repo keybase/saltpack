@@ -5,9 +5,9 @@ package saltpack
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/keybase/saltpack/encoding/basex"
@@ -116,17 +116,7 @@ func IsSaltpackBinarySlice(b []byte) (msgType MessageType, version Version, err 
 // saltpack message. If err is nil, then the brand, version and expected type of the message will be returned, but this does *NOT* guarantee that the
 // rest of the message is well formed.
 func IsSaltpackArmored(stream *bufio.Reader) (brand string, msgType MessageType, ver Version, err error) {
-
-	// temporary hack to compute stream.Size(), which is only available from go 1.10
-	// TODO remove after we can drop support for go 1.9 or older.
-	// If the buffer is larger then 8192, we use the first 8192 bytes (which should be
-	// enough to decode one block in the vast majority of cases)
-	sizePlusOne := sort.Search(8192, func(i int) bool {
-		_, peekErr := stream.Peek(i)
-		return peekErr == bufio.ErrBufferFull
-	})
-
-	buf, err := stream.Peek(sizePlusOne - 1)
+	buf, err := stream.Peek(stream.Size())
 	if (err != nil && err != io.EOF) || len(buf) == 0 {
 		return "", MessageTypeUnknown, ver, err
 	}
@@ -158,7 +148,7 @@ func IsSaltpackArmoredPrefix(pref string) (brand string, messageType MessageType
 
 		switch len(strs) {
 		case 1:
-			if strings.HasPrefix(string(headerMarker), strs[0]) {
+			if strings.HasPrefix(string(headerMarker), strs[0]) { // nolint
 				return "", MessageTypeUnknown, Version{}, ErrShortSliceOrBuffer
 			}
 			return "", MessageTypeUnknown, Version{}, ErrNotASaltpackMessage
@@ -174,13 +164,17 @@ func IsSaltpackArmoredPrefix(pref string) (brand string, messageType MessageType
 		}
 
 		headerWithoutBrand := strings.Join(append([]string{strs[0]}, strs[2:]...), " ")
+		headerPrefix := fmt.Sprintf("%s %s", headerMarker, strings.ToUpper(FormatName))
+		encryptionPrefix := fmt.Sprintf("%s %s", headerPrefix, EncryptionArmorString)
+		signedPrefix := fmt.Sprintf("%s %s", headerPrefix, SignedArmorString)
+		detachedSigPrefix := fmt.Sprintf("%s %s", headerPrefix, DetachedSignatureArmorString)
 
-		if strings.HasPrefix(string(headerMarker)+" "+strings.ToUpper(FormatName)+" "+EncryptionArmorString, headerWithoutBrand) ||
-			strings.HasPrefix(string(headerMarker)+" "+strings.ToUpper(FormatName)+" "+SignedArmorString, headerWithoutBrand) ||
-			strings.HasPrefix(string(headerMarker)+" "+strings.ToUpper(FormatName)+" "+DetachedSignatureArmorString, headerWithoutBrand) ||
-			strings.HasPrefix(string(headerMarker)+" "+strings.ToUpper(FormatName)+" "+EncryptionArmorString, s) ||
-			strings.HasPrefix(string(headerMarker)+" "+strings.ToUpper(FormatName)+" "+SignedArmorString, s) ||
-			strings.HasPrefix(string(headerMarker)+" "+strings.ToUpper(FormatName)+" "+DetachedSignatureArmorString, s) {
+		if strings.HasPrefix(encryptionPrefix, headerWithoutBrand) ||
+			strings.HasPrefix(signedPrefix, headerWithoutBrand) ||
+			strings.HasPrefix(detachedSigPrefix, headerWithoutBrand) ||
+			strings.HasPrefix(encryptionPrefix, s) ||
+			strings.HasPrefix(signedPrefix, s) ||
+			strings.HasPrefix(detachedSigPrefix, s) {
 			return "", MessageTypeUnknown, Version{}, ErrShortSliceOrBuffer
 		}
 		return "", MessageTypeUnknown, Version{}, ErrNotASaltpackMessage

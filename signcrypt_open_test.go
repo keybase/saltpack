@@ -44,7 +44,7 @@ func TestDecryptNoKey(t *testing.T) {
 	require.NoError(t, err)
 
 	// Open with empty keyring
-	emptyKeyring := makeEmptyKeyring(t)
+	emptyKeyring := makeEmptyKeyring()
 	sender, msg, openErr := SigncryptOpen(sealed, emptyKeyring, nil)
 	require.Equal(t, openErr, ErrNoDecryptionKey)
 	require.Nil(t, sender)
@@ -56,7 +56,7 @@ func TestDecryptNoSender(t *testing.T) {
 
 	aliceSigningPrivKey := makeSigningSecretKey(t)
 
-	bobKeyring := makeEmptyKeyring(t)
+	bobKeyring := makeEmptyKeyring()
 	bobBoxKey, createErr := createEphemeralKey(false)
 	require.NoError(t, createErr)
 	bobKeyring.insert(bobBoxKey)

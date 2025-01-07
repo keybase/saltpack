@@ -25,15 +25,15 @@ func runTestOverVersions(t *testing.T, f func(t *testing.T, version saltpack.Ver
 // test function names, and the names of the subtest will be taken to
 // be the strings after that prefix. Example use:
 //
-// func TestFoo(t *testing.T) {
-//      tests := []func(*testing.T, Version){
-//              testFooBar1,
-//              testFooBar2,
-//              testFooBar3,
-//              ...
-//      }
-//      runTestsOverVersions(t, "testFoo", tests)
-// }
+//	func TestFoo(t *testing.T) {
+//	     tests := []func(*testing.T, Version){
+//	             testFooBar1,
+//	             testFooBar2,
+//	             testFooBar3,
+//	             ...
+//	     }
+//	     runTestsOverVersions(t, "testFoo", tests)
+//	}
 //
 // This is copied from ../common_test.go.
 func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, ver saltpack.Version)) {

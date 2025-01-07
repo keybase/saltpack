@@ -43,7 +43,7 @@ func (e *encoder) Write(p []byte) (n int, err error) {
 		if e.nbuf < ibl {
 			return
 		}
-		e.enc.Encode(e.out[:], e.buf[:])
+		e.enc.Encode(e.out, e.buf)
 		if _, e.err = e.w.Write(e.out[:obl]); e.err != nil {
 			return n, e.err
 		}
@@ -57,7 +57,7 @@ func (e *encoder) Write(p []byte) (n int, err error) {
 			nn = len(p)
 			nn -= nn % ibl
 		}
-		e.enc.Encode(e.out[:], p[:nn])
+		e.enc.Encode(e.out, p[:nn])
 		if _, e.err = e.w.Write(e.out[0 : nn/ibl*obl]); e.err != nil {
 			return n, e.err
 		}
@@ -77,7 +77,7 @@ func (e *encoder) Write(p []byte) (n int, err error) {
 func (e *encoder) Close() error {
 	// If there's anything left in the buffer, flush it out
 	if e.err == nil && e.nbuf > 0 {
-		e.enc.Encode(e.out[:], e.buf[:e.nbuf])
+		e.enc.Encode(e.out, e.buf[:e.nbuf])
 		_, e.err = e.w.Write(e.out[:e.enc.EncodedLen(e.nbuf)])
 		e.nbuf = 0
 	}
@@ -173,7 +173,7 @@ func (d *decoder) Read(p []byte) (int, error) {
 	// the rest internally
 	if numBytesToOutput > len(p) {
 		var n int
-		n, d.err = d.enc.Decode(d.scratchbuf[:], d.buf[:numBytesToDecode])
+		n, d.err = d.enc.Decode(d.scratchbuf, d.buf[:numBytesToDecode])
 		d.out = d.scratchbuf[:n]
 		ret = copy(p, d.out)
 		d.out = d.out[ret:]

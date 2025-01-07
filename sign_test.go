@@ -59,7 +59,7 @@ func newSigPrivKey(t *testing.T) *sigPrivKey {
 
 func (s *sigPrivKey) Sign(message []byte) ([]byte, error) {
 	sig := ed25519.Sign(s.private, message)
-	return sig[:], nil
+	return sig, nil
 }
 
 func (s *sigPrivKey) GetPublicKey() SigningPublicKey {
@@ -68,13 +68,13 @@ func (s *sigPrivKey) GetPublicKey() SigningPublicKey {
 
 type sigErrKey struct{}
 
-func (s *sigErrKey) Sign(message []byte) ([]byte, error) { return nil, errors.New("sign error") }
-func (s *sigErrKey) GetPublicKey() SigningPublicKey      { return &sigPubKey{} }
+func (s *sigErrKey) Sign(_ []byte) ([]byte, error)  { return nil, errors.New("sign error") }
+func (s *sigErrKey) GetPublicKey() SigningPublicKey { return &sigPubKey{} }
 
 type sigNilPubKey struct{}
 
-func (s *sigNilPubKey) Sign(message []byte) ([]byte, error) { return nil, errors.New("sign error") }
-func (s *sigNilPubKey) GetPublicKey() SigningPublicKey      { return nil }
+func (s *sigNilPubKey) Sign(_ []byte) ([]byte, error)  { return nil, errors.New("sign error") }
+func (s *sigNilPubKey) GetPublicKey() SigningPublicKey { return nil }
 
 func testSign(t *testing.T, version Version) {
 	msg := randomMsg(t, 128)
@@ -323,7 +323,7 @@ func testSignAttachedVerifyDetached(t *testing.T, version Version) {
 
 func testSignBadKey(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
-	err := csprngRead(key.private[:])
+	err := csprngRead(key.private)
 	require.NoError(t, err)
 	msg := randomMsg(t, 128)
 	smsg, err := Sign(version, msg, key)
@@ -366,7 +366,7 @@ func testSignNilKey(t *testing.T, version Version) {
 
 type errReader struct{}
 
-func (e errReader) Read(p []byte) (int, error) { return 0, errors.New("read error") }
+func (e errReader) Read(_ []byte) (int, error) { return 0, errors.New("read error") }
 
 func testSignBadRandReader(t *testing.T, version Version) {
 	key := newSigPrivKey(t)

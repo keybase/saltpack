@@ -54,7 +54,7 @@ func NewEncoding(encoder string, base256BlockLen int, skipBytes string) *Encodin
 		baseBig:         big.NewInt(int64(base)),
 		skipBytes:       skipBytes,
 	}
-	copy(e.encode[:], encoder)
+	copy(e.encode, encoder)
 
 	for _, c := range skipBytes {
 		e.skipMap[c] = true

@@ -36,14 +36,14 @@ func (r *testConstResolver) ResolveKeys(identifiers [][]byte) ([]*SymmetricKey, 
 	return ret, nil
 }
 
-func makeEmptyKeyring(t *testing.T) *keyring {
+func makeEmptyKeyring() *keyring {
 	keyring := newKeyring()
 	keyring.iterable = true
 	return keyring
 }
 
 func makeKeyringWithOneKey(t *testing.T) (*keyring, []BoxPublicKey) {
-	keyring := makeEmptyKeyring(t)
+	keyring := makeEmptyKeyring()
 	keyring.iterable = true
 	receiverBoxSecretKey, err := createEphemeralKey(false)
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func makeSigningSecretKey(t *testing.T) SigningSecretKey {
 	return k
 }
 
-func makeResolverWithOneKey(t *testing.T) (SymmetricKeyResolver, []ReceiverSymmetricKey) {
+func makeResolverWithOneKey() (SymmetricKeyResolver, []ReceiverSymmetricKey) {
 	var sharedSymmetricKey SymmetricKey // zeros
 	receiver := ReceiverSymmetricKey{
 		Key:        sharedSymmetricKey,
@@ -100,9 +100,9 @@ func TestSigncryptionBoxKeyHelloWorld(t *testing.T) {
 
 func TestSigncryptionResolvedKeyHelloWorld(t *testing.T) {
 	msg := []byte("hello world")
-	keyring := makeEmptyKeyring(t)
+	keyring := makeEmptyKeyring()
 
-	resolver, receivers := makeResolverWithOneKey(t)
+	resolver, receivers := makeResolverWithOneKey()
 
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 
@@ -421,8 +421,8 @@ func TestSigncryptionInvalidMessagepack(t *testing.T) {
 
 func TestSigncryptionBoxKeyHeaderDecryptionError(t *testing.T) {
 	msg := []byte("hello world")
-	keyring := makeEmptyKeyring(t)
-	resolver, receivers := makeResolverWithOneKey(t)
+	keyring := makeEmptyKeyring()
+	resolver, receivers := makeResolverWithOneKey()
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, nil, receivers)
 	require.NoError(t, err)
@@ -456,7 +456,7 @@ type BrokenResolver struct{}
 
 var _ SymmetricKeyResolver = (*BrokenResolver)(nil)
 
-func (b *BrokenResolver) ResolveKeys(identifiers [][]byte) ([]*SymmetricKey, error) {
+func (b *BrokenResolver) ResolveKeys(_ [][]byte) ([]*SymmetricKey, error) {
 	return nil, fmt.Errorf("garbage error foo")
 }
 
@@ -465,14 +465,14 @@ type EmptyResolver struct{}
 
 var _ SymmetricKeyResolver = (*EmptyResolver)(nil)
 
-func (e *EmptyResolver) ResolveKeys(identifiers [][]byte) ([]*SymmetricKey, error) {
+func (e *EmptyResolver) ResolveKeys(_ [][]byte) ([]*SymmetricKey, error) {
 	return nil, nil
 }
 
 func TestSigncryptionBadResolvers(t *testing.T) {
 	msg := []byte("hello world")
-	keyring := makeEmptyKeyring(t)
-	_, receivers := makeResolverWithOneKey(t)
+	keyring := makeEmptyKeyring()
+	_, receivers := makeResolverWithOneKey()
 	senderSigningPrivKey := makeSigningKey(t, keyring)
 	sealed, err := SigncryptSeal(msg, ephemeralKeyCreator{}, senderSigningPrivKey, nil, receivers)
 	require.NoError(t, err)
@@ -577,7 +577,7 @@ type RandomSigningKeysKeyring struct {
 
 var _ (Keyring) = (*RandomSigningKeysKeyring)(nil)
 
-func (r *RandomSigningKeysKeyring) LookupSigningPublicKey(kid []byte) SigningPublicKey {
+func (r *RandomSigningKeysKeyring) LookupSigningPublicKey(_ []byte) SigningPublicKey {
 	pub, _, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		panic(err)

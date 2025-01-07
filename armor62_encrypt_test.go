@@ -56,7 +56,7 @@ func testDearmor62DecryptSlowReader(t *testing.T, version Version) {
 func testNewlineInFrame(t *testing.T, version Version) {
 	plaintext, ciphertext := encryptArmor62RandomData(t, version, 1024)
 
-	//newline space space tab space
+	// newline space space tab space
 	ss := []string{"\n\n>   ", ciphertext[0:10], "\n  	 ", ciphertext[11:]}
 	ciphertext = strings.Join(ss, "")
 
