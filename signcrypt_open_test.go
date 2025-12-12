@@ -64,7 +64,7 @@ func TestDecryptNoSender(t *testing.T) {
 	sealed, err := SigncryptSeal(plaintext, ephemeralKeyCreator{}, aliceSigningPrivKey, []BoxPublicKey{bobBoxKey.GetPublicKey()}, nil)
 	require.NoError(t, err)
 
-	// Open with only (reciever) key in keyring (not sender)
+	// Open with only (receiver) key in keyring (not sender)
 	sender, msg, openErr := SigncryptOpen(sealed, bobKeyring, nil)
 	require.Equal(t, openErr, ErrNoSenderKey{Sender: aliceSigningPrivKey.GetPublicKey().ToKID()})
 	require.Nil(t, sender)

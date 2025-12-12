@@ -11,7 +11,6 @@ import (
 )
 
 func ExampleEncryptArmor62Seal() {
-
 	var err error
 
 	// Make a new Keyring, initialized to be empty
@@ -57,7 +56,6 @@ func ExampleEncryptArmor62Seal() {
 }
 
 func ExampleNewEncryptArmor62Stream() {
-
 	var err error
 
 	// Make a new Keyring, initialized to be empty
@@ -95,7 +93,10 @@ func ExampleNewEncryptArmor62Stream() {
 		return
 	}
 	// And close when we're done
-	input.Close()
+	err = input.Close()
+	if err != nil {
+		return
+	}
 
 	// The decrypted message
 	var plaintextOutput io.Reader
@@ -110,14 +111,16 @@ func ExampleNewEncryptArmor62Stream() {
 	if err != nil {
 		return
 	}
-	os.Stdout.Write([]byte{'\n'})
+	_, err = os.Stdout.Write([]byte{'\n'})
+	if err != nil {
+		return
+	}
 
 	// Output:
 	// The Magic Words are Squeamish Ossifrage
 }
 
 func ExampleSignArmor62() {
-
 	var err error
 
 	// Make a new Keyring, initialized to be empty
@@ -159,7 +162,6 @@ func ExampleSignArmor62() {
 }
 
 func ExampleNewSignArmor62Stream() {
-
 	var err error
 
 	// Make a new Keyring, initialized to be empty
@@ -190,7 +192,10 @@ func ExampleNewSignArmor62Stream() {
 	if err != nil {
 		return
 	}
-	input.Close()
+	err = input.Close()
+	if err != nil {
+		return
+	}
 
 	// The verified message. We pass the signed stream as the first argument
 	// as a stream (here a bytes.Buffer which is output from above), and read the

@@ -85,6 +85,7 @@ func csprngUint32n(csprng io.Reader, n uint32) (uint32, error) {
 		return 0, err
 	}
 	prod := uint64(v) * uint64(n)
+	//nolint:gosec // intentionally taking low 32 bits
 	low := uint32(prod)
 	if low < n {
 		thresh := -n % n
@@ -94,9 +95,11 @@ func csprngUint32n(csprng io.Reader, n uint32) (uint32, error) {
 				return 0, err
 			}
 			prod = uint64(v) * uint64(n)
+			//nolint:gosec // intentionally taking low 32 bits
 			low = uint32(prod)
 		}
 	}
+	//nolint:gosec // intentionally taking high 32 bits
 	return uint32(prod >> 32), nil
 }
 
@@ -116,6 +119,7 @@ func csprngShuffle(csprng io.Reader, n int, swap func(i, j int)) error {
 	}
 
 	for i := n - 1; i > 0; i-- {
+		//nolint:gosec // i+1 is bounded by n < 2³¹, conversion is safe
 		j, err := csprngUint32n(csprng, uint32(i+1))
 		if err != nil {
 			return err

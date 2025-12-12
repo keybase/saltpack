@@ -92,12 +92,15 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 	var w sync.WaitGroup
 	w.Add(workerCount)
 
+	//nolint:gosec // workerCount is a small test parameter, conversion is safe
 	rangeSize := uint64(1<<32) / uint64(workerCount)
 
 	for i := 0; i < workerCount; i++ {
 		// Capture range variable.
 		i := i
+		//nolint:gosec // i is bounded by workerCount, conversion is safe
 		start := uint64(i) * rangeSize
+		//nolint:gosec // i is bounded by workerCount, conversion is safe
 		end := uint64(i+1) * rangeSize
 		if end > (1 << 32) {
 			end = 1 << 32
@@ -115,6 +118,7 @@ func testCSPRNGUint32nUniform(t *testing.T, n uint32) {
 					fmt.Printf("worker %d/%d: %.2f%% done\n", i+1, workerCount, float64(j-start)*100/float64(end-start))
 				}
 
+				//nolint:gosec // j is bounded by test data range, conversion is safe
 				binary.BigEndian.PutUint32(buf[:], uint32(j))
 				_, err := r.Seek(0, io.SeekStart)
 				require.NoError(t, err)
@@ -207,10 +211,10 @@ func testCSPRNGShuffle(t *testing.T, size int) {
 	copy(output, input)
 
 	sourceExpected := testReaderSource{t, cryptorand.Reader, nil}
+	//nolint:gosec // using math/rand with crypto/rand source for testing
 	rnd := mathrand.New(&sourceExpected)
 	rnd.Shuffle(len(expectedOutput), func(i, j int) {
-		expectedOutput[i], expectedOutput[j] =
-			expectedOutput[j], expectedOutput[i]
+		expectedOutput[i], expectedOutput[j] = expectedOutput[j], expectedOutput[i]
 	})
 
 	r := bytes.NewReader(sourceExpected.read)

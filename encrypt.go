@@ -28,7 +28,6 @@ type encryptStream struct {
 }
 
 func (es *encryptStream) Write(plaintext []byte) (int, error) {
-
 	if es.err != nil {
 		return 0, es.err
 	}
@@ -193,7 +192,8 @@ type encryptRNG interface {
 
 func (es *encryptStream) init(
 	version Version, sender BoxSecretKey, receivers []BoxPublicKey,
-	ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG) error {
+	ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG,
+) error {
 	if err := checkKnownVersion(version); err != nil {
 		return err
 	}
@@ -236,6 +236,7 @@ func (es *encryptStream) init(
 
 	for i, receiver := range receivers {
 		sharedKey := ephemeralKey.Precompute(receiver)
+		//nolint:gosec // i is a valid slice index, conversion is safe
 		nonce := nonceForPayloadKeyBox(version, uint64(i))
 		payloadKeyBox := sharedKey.Box(nonce, es.payloadKey[:])
 
@@ -290,6 +291,7 @@ func computeMACKeySender(version Version, index uint64, secret, eSecret BoxSecre
 func computeMACKeysSender(version Version, sender, ephemeralKey BoxSecretKey, receivers []BoxPublicKey, headerHash headerHash) []macKey {
 	var macKeys []macKey
 	for i, receiver := range receivers {
+		//nolint:gosec // i is a valid slice index, conversion is safe
 		macKey := computeMACKeySender(version, uint64(i), sender, ephemeralKey, receiver, headerHash)
 		macKeys = append(macKeys, macKey)
 	}
@@ -316,7 +318,6 @@ func (es *encryptStream) Close() error {
 		err := es.encryptBlock(true)
 		if err != nil {
 			return err
-
 		}
 
 		if es.buffer.Len() > 0 {

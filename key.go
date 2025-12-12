@@ -80,7 +80,6 @@ type BoxPrecomputedSharedKey interface {
 
 // BoxSecretKey is the secret key corresponding to a BoxPublicKey
 type BoxSecretKey interface {
-
 	// Box boxes up data, sent from this secret key, and to the receiver
 	// specified.
 	Box(receiver BoxPublicKey, nonce Nonce, msg []byte) []byte

@@ -51,7 +51,8 @@ func NewArmor62DecoderStream(r io.Reader, hc HeaderChecker, fc FrameChecker) (io
 
 // Armor62Open runs armor stream decoding, but on a string, and it outputs
 // a string. It does not do any validation on the header and footer.
-// Deprecated: user Armor62OpenWithValidation instead.
+//
+// Deprecated: use Armor62OpenWithValidation instead.
 func Armor62Open(msg string) (body []byte, header string, footer string, err error) {
 	body, _, header, footer, err = Armor62OpenWithValidation(msg, nil, nil)
 	return body, header, footer, err

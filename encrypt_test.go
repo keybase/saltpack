@@ -1020,7 +1020,6 @@ func testAllAnonymous(t *testing.T, version Version) {
 	require.Nil(t, mki.ReceiverKey)
 	require.Equal(t, 8, mki.NumAnonReceivers)
 	require.Equal(t, 0, len(mki.NamedReceivers))
-
 }
 
 func testCorruptEphemeralKey(t *testing.T, version Version) {
@@ -1486,7 +1485,8 @@ type encryptArmor62SealInput struct {
 }
 
 func newRandomEncryptArmor62SealInput(
-	version Version, plaintext string) (encryptArmor62SealInput, error) {
+	version Version, plaintext string,
+) (encryptArmor62SealInput, error) {
 	// Hardcoded for now.
 	receiverCount := 3
 	receivers, err := newRandomSecretKeyStrings(receiverCount)

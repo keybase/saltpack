@@ -50,7 +50,6 @@ type testEncryptStream struct {
 }
 
 func (pes *testEncryptStream) Write(plaintext []byte) (int, error) {
-
 	if pes.err != nil {
 		return 0, pes.err
 	}
@@ -119,7 +118,8 @@ func (pes *testEncryptStream) encryptBlock(isFinal bool) error {
 
 func (pes *testEncryptStream) init(
 	version Version, sender BoxSecretKey, receivers []BoxPublicKey,
-	ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG) error {
+	ephemeralKeyCreator EphemeralKeyCreator, rng encryptRNG,
+) error {
 	if err := checkKnownVersion(version); err != nil {
 		return err
 	}
@@ -175,6 +175,7 @@ func (pes *testEncryptStream) init(
 			pes.options.corruptPayloadKey(&payloadKeySlice, rid)
 		}
 
+		//nolint:gosec // rid is a valid receiver index, conversion is safe
 		nonceTmp := nonceForPayloadKeyBox(version, uint64(rid))
 		if pes.options.corruptKeysNonce != nil {
 			nonceTmp = pes.options.corruptKeysNonce(nonceTmp, rid)

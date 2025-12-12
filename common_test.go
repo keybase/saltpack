@@ -27,7 +27,6 @@ func TestComputePayloadAuthenticator(t *testing.T) {
 			authenticator := computePayloadAuthenticator(macKey, payloadHash)
 			if !authenticator.Equal(expectedAuthenticators[i]) {
 				t.Errorf("Got %#v, expected %#v", authenticator, expectedAuthenticators[i])
-
 			}
 			i++
 		}
@@ -81,6 +80,7 @@ func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, v
 var secret1 = boxSecretKey{
 	key: RawBoxKey{0x08},
 }
+
 var secret2 = boxSecretKey{
 	key: RawBoxKey{0x10},
 }
@@ -88,6 +88,7 @@ var secret2 = boxSecretKey{
 var eSecret1 = boxSecretKey{
 	key: RawBoxKey{0x18},
 }
+
 var eSecret2 = boxSecretKey{
 	key: RawBoxKey{0x20},
 }
@@ -95,6 +96,7 @@ var eSecret2 = boxSecretKey{
 var public1 = boxPublicKey{
 	key: RawBoxKey{0x5},
 }
+
 var public2 = boxPublicKey{
 	key: RawBoxKey{0x6},
 }

@@ -197,7 +197,6 @@ func (s *framedDecoderStream) loadHeader() (err error) {
 // Read from a framedDeecoderStream. The frame is the "BEGIN FOO." block
 // at the beginning, and the "END FOO." block at the end.
 func (s *framedDecoderStream) Read(p []byte) (n int, err error) {
-
 	if s.state == fdsHeader {
 		err = s.loadHeader()
 		if err != nil {

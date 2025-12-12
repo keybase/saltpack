@@ -33,7 +33,6 @@ const (
 // saltpack message. If err is nil, msgType will return the type of the encoded message, but this does *NOT* guarantee that the
 // rest of the message is well formed.
 func IsSaltpackBinary(stream *bufio.Reader) (msgType MessageType, version Version, err error) {
-
 	b, err := stream.Peek(minLengthToIdentifyBinarySaltpack)
 	if err == bufio.ErrBufferFull {
 		return MessageTypeUnknown, Version{}, ErrShortSliceOrBuffer
@@ -48,7 +47,6 @@ func IsSaltpackBinary(stream *bufio.Reader) (msgType MessageType, version Versio
 // long enough to make this determination, or if it does not appear to contain a binary saltpack message. If err is nil, msgType
 // will return the type of the encoded message, but this does *NOT* guarantee that the rest of the message is well formed.
 func IsSaltpackBinarySlice(b []byte) (msgType MessageType, version Version, err error) {
-
 	// To avoid decoding the whole header, part of the messagepack decoding is done manually
 	// instead of through go-codec. See https://github.com/msgpack/msgpack/blob/master/spec.md
 	// for details on the encoding.
@@ -241,7 +239,8 @@ func ClassifyStream(stream *bufio.Reader) (isArmored bool, brand string, message
 // as well as some informtation about the stream. The brand is only returned for armored ciphertexts, mki only
 // for encryption-mode ciphertext, senderPublic only for signcryption-mode ciphertexts.
 func ClassifyEncryptedStreamAndMakeDecoder(source io.Reader, decryptionKeyring SigncryptKeyring, keyResolver SymmetricKeyResolver) (
-	plainsource io.Reader, msgType MessageType, mki *MessageKeyInfo, senderPublic SigningPublicKey, isArmored bool, brand string, ver Version, err error) {
+	plainsource io.Reader, msgType MessageType, mki *MessageKeyInfo, senderPublic SigningPublicKey, isArmored bool, brand string, ver Version, err error,
+) {
 	stream := bufio.NewReader(source)
 
 	isArmored, _, msgType, ver, err = ClassifyStream(stream)
