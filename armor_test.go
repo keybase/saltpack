@@ -29,8 +29,10 @@ func brandCheck(t *testing.T, received string) {
 	require.Equal(t, ourBrand, received)
 }
 
-const hdr = "BEGIN ACME SALTPACK ENCRYPTED MESSAGE"
-const ftr = "END ACME SALTPACK ENCRYPTED MESSAGE"
+const (
+	hdr = "BEGIN ACME SALTPACK ENCRYPTED MESSAGE"
+	ftr = "END ACME SALTPACK ENCRYPTED MESSAGE"
+)
 
 func testArmor(t *testing.T, sz int) {
 	m := msg(sz)
@@ -58,6 +60,7 @@ func TestArmor1024(t *testing.T) {
 func TestArmor8192(t *testing.T) {
 	testArmor(t, 8192)
 }
+
 func TestArmor65536(t *testing.T) {
 	testArmor(t, 65536)
 }
@@ -129,7 +132,8 @@ func TestBinaryInput(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		buf := make([]byte, 1<<16)
 		runtime.Stack(buf, true)
-		os.Stderr.Write(buf)
+		_, err := os.Stderr.Write(buf)
+		require.NoError(t, err)
 		t.Fatal("timed out waiting for Armor62Open to finish")
 	}
 

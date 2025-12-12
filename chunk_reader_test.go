@@ -97,8 +97,9 @@ func exampleEncode(plaintext []byte) []byte {
 	for i := 0; i < len(plaintext); i++ {
 		block := exampleBlock{
 			PayloadCiphertext: []byte{^plaintext[i]},
-			Seqno:             packetSeqno(i + 1),
-			IsFinal:           i == len(plaintext)-1,
+			//nolint:gosec // i is a valid slice index, conversion is safe
+			Seqno:   packetSeqno(i + 1),
+			IsFinal: i == len(plaintext)-1,
 		}
 		err := encoder.Encode(block)
 		if err != nil {

@@ -34,7 +34,6 @@ type Encoding struct {
 // wasted per block. The name of the game is to find a good rational
 // approximation of 8/log2(58), and 26/19 is pretty good!
 func NewEncoding(encoder string, base256BlockLen int, skipBytes string) *Encoding {
-
 	base := len(encoder)
 
 	logOfBase := math.Log2(float64(base))
@@ -105,7 +104,6 @@ func (enc *Encoding) getByteType(b byte) byteType {
 		return skipByteType
 	}
 	return invalidByteType
-
 }
 
 func (enc *Encoding) hasSkipBytes() bool {
@@ -124,7 +122,6 @@ func (enc *Encoding) IsValidByte(b byte) bool {
 // bounds checks are performed.  In particular, the dst buffer will
 // be zero-padded from right to left in all remaining bytes.
 func (enc *Encoding) encodeBlock(dst, src []byte) {
-
 	// Interpret the block as a big-endian number (Go's default)
 	num := new(big.Int).SetBytes(src)
 	rem := new(big.Int)
@@ -227,7 +224,6 @@ func (enc *Encoding) decodeBlock(dst []byte, src []byte, baseOffset int) (int, i
 // EncodedLen returns the length in bytes of the baseX encoding
 // of an input buffer of length n
 func (enc *Encoding) EncodedLen(n int) int {
-
 	// Fast path!
 	if n == enc.base256BlockLen {
 		return enc.baseXBlockLen
@@ -245,7 +241,6 @@ func (enc *Encoding) EncodedLen(n int) int {
 // DecodedLen returns the length in bytes of the baseX decoding
 // of an input buffer of length n
 func (enc *Encoding) DecodedLen(n int) int {
-
 	// Fast path!
 	if n == enc.baseXBlockLen {
 		return enc.base256BlockLen

@@ -33,7 +33,6 @@ var ErrOverflow = errors.New("buffer was overflowed before we found punctuation"
 // Read from the punctuatedReader, potentially returning an `ErrPunctuation`
 // if a punctuation character was found.
 func (p *punctuatedReader) Read(out []byte) (n int, err error) {
-
 	// First deal with the case that we had a "short copy" to our target buffer
 	// in a previous call of the read function.
 	if len(p.thisSegment) > 0 {

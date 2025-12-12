@@ -30,7 +30,6 @@ type signcryptSealStream struct {
 }
 
 func (sss *signcryptSealStream) Write(plaintext []byte) (int, error) {
-
 	if sss.err != nil {
 		return 0, sss.err
 	}
@@ -283,7 +282,8 @@ type signcryptRNG interface {
 // and should both be indistinguishable from random noise.
 func (sss *signcryptSealStream) init(
 	receiverBoxKeys []BoxPublicKey, receiverSymmetricKeys []ReceiverSymmetricKey,
-	ephemeralKeyCreator EphemeralKeyCreator, rng signcryptRNG) error {
+	ephemeralKeyCreator EphemeralKeyCreator, rng signcryptRNG,
+) error {
 	if err := checkSigncryptReceivers(receiverBoxKeys, receiverSymmetricKeys); err != nil {
 		return err
 	}
@@ -329,6 +329,7 @@ func (sss *signcryptSealStream) init(
 	// Collect all the recipient identifiers, and encrypt the payload key for
 	// all of them.
 	for i, r := range receivers {
+		//nolint:gosec // i is a valid slice index, conversion is safe
 		eh.Receivers = append(eh.Receivers, r.makeReceiverKeys(ephemeralKey, sss.encryptionKey, uint64(i)))
 	}
 

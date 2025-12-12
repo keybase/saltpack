@@ -117,7 +117,6 @@ type decoder struct {
 }
 
 func (d *decoder) Read(p []byte) (int, error) {
-
 	if d.err != nil {
 		return 0, d.err
 	}

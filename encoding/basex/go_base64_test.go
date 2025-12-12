@@ -93,7 +93,8 @@ func TestEncoder(t *testing.T) {
 		encoder := NewEncoder(Base58StdEncoding, bb)
 		_, err := encoder.Write([]byte(p.decoded))
 		require.NoError(t, err)
-		encoder.Close()
+		err = encoder.Close()
+		require.NoError(t, err)
 		testEqual(t, "Encode(%q) = %q, want %q", p.decoded, bb.String(), p.encoded)
 	}
 }

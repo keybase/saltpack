@@ -131,6 +131,7 @@ func (ds *decryptStream) tryVisibleReceivers(hdr *EncryptionHeader, ephemeralKey
 		return nil, nil, -1, ErrBadLookup
 	}
 
+	//nolint:gosec // orig is a valid slice index, conversion is safe
 	nonce := nonceForPayloadKeyBox(hdr.Version, uint64(orig))
 	payloadKeySlice, err := sk.Unbox(ephemeralKey, nonce, hdr.Receivers[orig].PayloadKeyBox)
 	if err != nil {
@@ -160,6 +161,7 @@ func (ds *decryptStream) tryHiddenReceivers(hdr *EncryptionHeader, ephemeralKey 
 
 		for i, r := range hdr.Receivers {
 			if len(r.ReceiverKID) == 0 {
+				//nolint:gosec // i is a valid slice index, conversion is safe
 				nonce := nonceForPayloadKeyBox(hdr.Version, uint64(i))
 				payloadKeySlice, err := shared.Unbox(nonce, r.PayloadKeyBox)
 				if err != nil {
@@ -259,7 +261,6 @@ func computeMACKeyReceiver(version Version, index uint64, secret BoxSecretKey, p
 }
 
 func (ds *decryptStream) processBlock(ciphertext []byte, authenticators []payloadAuthenticator, isFinal bool, seqno packetSeqno) ([]byte, error) {
-
 	blockNum := encryptionBlockNumber(seqno - 1)
 
 	if err := blockNum.check(); err != nil {

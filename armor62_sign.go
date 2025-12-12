@@ -60,7 +60,6 @@ func NewSignDetachedArmor62Stream(version Version, detachedsig io.Writer, signer
 		return nil, err
 	}
 	return closeForwarder([]io.WriteCloser{out, enc}), nil
-
 }
 
 // SignDetachedArmor62 returns a detached armored signature of plaintext from signer.

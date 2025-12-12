@@ -190,7 +190,6 @@ func testSignTruncation(t *testing.T, version Version) {
 	if err != io.ErrUnexpectedEOF {
 		t.Errorf("error: %v, expected %v", err, io.ErrUnexpectedEOF)
 	}
-
 }
 
 func testSignSkipBlock(t *testing.T, version Version) {
@@ -198,6 +197,7 @@ func testSignSkipBlock(t *testing.T, version Version) {
 	var opts testSignOptions
 	numBlocks := 10
 	opts.skipBlock = func(n packetSeqno) bool {
+		//nolint:gosec // n is bounded by test data, conversion is safe
 		return int(n) == numBlocks-1
 	}
 	smsg, err := testTweakSign(version, randomMsg(t, numBlocks*1024*1024), key, opts)

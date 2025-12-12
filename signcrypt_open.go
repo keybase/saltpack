@@ -84,9 +84,11 @@ func (sos *signcryptOpenStream) tryBoxSecretKeys(hdr *SigncryptionHeader, epheme
 	// one, so this shouldn't be as quadratic as it looks.
 	for receiverIndex, receiver := range hdr.Receivers {
 		for _, derivedKey := range derivedKeys {
+			//nolint:gosec // receiverIndex is a valid slice index, conversion is safe
 			identifier := keyIdentifierFromDerivedKey(derivedKey, uint64(receiverIndex))
 			if hmac.Equal(identifier, receiver.ReceiverKID) {
 				// This is the right key! Open the sender secretbox and return the sender key.
+				//nolint:gosec // receiverIndex is a valid slice index, conversion is safe
 				nonce := nonceForPayloadKeyBoxV2(uint64(receiverIndex))
 				payloadKey, isValid := secretbox.Open(
 					nil,
@@ -144,6 +146,7 @@ func (sos *signcryptOpenStream) trySharedSymmetricKeys(hdr *SigncryptionHeader, 
 			panic(err) // should be statically impossible, if the slice above is the right length
 		}
 
+		//nolint:gosec // index is a valid slice index, conversion is safe
 		nonce := nonceForPayloadKeyBoxV2(uint64(index))
 		payloadKey, isValid := secretbox.Open(
 			nil,
@@ -205,7 +208,6 @@ func (sos *signcryptOpenStream) processHeader(hdr *SigncryptionHeader) error {
 }
 
 func (sos *signcryptOpenStream) processBlock(payloadCiphertext []byte, isFinal bool, seqno packetSeqno) ([]byte, error) {
-
 	blockNum := encryptionBlockNumber(seqno - 1)
 
 	if err := blockNum.check(); err != nil {
@@ -267,7 +269,7 @@ type SymmetricKeyResolver interface {
 }
 
 // SigncryptOpen simply opens a ciphertext given the set of keys in the specified keyring.
-// It returns a plaintext on sucess, and an error on failure. It returns the header's
+// It returns a plaintext on success, and an error on failure. It returns the header's
 // MessageKeyInfo in either case.
 func SigncryptOpen(ciphertext []byte, keyring SigncryptKeyring, resolver SymmetricKeyResolver) (senderPub SigningPublicKey, plaintext []byte, err error) {
 	buf := bytes.NewBuffer(ciphertext)

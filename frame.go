@@ -67,7 +67,6 @@ func getStringForType(typ MessageType) string {
 }
 
 func parseFrame(m string, typ MessageType, hof headerOrFooterMarker) (brand string, err error) {
-
 	if len(m) > maxFrameLength {
 		err = makeErrBadFrame("Frame is too long")
 		return

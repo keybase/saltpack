@@ -125,18 +125,23 @@ func makeErrBadFrame(format string, args ...interface{}) error {
 func (e ErrNoSenderKey) Error() string {
 	return "no sender key found for message"
 }
+
 func (e ErrWrongMessageType) Error() string {
 	return fmt.Sprintf("Wrong saltpack message type: wanted %s, but got %s instead", e.Wanted, e.Received)
 }
+
 func (e ErrBadVersion) Error() string {
 	return fmt.Sprintf("Unsupported version (%s)", e.received)
 }
+
 func (e ErrBadCiphertext) Error() string {
 	return fmt.Sprintf("In packet %d: bad ciphertext; failed Poly1305", e)
 }
+
 func (e ErrBadTag) Error() string {
 	return fmt.Sprintf("In packet %d: bad Poly1305 tag; data was corrupted in transit", e)
 }
+
 func (e ErrRepeatedKey) Error() string {
 	return fmt.Sprintf("Repeated recipient key: %x", []byte(e))
 }
