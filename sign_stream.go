@@ -105,7 +105,7 @@ func (s *signAttachedStream) Close() error {
 	}
 }
 
-func makeSignatureBlock(version Version, sig, chunk []byte, isFinal bool) interface{} {
+func makeSignatureBlock(version Version, sig, chunk []byte, isFinal bool) any {
 	sbV1 := signatureBlockV1{
 		Signature:    sig,
 		PayloadChunk: chunk,

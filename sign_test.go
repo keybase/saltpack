@@ -92,7 +92,7 @@ func testSignConcurrent(t *testing.T, version Version) {
 	msg := randomMsg(t, 128)
 	key := newSigPrivKey(t)
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -648,7 +648,7 @@ func TestSignSubsequenceV1(t *testing.T) {
 	encoder2 := newEncoder(truncatedSMsg2)
 	encoder3 := newEncoder(truncatedSMsg3)
 
-	encode := func(e encoder, i interface{}) {
+	encode := func(e encoder, i any) {
 		err = e.Encode(i)
 		if err != nil {
 			t.Fatal(err)
@@ -718,7 +718,7 @@ func TestSignSubsequenceV2(t *testing.T) {
 	encoder1 := newEncoder(truncatedSMsg1)
 	encoder2 := newEncoder(truncatedSMsg2)
 
-	encode := func(e encoder, i interface{}) {
+	encode := func(e encoder, i any) {
 		err = e.Encode(i)
 		if err != nil {
 			t.Fatal(err)

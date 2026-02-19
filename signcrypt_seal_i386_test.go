@@ -2,7 +2,6 @@
 // this source code is governed by the included BSD license.
 
 //go:build 386
-// +build 386
 
 package saltpack
 

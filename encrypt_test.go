@@ -251,7 +251,7 @@ func isValidPermutation(n int, a []int) bool {
 	aCopy := make([]int, len(a))
 	copy(aCopy, a)
 	sort.Ints(aCopy)
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		if aCopy[i] != i {
 			return false
 		}
@@ -289,7 +289,7 @@ func requireValidNonTrivialPermutation(t *testing.T, count int, shuffledOrder []
 func TestShuffleEncryptReceivers(t *testing.T) {
 	receiverCount := 20
 	var receivers []BoxPublicKey
-	for i := 0; i < receiverCount; i++ {
+	for i := range receiverCount {
 		k := boxPublicKey{
 			key: RawBoxKey{byte(i)},
 		}
@@ -314,7 +314,7 @@ func getEncryptReceiverKeysOrder(receiverKeys []receiverKeys) []int {
 func testNewEncryptStreamShuffledReaders(t *testing.T, version Version) {
 	receiverCount := 20
 	var receivers []BoxPublicKey
-	for i := 0; i < receiverCount; i++ {
+	for i := range receiverCount {
 		k := boxPublicKey{
 			key: RawBoxKey{byte(i)},
 		}
@@ -797,7 +797,7 @@ func testMissingFooter(t *testing.T, version Version) {
 	require.Equal(t, io.ErrUnexpectedEOF, err)
 }
 
-func getEncryptionBlockV1(eb *interface{}) encryptionBlockV1 {
+func getEncryptionBlockV1(eb *any) encryptionBlockV1 {
 	switch eb := (*eb).(type) {
 	case encryptionBlockV1:
 		return eb
@@ -816,7 +816,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	// First check that a corrupted ciphertext fails the Poly1305
 	ciphertext, err := testSeal(version, msg, sender, receivers, testEncryptionOptions{
 		blockSize: 1024,
-		corruptEncryptionBlock: func(eb *interface{}, ebn encryptionBlockNumber) {
+		corruptEncryptionBlock: func(eb *any, ebn encryptionBlockNumber) {
 			if ebn == 2 {
 				ebV1 := getEncryptionBlockV1(eb)
 				ebV1.PayloadCiphertext[8] ^= 1
@@ -830,7 +830,7 @@ func testCorruptEncryption(t *testing.T, version Version) {
 	// Next check that a corruption of the Poly1305 tags causes a failure
 	ciphertext, err = testSeal(version, msg, sender, receivers, testEncryptionOptions{
 		blockSize: 1024,
-		corruptEncryptionBlock: func(eb *interface{}, ebn encryptionBlockNumber) {
+		corruptEncryptionBlock: func(eb *any, ebn encryptionBlockNumber) {
 			if ebn == 2 {
 				ebV1 := getEncryptionBlockV1(eb)
 				ebV1.HashAuthenticators[0][2] ^= 1
@@ -1212,7 +1212,7 @@ func TestEncryptSubsequenceV1(t *testing.T) {
 	encoder2 := newEncoder(truncatedCiphertext2)
 	encoder3 := newEncoder(truncatedCiphertext3)
 
-	encode := func(e encoder, i interface{}) {
+	encode := func(e encoder, i any) {
 		err = e.Encode(i)
 		require.NoError(t, err)
 	}
@@ -1284,7 +1284,7 @@ func TestEncryptSubsequenceV2(t *testing.T) {
 	encoder1 := newEncoder(truncatedCiphertext1)
 	encoder2 := newEncoder(truncatedCiphertext2)
 
-	encode := func(e encoder, i interface{}) {
+	encode := func(e encoder, i any) {
 		err = e.Encode(i)
 		require.NoError(t, err)
 	}
@@ -1396,7 +1396,7 @@ func (s secretKeyString) toSecretKey() (boxSecretKey, error) {
 
 func newRandomSecretKeyStrings(n int) ([]secretKeyString, error) {
 	var secretKeyStrings []secretKeyString
-	for i := 0; i < n; i++ {
+	for range n {
 		s, err := newRandomSecretKeyString()
 		if err != nil {
 			return nil, err
@@ -1458,7 +1458,7 @@ func (c constantEncryptRNG) shuffleReceivers(receivers []BoxPublicKey) ([]BoxPub
 		return nil, fmt.Errorf("invalid permutation for length %d: %+v", len(receivers), c.p)
 	}
 	shuffled := make([]BoxPublicKey, len(receivers))
-	for i := 0; i < len(receivers); i++ {
+	for i := range receivers {
 		shuffled[i] = receivers[c.p[i]]
 	}
 	return shuffled, nil
@@ -1494,7 +1494,7 @@ func newRandomEncryptArmor62SealInput(
 		return encryptArmor62SealInput{}, err
 	}
 	permutation := make([]int, receiverCount)
-	for i := 0; i < receiverCount; i++ {
+	for i := range receiverCount {
 		permutation[i] = i
 	}
 	err = csprngShuffle(rand.Reader, receiverCount, func(i, j int) {

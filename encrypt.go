@@ -9,6 +9,7 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"io"
+	"slices"
 
 	"golang.org/x/crypto/nacl/secretbox"
 )
@@ -49,7 +50,7 @@ func (es *encryptStream) Write(plaintext []byte) (int, error) {
 	return ret, nil
 }
 
-func makeEncryptionBlock(version Version, ciphertext []byte, authenticators []payloadAuthenticator, isFinal bool) interface{} {
+func makeEncryptionBlock(version Version, ciphertext []byte, authenticators []payloadAuthenticator, isFinal bool) any {
 	ebV1 := encryptionBlockV1{
 		PayloadCiphertext:  ciphertext,
 		HashAuthenticators: authenticators,
@@ -137,10 +138,8 @@ func (es *encryptStream) encryptBlock(isFinal bool) error {
 }
 
 func checkKnownVersion(version Version) error {
-	for _, knownVersion := range KnownVersions() {
-		if version == knownVersion {
-			return nil
-		}
+	if slices.Contains(KnownVersions(), version) {
+		return nil
 	}
 	return ErrBadVersion{version}
 }

@@ -43,7 +43,7 @@ My Muse said to me ‘Fool, look in your heart and write.’
 func TestPunctuatedReaderRegularReads(t *testing.T) {
 	buf := bytes.NewBufferString(testText)
 	r := newPunctuatedReader(buf, '.')
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		_, err := r.ReadUntilPunctuation(1024)
 		if err != nil {
 			t.Fatal(err)
@@ -57,7 +57,7 @@ func TestPunctuatedReaderRegularReads(t *testing.T) {
 
 func TestPunctuatedReaderSlowReads(t *testing.T) {
 	r := newPunctuatedReader(&slowReader{[]byte(testText)}, '.')
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		_, err := r.ReadUntilPunctuation(1024)
 		if err != nil {
 			t.Fatal(err)

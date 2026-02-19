@@ -13,7 +13,6 @@ import (
 
 func runTestOverVersions(t *testing.T, f func(t *testing.T, version saltpack.Version)) {
 	for _, version := range saltpack.KnownVersions() {
-		version := version // capture range variable.
 		t.Run(version.String(), func(t *testing.T) {
 			f(t, version)
 		})
@@ -38,7 +37,6 @@ func runTestOverVersions(t *testing.T, f func(t *testing.T, version saltpack.Ver
 // This is copied from ../common_test.go.
 func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, ver saltpack.Version)) {
 	for _, f := range fs {
-		f := f // capture range variable.
 		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 		i := strings.LastIndex(name, prefix)
 		if i >= 0 {

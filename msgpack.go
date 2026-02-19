@@ -10,14 +10,14 @@ import (
 )
 
 type encoder interface {
-	Encode(v interface{}) error
+	Encode(v any) error
 }
 
 func newEncoder(w io.Writer) encoder {
 	return codec.NewEncoder(w, codecHandle())
 }
 
-func encodeToBytes(i interface{}) ([]byte, error) {
+func encodeToBytes(i any) ([]byte, error) {
 	var encoded []byte
 	err := codec.NewEncoderBytes(&encoded, codecHandle()).Encode(i)
 	return encoded, err
@@ -32,7 +32,7 @@ func encodeToBytes(i interface{}) ([]byte, error) {
 // aren't minimally encoded, but there's no easy way to check that
 // either.
 
-func decodeFromBytes(p interface{}, b []byte) error {
+func decodeFromBytes(p any, b []byte) error {
 	return codec.NewDecoderBytes(b, codecHandle()).Decode(p)
 }
 
@@ -45,7 +45,7 @@ func newMsgpackStream(r io.Reader) *msgpackStream {
 	return &msgpackStream{decoder: codec.NewDecoder(r, codecHandle())}
 }
 
-func (r *msgpackStream) Read(i interface{}) (ret packetSeqno, err error) {
+func (r *msgpackStream) Read(i any) (ret packetSeqno, err error) {
 	if err = r.decoder.Decode(i); err != nil {
 		return ret, err
 	}

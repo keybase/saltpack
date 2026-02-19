@@ -117,7 +117,7 @@ func TestConcurrent(t *testing.T) {
 	encoder := Base62StdEncodingStrict
 	eg := errgroup.Group{}
 	eg.Go(func() error {
-		for i := 0; i < 2000; i++ {
+		for range 2000 {
 			s := encoder.EncodeToString([]byte("testing"))
 			_, decodeErr := encoder.DecodeString(s)
 			if decodeErr != nil {
@@ -126,7 +126,7 @@ func TestConcurrent(t *testing.T) {
 		}
 		return nil
 	})
-	for i := 0; i < 2000; i++ {
+	for range 2000 {
 		s := encoder.EncodeToString([]byte("testing"))
 		_, decodeErr := encoder.DecodeString(s)
 		if decodeErr != nil {

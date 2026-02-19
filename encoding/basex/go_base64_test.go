@@ -69,7 +69,7 @@ var bigtest = testpair{
 	"GTsfDqyGri6QZNu9WnLkGjRiS73vQ4n9xVSxpZfC6Rhd92z",
 }
 
-func testEqual(t *testing.T, msg string, args ...interface{}) bool {
+func testEqual(t *testing.T, msg string, args ...any) bool {
 	if args[len(args)-2] != args[len(args)-1] {
 		t.Errorf(msg, args...)
 		return false
@@ -105,10 +105,7 @@ func TestEncoderBuffering(t *testing.T) {
 		bb := &bytes.Buffer{}
 		encoder := NewEncoder(Base58StdEncoding, bb)
 		for pos := 0; pos < len(input); pos += bs {
-			end := pos + bs
-			if end > len(input) {
-				end = len(input)
-			}
+			end := min(pos+bs, len(input))
 			n, err := encoder.Write(input[pos:end])
 			require.NoError(t, err)
 			testEqual(t, "Write(%q) gave error %v, want %v", input[pos:end], err, error(nil))

@@ -212,7 +212,7 @@ func TestIsSaltpackArmoredShortArmor(t *testing.T) {
 
 	// The number 83 directly depends on the length of the header frame, the number of spaces, and the base62 block length
 	// for this specific message.
-	for i := 0; i < 83; i++ {
+	for i := range 83 {
 		_, _, _, err := IsSaltpackArmoredPrefix(sealedStr[:i])
 		require.Equalf(t, ErrShortSliceOrBuffer, err, "Expected ErrShortSliceOrBuffer for i=%v, instead got: %T, %v", i, err, err)
 	}

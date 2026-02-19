@@ -2,7 +2,6 @@
 // this source code is governed by the included BSD license.
 
 //go:build go1.10
-// +build go1.10
 
 package saltpack
 
