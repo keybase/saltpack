@@ -66,7 +66,7 @@ type encryptionBlockV2 struct {
 var _ codec.Selfer = (*encryptionBlockV2)(nil)
 
 func (b *encryptionBlockV2) CodecEncodeSelf(e *codec.Encoder) {
-	e.MustEncode([]interface{}{
+	e.MustEncode([]any{
 		b.IsFinal,
 		b.HashAuthenticators,
 		b.PayloadCiphertext,
@@ -74,7 +74,7 @@ func (b *encryptionBlockV2) CodecEncodeSelf(e *codec.Encoder) {
 }
 
 func (b *encryptionBlockV2) CodecDecodeSelf(d *codec.Decoder) {
-	d.MustDecode([]interface{}{
+	d.MustDecode([]any{
 		&b.IsFinal,
 		&b.HashAuthenticators,
 		&b.PayloadCiphertext,
@@ -179,7 +179,7 @@ type signatureBlockV2 struct {
 var _ codec.Selfer = (*signatureBlockV2)(nil)
 
 func (b *signatureBlockV2) CodecEncodeSelf(e *codec.Encoder) {
-	e.MustEncode([]interface{}{
+	e.MustEncode([]any{
 		b.IsFinal,
 		b.Signature,
 		b.PayloadChunk,
@@ -187,7 +187,7 @@ func (b *signatureBlockV2) CodecEncodeSelf(e *codec.Encoder) {
 }
 
 func (b *signatureBlockV2) CodecDecodeSelf(d *codec.Decoder) {
-	d.MustDecode([]interface{}{
+	d.MustDecode([]any{
 		&b.IsFinal,
 		&b.Signature,
 		&b.PayloadChunk,

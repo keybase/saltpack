@@ -118,7 +118,7 @@ func (e ErrBadFrame) Error() string {
 	return fmt.Sprintf("Error in framing: %s", e.msg)
 }
 
-func makeErrBadFrame(format string, args ...interface{}) error {
+func makeErrBadFrame(format string, args ...any) error {
 	return ErrBadFrame{fmt.Sprintf(format, args...)}
 }
 

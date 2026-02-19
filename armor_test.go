@@ -17,7 +17,7 @@ import (
 
 func msg(sz int) []byte {
 	res := make([]byte, sz)
-	for i := 0; i < sz; i++ {
+	for i := range sz {
 		res[i] = byte(i % 256)
 	}
 	return res

@@ -35,7 +35,6 @@ func TestComputePayloadAuthenticator(t *testing.T) {
 
 func runTestOverVersions(t *testing.T, f func(t *testing.T, version Version)) {
 	for _, version := range KnownVersions() {
-		version := version // capture range variable.
 		t.Run(version.String(), func(t *testing.T) {
 			f(t, version)
 		})
@@ -58,7 +57,6 @@ func runTestOverVersions(t *testing.T, f func(t *testing.T, version Version)) {
 //	}
 func runTestsOverVersions(t *testing.T, prefix string, fs []func(t *testing.T, ver Version)) {
 	for _, f := range fs {
-		f := f // capture range variable.
 		name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 		i := strings.LastIndex(name, prefix)
 		if i >= 0 {

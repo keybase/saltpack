@@ -41,7 +41,7 @@ func (e encryptionBlockNumber) check() error {
 // should be used in a context where io.EOF is expected, and anything
 // else is an error.
 func assertEndOfStream(stream *msgpackStream) error {
-	var i interface{}
+	var i any
 	_, err := stream.Read(&i)
 	if err == nil {
 		err = ErrTrailingGarbage

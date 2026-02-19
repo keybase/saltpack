@@ -275,7 +275,7 @@ func testSigncryptionSubsequence(t *testing.T, anon bool) {
 	encoder1 := newEncoder(truncatedCiphertext1)
 	encoder2 := newEncoder(truncatedCiphertext2)
 
-	encode := func(e encoder, i interface{}) {
+	encode := func(e encoder, i any) {
 		err = e.Encode(i)
 		require.NoError(t, err)
 	}

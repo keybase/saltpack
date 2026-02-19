@@ -94,7 +94,7 @@ func exampleEncode(plaintext []byte) []byte {
 	if err != nil {
 		panic(err)
 	}
-	for i := 0; i < len(plaintext); i++ {
+	for i := range plaintext {
 		block := exampleBlock{
 			PayloadCiphertext: []byte{^plaintext[i]},
 			//nolint:gosec // i is a valid slice index, conversion is safe
@@ -159,10 +159,7 @@ func (c *testChunker) getNextChunk() ([]byte, error) {
 func chunkString(t *testing.T, s string, chunkSize int, finalErr error, errWithLastChunk bool) *testChunker {
 	var chunks [][]byte
 	for len(s) > 0 {
-		n := chunkSize
-		if n > len(s) {
-			n = len(s)
-		}
+		n := min(chunkSize, len(s))
 		chunks = append(chunks, []byte(s[:n]))
 		s = s[n:]
 	}

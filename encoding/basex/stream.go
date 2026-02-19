@@ -131,10 +131,7 @@ func (d *decoder) Read(p []byte) (int, error) {
 	ibl := d.enc.base256BlockLen
 	obl := d.enc.baseXBlockLen
 
-	nn := len(p) / ibl * obl
-	if nn < obl {
-		nn = obl
-	}
+	nn := max(len(p)/ibl*obl, obl)
 	if nn > len(d.buf) {
 		nn = len(d.buf)
 	}

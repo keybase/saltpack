@@ -74,7 +74,7 @@ func TestNewSigncryptSealStreamShuffledReaders(t *testing.T) {
 	// identifier to the index.
 
 	var receiverSymmetricKeys []ReceiverSymmetricKey
-	for i := 0; i < receiverCount; i++ {
+	for i := range receiverCount {
 		k := ReceiverSymmetricKey{
 			Key:        SymmetricKey{byte(i)},
 			Identifier: []byte{byte(i)},

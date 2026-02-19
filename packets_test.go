@@ -124,7 +124,7 @@ func TestEncryptionBlockV2FieldOrder(t *testing.T) {
 	require.NoError(t, err)
 
 	var blockV2Decoded encryptionBlockV2
-	err = decodeFromBytes([]interface{}{
+	err = decodeFromBytes([]any{
 		&blockV2Decoded.IsFinal,
 		&blockV2Decoded.HashAuthenticators,
 		&blockV2Decoded.PayloadCiphertext,
@@ -190,7 +190,7 @@ func TestSignatureBlockV2FieldOrder(t *testing.T) {
 	require.NoError(t, err)
 
 	var blockV2Decoded signatureBlockV2
-	err = decodeFromBytes([]interface{}{
+	err = decodeFromBytes([]any{
 		&blockV2Decoded.IsFinal,
 		&blockV2Decoded.Signature,
 		&blockV2Decoded.PayloadChunk,

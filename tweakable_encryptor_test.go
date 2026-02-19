@@ -15,7 +15,7 @@ import (
 type testEncryptionOptions struct {
 	blockSize                   int
 	skipFooter                  bool
-	corruptEncryptionBlock      func(bl *interface{}, ebn encryptionBlockNumber)
+	corruptEncryptionBlock      func(bl *any, ebn encryptionBlockNumber)
 	corruptCiphertextBeforeHash func(c []byte, ebn encryptionBlockNumber)
 	corruptPayloadNonce         func(n Nonce, ebn encryptionBlockNumber) Nonce
 	corruptKeysNonce            func(n Nonce, rid int) Nonce

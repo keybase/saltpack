@@ -25,7 +25,7 @@ type testSignStream struct {
 	seqno      packetSeqno
 	secretKey  SigningSecretKey
 	options    testSignOptions
-	savedBlock interface{}
+	savedBlock any
 }
 
 func newTestSignStream(version Version, w io.Writer, signer SigningSecretKey, opts testSignOptions) (*testSignStream, error) {
