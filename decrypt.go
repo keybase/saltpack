@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
+	"errors"
 	"io"
 
 	"golang.org/x/crypto/nacl/secretbox"
@@ -42,7 +43,7 @@ type MessageKeyInfo struct {
 func (ds *decryptStream) getNextChunk() ([]byte, error) {
 	ciphertext, authenticators, isFinal, seqno, err := readEncryptionBlock(ds.version, ds.mps)
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
 		return nil, err

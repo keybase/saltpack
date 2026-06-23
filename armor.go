@@ -5,6 +5,7 @@ package saltpack
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -206,11 +207,11 @@ func (s *framedDecoderStream) Read(p []byte) (n int, err error) {
 
 	if s.state == fdsBody {
 		n, err = s.r.Read(p)
-		if err == ErrPunctuated {
+		if errors.Is(err, ErrPunctuated) {
 			err = nil
 			s.state = fdsFooter
 		}
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
 		if err != nil {
@@ -241,7 +242,7 @@ func (s *framedDecoderStream) Read(p []byte) (n int, err error) {
 
 	if s.state == fdsEndOfStream {
 		err = s.consumeUntilEOF()
-		if err == io.EOF && n > 0 {
+		if errors.Is(err, io.EOF) && n > 0 {
 			err = nil
 		}
 	}

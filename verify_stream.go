@@ -4,6 +4,7 @@
 package saltpack
 
 import (
+	"errors"
 	"io"
 )
 
@@ -28,7 +29,7 @@ func newVerifyStream(versionValidator VersionValidator, r io.Reader, msgType Mes
 func (v *verifyStream) getNextChunk() ([]byte, error) {
 	signature, chunk, isFinal, seqno, err := readSignatureBlock(v.header.Version, v.mps)
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
 		return nil, err

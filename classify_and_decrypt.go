@@ -5,6 +5,7 @@ package saltpack
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -34,7 +35,7 @@ const (
 // rest of the message is well formed.
 func IsSaltpackBinary(stream *bufio.Reader) (msgType MessageType, version Version, err error) {
 	b, err := stream.Peek(minLengthToIdentifyBinarySaltpack)
-	if err == bufio.ErrBufferFull {
+	if errors.Is(err, bufio.ErrBufferFull) {
 		return MessageTypeUnknown, Version{}, ErrShortSliceOrBuffer
 	}
 	if err != nil {
@@ -115,7 +116,7 @@ func IsSaltpackBinarySlice(b []byte) (msgType MessageType, version Version, err 
 // rest of the message is well formed.
 func IsSaltpackArmored(stream *bufio.Reader) (brand string, msgType MessageType, ver Version, err error) {
 	buf, err := stream.Peek(stream.Size())
-	if (err != nil && err != io.EOF) || len(buf) == 0 {
+	if (err != nil && !errors.Is(err, io.EOF)) || len(buf) == 0 {
 		return "", MessageTypeUnknown, ver, err
 	}
 
@@ -186,7 +187,7 @@ func IsSaltpackArmoredPrefix(pref string) (brand string, messageType MessageType
 	// a truncated block as if it was a short block. Moreover, we only need one codeword, so if an error is returned but a codeword
 	// was decoded, the error can be ignored.
 	if len(dec) < 32 {
-		if err == basex.ErrInvalidEncodingLength || err == nil {
+		if errors.Is(err, basex.ErrInvalidEncodingLength) || err == nil {
 			return "", MessageTypeUnknown, ver, ErrShortSliceOrBuffer
 		}
 		return "", MessageTypeUnknown, ver, ErrNotASaltpackMessage
@@ -222,7 +223,7 @@ func ClassifyStream(stream *bufio.Reader) (isArmored bool, brand string, message
 	brand, messageType, ver, err = IsSaltpackArmored(stream)
 	if err == nil {
 		return true, brand, messageType, ver, err
-	} else if err == ErrShortSliceOrBuffer {
+	} else if errors.Is(err, ErrShortSliceOrBuffer) {
 		return false, "", MessageTypeUnknown, Version{}, ErrShortSliceOrBuffer
 	}
 	messageType, ver, err = IsSaltpackBinary(stream)
@@ -244,7 +245,7 @@ func ClassifyEncryptedStreamAndMakeDecoder(source io.Reader, decryptionKeyring S
 	stream := bufio.NewReader(source)
 
 	isArmored, _, msgType, ver, err = ClassifyStream(stream)
-	if err == ErrShortSliceOrBuffer {
+	if errors.Is(err, ErrShortSliceOrBuffer) {
 		return nil, MessageTypeUnknown, nil, nil, false, "", Version{}, ErrShortSliceOrBuffer
 	}
 	if err != nil {

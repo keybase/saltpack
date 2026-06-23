@@ -6,6 +6,7 @@ package saltpack
 import (
 	"bytes"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"testing"
@@ -371,7 +372,7 @@ func TestSigncryptionStream(t *testing.T) {
 		buffer := make([]byte, 1)
 		n, err := reader.Read(buffer)
 		output = append(output, buffer[:n]...)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		require.NoError(t, err)
@@ -575,7 +576,7 @@ type RandomSigningKeysKeyring struct {
 	keyring
 }
 
-var _ (Keyring) = (*RandomSigningKeysKeyring)(nil)
+var _ Keyring = (*RandomSigningKeysKeyring)(nil)
 
 func (r *RandomSigningKeysKeyring) LookupSigningPublicKey(_ []byte) SigningPublicKey {
 	pub, _, err := ed25519.GenerateKey(rand.Reader)
