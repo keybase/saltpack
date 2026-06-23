@@ -51,7 +51,7 @@ type errAtEOFReader struct {
 
 func (r errAtEOFReader) Read(p []byte) (n int, err error) {
 	n, err = r.Reader.Read(p)
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		err = r.errAtEOF
 	}
 	return n, err

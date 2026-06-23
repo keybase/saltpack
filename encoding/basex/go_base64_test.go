@@ -139,12 +139,12 @@ func TestDecoder(t *testing.T) {
 		decoder := NewDecoder(Base58StdEncoding, strings.NewReader(p.encoded))
 		dbuf := make([]byte, Base58StdEncoding.DecodedLen(len(p.encoded)))
 		count, err := decoder.Read(dbuf)
-		if err != nil && err != io.EOF {
+		if err != nil && !errors.Is(err, io.EOF) {
 			t.Fatal("Read failed", err)
 		}
 		testEqual(t, "Read from %q = length %v, want %v", p.encoded, count, len(p.decoded))
 		testEqual(t, "Decoding of %q = %q, want %q", p.encoded, string(dbuf[0:count]), p.decoded)
-		if err != io.EOF {
+		if !errors.Is(err, io.EOF) {
 			_, err = decoder.Read(dbuf)
 		}
 		testEqual(t, "Read from %q = %v, want %v", p.encoded, err, io.EOF)
@@ -263,7 +263,7 @@ func TestDecoderIssue3577(t *testing.T) {
 	}()
 	select {
 	case err := <-errc:
-		if err != wantErr {
+		if !errors.Is(err, wantErr) {
 			t.Errorf("got error %v; want %v", err, wantErr)
 		}
 	case <-time.After(5 * time.Second):
@@ -336,10 +336,10 @@ func TestDecodeCorrupt(t *testing.T) {
 			}
 			continue
 		}
-		switch err := err.(type) {
-		case CorruptInputError:
-			testEqual(t, "Corruption in %q at offset %v, want %v", tc.input, int(err), tc.offset)
-		default:
+		var cie CorruptInputError
+		if errors.As(err, &cie) {
+			testEqual(t, "Corruption in %q at offset %v, want %v", tc.input, int(cie), tc.offset)
+		} else {
 			t.Error("Decoder failed to detect corruption in", tc)
 		}
 	}

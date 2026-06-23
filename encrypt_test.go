@@ -233,7 +233,7 @@ func slowRead(r io.Reader, sz int) ([]byte, error) {
 	for eof := false; !eof; {
 		n, err := r.Read(buf)
 		res = append(res, buf[:n]...)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -1250,19 +1250,19 @@ func TestEncryptSubsequenceV1(t *testing.T) {
 	validator := SingleVersionValidator(Version1())
 	_, _, err = Open(validator, truncatedCiphertext1.Bytes(), kr)
 	expectedErr := ErrBadTag(2)
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("err=%v != %v for truncatedCiphertext1", err, expectedErr)
 	}
 
 	_, _, err = Open(validator, truncatedCiphertext2.Bytes(), kr)
 	expectedErr = ErrBadTag(1)
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("err=%v != %v for truncatedCiphertext2", err, expectedErr)
 	}
 
 	_, _, err = Open(validator, truncatedCiphertext3.Bytes(), kr)
 	expectedErr = ErrBadTag(1)
-	if err != expectedErr {
+	if !errors.Is(err, expectedErr) {
 		t.Errorf("err=%v != %v for truncatedCiphertext3", err, expectedErr)
 	}
 }
@@ -1316,7 +1316,7 @@ func TestEncryptSubsequenceV2(t *testing.T) {
 		validator := SingleVersionValidator(Version2())
 		_, _, err = Open(validator, truncatedCiphertext.Bytes(), kr)
 		expectedErr := ErrBadTag(1)
-		if err != expectedErr {
+		if !errors.Is(err, expectedErr) {
 			t.Errorf("err=%v != %v for truncatedCiphertext%d", err, expectedErr, i+1)
 		}
 	}
@@ -1547,7 +1547,8 @@ func (i encryptArmor62SealInput) call() (string, error) {
 		receivers,
 		constantEphemeralKeyCreator{ephemeralKey},
 		constantEncryptRNG{payloadKey, i.permutation},
-		i.brand)
+		i.brand,
+	)
 }
 
 // encryptArmor62SealResult encapsulates all the inputs and outputs of

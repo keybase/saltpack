@@ -3,7 +3,10 @@
 
 package basex
 
-import "io"
+import (
+	"errors"
+	"io"
+)
 
 // Much of this code is adopted from Go's encoding/base64
 
@@ -145,7 +148,7 @@ func (d *decoder) Read(p []byte) (int, error) {
 
 	eof := false
 
-	if d.err == io.EOF {
+	if errors.Is(d.err, io.EOF) {
 		if d.nbuf == 0 {
 			return 0, d.err
 		}

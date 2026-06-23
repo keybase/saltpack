@@ -103,17 +103,17 @@ func (p *punctuatedReader) ReadUntilPunctuation(lim int) (res []byte, err error)
 	for {
 		var n int
 		n, err = p.Read(p.buf[:])
-		switch err {
-		case nil, ErrPunctuated:
+		switch {
+		case err == nil, errors.Is(err, ErrPunctuated):
 			res = append(res, p.buf[0:n]...)
-			if err == ErrPunctuated {
+			if errors.Is(err, ErrPunctuated) {
 				err = nil
 				return res, err
 			}
 			if len(res) >= lim {
 				return nil, ErrOverflow
 			}
-		case io.EOF:
+		case errors.Is(err, io.EOF):
 			err = io.ErrUnexpectedEOF
 			fallthrough
 		default:

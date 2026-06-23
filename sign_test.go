@@ -187,7 +187,7 @@ func testSignTruncation(t *testing.T, version Version) {
 	if vmsg != nil {
 		t.Errorf("Verify returned a message for a truncated message")
 	}
-	if err != io.ErrUnexpectedEOF {
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Errorf("error: %v, expected %v", err, io.ErrUnexpectedEOF)
 	}
 }
@@ -211,7 +211,7 @@ func testSignSkipBlock(t *testing.T, version Version) {
 	if vmsg != nil {
 		t.Errorf("Verify returned a message for a message with missing block")
 	}
-	if err != io.ErrUnexpectedEOF {
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Errorf("error: %v, expected %v", err, io.ErrUnexpectedEOF)
 	}
 }
@@ -230,7 +230,7 @@ func testSignSkipFooter(t *testing.T, version Version) {
 	if vmsg != nil {
 		t.Errorf("Verify returned a message for a signed message without a footer")
 	}
-	if err != io.ErrUnexpectedEOF {
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Errorf("error: %v, expected %v", err, io.ErrUnexpectedEOF)
 	}
 }
@@ -249,7 +249,7 @@ func testSignSwapBlock(t *testing.T, version Version) {
 	if vmsg != nil {
 		t.Errorf("Verify returned a message for a signed message without a footer")
 	}
-	if err != ErrBadSignature {
+	if !errors.Is(err, ErrBadSignature) {
 		t.Errorf("error: %v, expected %v", err, ErrBadSignature)
 	}
 }
@@ -290,7 +290,7 @@ func testSignDetachedVerifyAttached(t *testing.T, version Version) {
 	if err == nil {
 		t.Fatal("Verify succeeded, expected it to fail")
 	}
-	if _, ok := err.(ErrWrongMessageType); !ok {
+	if !errors.As(err, new(ErrWrongMessageType)) {
 		t.Errorf("error %T, expected ErrWrongMessageType", err)
 	}
 	if skey != nil {
@@ -313,7 +313,7 @@ func testSignAttachedVerifyDetached(t *testing.T, version Version) {
 	if err == nil {
 		t.Fatal("VerifyDetached succeeded, expected it to fail")
 	}
-	if _, ok := err.(ErrWrongMessageType); !ok {
+	if !errors.As(err, new(ErrWrongMessageType)) {
 		t.Errorf("error %T, expected ErrWrongMessageType", err)
 	}
 	if skey != nil {
@@ -331,7 +331,7 @@ func testSignBadKey(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
-	if err != ErrBadSignature {
+	if !errors.Is(err, ErrBadSignature) {
 		t.Errorf("error: %v, expected ErrBadSignature", err)
 	}
 
@@ -340,7 +340,7 @@ func testSignBadKey(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
-	if err != ErrBadSignature {
+	if !errors.Is(err, ErrBadSignature) {
 		t.Errorf("error: %v, expected ErrBadSignature", err)
 	}
 }
@@ -351,7 +351,7 @@ func testSignNilKey(t *testing.T, version Version) {
 	if err == nil {
 		t.Fatal("Sign with nil key didn't fail")
 	}
-	if _, ok := err.(ErrInvalidParameter); !ok {
+	if !errors.As(err, new(ErrInvalidParameter)) {
 		t.Errorf("error %T, expected ErrInvalidParameter", err)
 	}
 
@@ -359,7 +359,7 @@ func testSignNilKey(t *testing.T, version Version) {
 	if err == nil {
 		t.Fatal("SignDetached with nil key didn't fail")
 	}
-	if _, ok := err.(ErrInvalidParameter); !ok {
+	if !errors.As(err, new(ErrInvalidParameter)) {
 		t.Errorf("error %T, expected ErrInvalidParameter", err)
 	}
 }
@@ -450,7 +450,8 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
-	if ebv, ok := err.(ErrBadVersion); !ok {
+	var ebv ErrBadVersion
+	if !errors.As(err, &ebv) {
 		t.Fatalf("Got wrong error; wanted 'Bad Version' but got %v", err)
 	} else if ebv.received != badVersion {
 		t.Fatalf("got wrong version # in error message: %v", ebv.received)
@@ -465,7 +466,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
-	if _, ok := err.(ErrWrongMessageType); !ok {
+	if !errors.As(err, new(ErrWrongMessageType)) {
 		t.Errorf("error: %v (%T), expected ErrWrongMessageType", err, err)
 	}
 
@@ -478,7 +479,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
-	if _, ok := err.(ErrWrongMessageType); !ok {
+	if !errors.As(err, new(ErrWrongMessageType)) {
 		t.Errorf("error: %v (%T), expected ErrWrongMessageType", err, err)
 	}
 
@@ -538,7 +539,7 @@ func testSignDetachedCorruptHeader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
-	if _, ok := err.(ErrWrongMessageType); !ok {
+	if !errors.As(err, new(ErrWrongMessageType)) {
 		t.Errorf("error: %v (%T), expected ErrWrongMessageType", err, err)
 	}
 
@@ -551,7 +552,7 @@ func testSignDetachedCorruptHeader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, err = VerifyDetached(SingleVersionValidator(version), msg, sig, kr)
-	if _, ok := err.(ErrWrongMessageType); !ok {
+	if !errors.As(err, new(ErrWrongMessageType)) {
 		t.Errorf("error: %v (%T), expected ErrWrongMessageType", err, err)
 	}
 }
@@ -588,7 +589,7 @@ func TestSignSinglePacketV1(t *testing.T) {
 
 	// Nothing else.
 	_, err = mps.Read(&block)
-	if err != io.EOF {
+	if !errors.Is(err, io.EOF) {
 		t.Fatalf("err=%v != io.EOF", err)
 	}
 }
@@ -623,7 +624,7 @@ func TestSignSinglePacketV2(t *testing.T) {
 
 	// Nothing else.
 	_, err = mps.Read(&block)
-	if err != io.EOF {
+	if !errors.Is(err, io.EOF) {
 		t.Fatalf("err=%v != io.EOF", err)
 	}
 }
@@ -695,7 +696,7 @@ func TestSignSubsequenceV1(t *testing.T) {
 
 	for i, truncatedSMsg := range []*bytes.Buffer{truncatedSMsg1, truncatedSMsg2, truncatedSMsg3} {
 		_, _, err = Verify(SingleVersionValidator(Version1()), truncatedSMsg.Bytes(), kr)
-		if err != ErrBadSignature {
+		if !errors.Is(err, ErrBadSignature) {
 			t.Errorf("err=%v != ErrBadSignature for truncatedSMsg%d", err, i+1)
 		}
 	}
@@ -756,7 +757,7 @@ func TestSignSubsequenceV2(t *testing.T) {
 
 	for i, truncatedSMsg := range []*bytes.Buffer{truncatedSMsg1, truncatedSMsg2} {
 		_, _, err = Verify(SingleVersionValidator(Version2()), truncatedSMsg.Bytes(), kr)
-		if err != ErrBadSignature {
+		if !errors.Is(err, ErrBadSignature) {
 			t.Errorf("err=%v != ErrBadSignature for truncatedSMsg%d", err, i+1)
 		}
 	}

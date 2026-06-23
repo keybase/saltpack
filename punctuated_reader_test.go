@@ -5,6 +5,7 @@ package saltpack
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"testing"
 )
@@ -50,7 +51,7 @@ func TestPunctuatedReaderRegularReads(t *testing.T) {
 		}
 	}
 	_, err := r.ReadUntilPunctuation(1024)
-	if err != io.ErrUnexpectedEOF {
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Fatalf("Wrong error; wanted %v but got %v", io.ErrUnexpectedEOF, err)
 	}
 }
@@ -64,7 +65,7 @@ func TestPunctuatedReaderSlowReads(t *testing.T) {
 		}
 	}
 	_, err := r.ReadUntilPunctuation(1024)
-	if err != io.ErrUnexpectedEOF {
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Fatalf("Wrong error; wanted %v but got %v", io.ErrUnexpectedEOF, err)
 	}
 }
@@ -72,7 +73,7 @@ func TestPunctuatedReaderSlowReads(t *testing.T) {
 func TestPunctuatedReaderSlowReadsOverflow(t *testing.T) {
 	r := newPunctuatedReader(&slowReader{[]byte(testText)}, '.')
 	_, err := r.ReadUntilPunctuation(20)
-	if err != ErrOverflow {
+	if !errors.Is(err, ErrOverflow) {
 		t.Fatalf("Wrong error; wanted %v but got %v", ErrOverflow, err)
 	}
 }

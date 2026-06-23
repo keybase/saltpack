@@ -146,7 +146,8 @@ func (r receiverBoxKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, payloadKey 
 		nil,
 		payloadKey[:],
 		(*[24]byte)(&nonce),
-		(*[32]byte)(derivedKey))
+		(*[32]byte)(derivedKey),
+	)
 
 	return receiverKeys{
 		ReceiverKID:   identifier,
@@ -179,7 +180,8 @@ func (r ReceiverSymmetricKey) makeReceiverKeys(ephemeralPriv BoxSecretKey, paylo
 		nil,
 		payloadKey[:],
 		(*[24]byte)(&nonce),
-		(*[32]byte)(derivedKey))
+		(*[32]byte)(derivedKey),
+	)
 
 	// Unlike the box key case, the identifier is supplied by the caller rather
 	// than computed. (These will be KBFS TLF pseudonyms.)

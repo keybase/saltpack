@@ -57,7 +57,7 @@ func (c exampleChunker) getNextChunk() ([]byte, error) {
 	seqno, err := c.mps.Read(&block)
 	if err != nil {
 		// An EOF here is unexpected.
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
 		return nil, err

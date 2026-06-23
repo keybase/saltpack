@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha512"
+	"errors"
 	"io"
 
 	"golang.org/x/crypto/ed25519"
@@ -27,7 +28,7 @@ func (sos *signcryptOpenStream) getNextChunk() ([]byte, error) {
 	var sb signcryptionBlock
 	seqno, err := sos.mps.Read(&sb)
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = io.ErrUnexpectedEOF
 		}
 		return nil, err
@@ -94,7 +95,8 @@ func (sos *signcryptOpenStream) tryBoxSecretKeys(hdr *SigncryptionHeader, epheme
 					nil,
 					receiver.PayloadKeyBox,
 					(*[24]byte)(&nonce),
-					(*[32]byte)(derivedKey))
+					(*[32]byte)(derivedKey),
+				)
 				if !isValid {
 					return nil, ErrDecryptionFailed
 				}
@@ -152,7 +154,8 @@ func (sos *signcryptOpenStream) trySharedSymmetricKeys(hdr *SigncryptionHeader, 
 			nil,
 			hdr.Receivers[index].PayloadKeyBox,
 			(*[24]byte)(&nonce),
-			(*[32]byte)(derivedKey))
+			(*[32]byte)(derivedKey),
+		)
 		if !isValid {
 			return nil, ErrDecryptionFailed
 		}
