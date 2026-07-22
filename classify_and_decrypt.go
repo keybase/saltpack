@@ -28,6 +28,13 @@ const (
 	minLengthToIdentifyBinarySaltpack int = 23
 )
 
+var (
+	// Compile armor prefix regexes once for reuse.
+	armorWhitespaceRegex = regexp.MustCompile("[>\n\r\t ]+")
+	armorHeaderRegex     = regexp.MustCompile("^BEGIN (?:([a-zA-Z0-9]+) )?SALTPACK (" + EncryptionArmorString + "|" + SignedArmorString + "|" + DetachedSignatureArmorString + ") ?\\.([a-zA-Z0-9 ]*)")
+	armorWordCountRegex  = regexp.MustCompile("^([a-zA-Z0-9]+ ?){0,5}$")
+)
+
 // IsSaltpackBinary peeks into the provided bufio.Reader to determine whether it encodes a binary saltpack message.
 // It does not consume any of the reader's bytes (whose buffer length must be at least minLengthToIdentifyBinarySaltpack). It returns a non nil error if the buffer
 // size of the reader is not large enough (ErrShortSliceOrBuffer), or if the stream does not appear to contain a binary
@@ -130,16 +137,12 @@ func IsSaltpackArmored(stream *bufio.Reader) (brand string, msgType MessageType,
 // rest of the message is well formed.
 func IsSaltpackArmoredPrefix(pref string) (brand string, messageType MessageType, ver Version, err error) {
 	// replace blocks of characters in the set [>\n\r\t ] with a single space, so that the next regexp is simpler
-	re := regexp.MustCompile("[>\n\r\t ]+")
-	s := strings.TrimSpace(re.ReplaceAllString(pref, " "))
+	s := strings.TrimSpace(armorWhitespaceRegex.ReplaceAllString(pref, " "))
 
-	headerRegExpSt := "^BEGIN (?:([a-zA-Z0-9]+) )?SALTPACK (" + EncryptionArmorString + "|" + SignedArmorString + "|" + DetachedSignatureArmorString + ") ?\\.([a-zA-Z0-9 ]*)"
-	headerRegExp := regexp.MustCompile(headerRegExpSt)
-
-	m := headerRegExp.FindStringSubmatch(s)
+	m := armorHeaderRegex.FindStringSubmatch(s)
 	if len(m) == 0 {
 		// Matches at most five words
-		if !regexp.MustCompile("^([a-zA-Z0-9]+ ?){0,5}$").MatchString(s) {
+		if !armorWordCountRegex.MatchString(s) {
 			return "", MessageTypeUnknown, Version{}, ErrNotASaltpackMessage
 		}
 

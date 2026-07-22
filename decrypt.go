@@ -23,6 +23,7 @@ type decryptStream struct {
 	headerHash       headerHash
 	macKey           macKey
 	position         int
+	numReceivers     int
 	mki              MessageKeyInfo
 }
 
@@ -186,6 +187,7 @@ func (ds *decryptStream) processHeader(hdr *EncryptionHeader) error {
 	}
 
 	ds.version = hdr.Version
+	ds.numReceivers = len(hdr.Receivers)
 
 	ephemeralKey := ds.ring.ImportBoxEphemeralKey(hdr.Ephemeral)
 	if ephemeralKey == nil {
@@ -270,7 +272,13 @@ func (ds *decryptStream) processBlock(ciphertext []byte, authenticators []payloa
 
 	nonce := nonceForChunkSecretBox(blockNum)
 
-	// Check the authenticator.
+	// Each receiver has exactly one authenticator in every payload block.
+	// Validate the complete structure before indexing with our receiver position.
+	if len(authenticators) != ds.numReceivers {
+		return nil, ErrBadCiphertext(seqno)
+	}
+
+	// Check our authenticator.
 	hashToAuthenticate := computePayloadHash(ds.version, ds.headerHash, nonce, ciphertext, isFinal)
 	ourAuthenticator := computePayloadAuthenticator(ds.macKey, hashToAuthenticate)
 	if !ourAuthenticator.Equal(authenticators[ds.position]) {
