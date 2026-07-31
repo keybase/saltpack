@@ -26,6 +26,10 @@ type encryptionBlockNumber uint64
 func codecHandle() *codec.MsgpackHandle {
 	var mh codec.MsgpackHandle
 	mh.WriteExt = true
+	// Leave MaxInitLen at zero so go-codec uses its element-size-aware default.
+	// MaxInitLen is a count of elements, not a byte limit; setting it to a large
+	// byte-looking value can cause multi-gigabyte allocations for slices whose
+	// elements are larger than one byte.
 	return &mh
 }
 
