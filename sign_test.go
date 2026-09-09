@@ -93,9 +93,7 @@ func testSignConcurrent(t *testing.T, version Version) {
 	key := newSigPrivKey(t)
 	var wg sync.WaitGroup
 	for range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			out, err := Sign(version, msg, key)
 			if err != nil {
 				t.Error(err)
@@ -103,7 +101,7 @@ func testSignConcurrent(t *testing.T, version Version) {
 			if len(out) == 0 {
 				t.Error("Sign returned no error and no output")
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -450,8 +448,7 @@ func testSignCorruptHeader(t *testing.T, version Version) {
 		t.Fatal(err)
 	}
 	_, _, err = Verify(SingleVersionValidator(version), smsg, kr)
-	var ebv ErrBadVersion
-	if !errors.As(err, &ebv) {
+	if ebv, ok := errors.AsType[ErrBadVersion](err); !ok {
 		t.Fatalf("Got wrong error; wanted 'Bad Version' but got %v", err)
 	} else if ebv.received != badVersion {
 		t.Fatalf("got wrong version # in error message: %v", ebv.received)
