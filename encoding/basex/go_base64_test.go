@@ -336,8 +336,7 @@ func TestDecodeCorrupt(t *testing.T) {
 			}
 			continue
 		}
-		var cie CorruptInputError
-		if errors.As(err, &cie) {
+		if cie, ok := errors.AsType[CorruptInputError](err); ok {
 			testEqual(t, "Corruption in %q at offset %v, want %v", tc.input, int(cie), tc.offset)
 		} else {
 			t.Error("Decoder failed to detect corruption in", tc)

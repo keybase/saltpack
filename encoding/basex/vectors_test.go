@@ -3318,6 +3318,10 @@ var testEncodeVectors1 = map[string]string{
 	"zero_pad_29_29_0": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 }
 
+// testDecodeVectors1 contains base64-encoded test vectors for decode testing.
+// These are not credentials - they are random test data for verifying encoding/decoding.
+//
+//nolint:gosec // G101: False positive - test vectors, not credentials
 var testDecodeVectors1 = map[string]string{
 	"KGE+t8GHoQfu7A==":                                                                                                                     "3GacphNxeoqtm9",
 	"+QnJVplWtiCWnw==":                                                                                                                     "EzW8v4NcGX44Kg",

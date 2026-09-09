@@ -64,9 +64,7 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 
 	var wg sync.WaitGroup
 	for range 100 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			skey, msg, err := Verify(SingleVersionValidator(version), smsg, kr)
 			if !assert.NoError(t, err, "input:      %x\nsigned msg: %x", in, smsg) {
 				// Don't fall through, as the tests below will panic.
@@ -75,7 +73,7 @@ func testVerifyConcurrent(t *testing.T, version Version) {
 			assert.True(t, PublicKeyEqual(skey, key.GetPublicKey()),
 				"sender key %x, expected %x", skey.ToKID(), key.GetPublicKey().ToKID())
 			assert.Equal(t, in, msg)
-		}()
+		})
 	}
 	wg.Wait()
 }

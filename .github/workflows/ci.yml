@@ -23,29 +23,29 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        go-version: [1.25.x]
+        go-version: [1.26.x, 1.27.x]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version: ${{ matrix.go-version }}
           cache: true
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
+        uses: golangci/golangci-lint-action@v9.3.0
         with:
-          version: v2.7.2
+          version: v2.13.2
 
       - name: Build
         run: go build -v ./...
 
       - name: Run govulncheck
-        uses: golang/govulncheck-action@v1
+        uses: golang/govulncheck-action@v1.1.0
         with:
           go-version-input: ${{ matrix.go-version }}
 
