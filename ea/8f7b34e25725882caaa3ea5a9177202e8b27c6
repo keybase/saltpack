@@ -1,0 +1,19 @@
+.github/workflows/ci.yml
+  s_7ec9b154bf7941::t_74956bb6c87c2e 42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "ea8f7b34e25725882caaa3ea5a9177202e8b27c6",
+  "prompts": {},
+  "sessions": {
+    "s_7ec9b154bf7941": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2be764c7-9ca5-4085-ac68-14fa36b12fb5",
+        "model": "claude-haiku-5-5"
+      },
+      "human_author": "Joshua Blum <joshua.blum@zoom.us>"
+    }
+  }
+}
